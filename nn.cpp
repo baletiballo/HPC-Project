@@ -15,7 +15,7 @@
 #include <string>
 #include <random>
 #include <algorithm>
-#include <execution>
+//#include <execution>
 
 using namespace std;
 
@@ -39,7 +39,7 @@ void print ( const vector <float>& m, int n_rows, int n_columns ) {
 
 int argmax ( const vector <float>& m ) {
 
-    return distance(m.begin(), max_element(std::execution::par, m.begin(), m.end()));
+    return distance(m.begin(), max_element(m.begin(), m.end()));
 }
 
 vector <float> relu(const vector <float>& z){

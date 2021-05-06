@@ -1,0 +1,40 @@
+﻿  cnn.cpp
+  The contents of <execution> are available only with C++17 or later.
+C:\Users\silas\Documents\GitHub\HPC-Project\cnn.cpp(49,49): warning C4244: "=": Konvertierung von "double" in "_Ty", möglicher Datenverlust
+          with
+          [
+              _Ty=float
+          ]
+C:\Users\silas\Documents\GitHub\HPC-Project\cnn.cpp(233,45): warning C4244: "=": Konvertierung von "double" in "_Ty", möglicher Datenverlust
+          with
+          [
+              _Ty=float
+          ]
+C:\Users\silas\Documents\GitHub\HPC-Project\cnn.cpp(295,16): error C2131: Ausdruck wurde nicht zu einer Konstanten ausgewertet.
+C:\Users\silas\Documents\GitHub\HPC-Project\cnn.cpp(295,16): message : Der Fehler wurde durch einen Lesezugriff auf eine Variable außerhalb ihrer Lebensdauer verursacht.
+C:\Users\silas\Documents\GitHub\HPC-Project\cnn.cpp(295,16): message : siehe Verwendung von "this"
+C:\Users\silas\Documents\GitHub\HPC-Project\cnn.cpp(297,14): error C3863: Der Arraytyp "float [this->12]" kann nicht zugewiesen werden.
+C:\Users\silas\Documents\GitHub\HPC-Project\cnn.cpp(300,17): error C3863: Der Arraytyp "float [this->12]" kann nicht zugewiesen werden.
+C:\Users\silas\Documents\GitHub\HPC-Project\cnn.cpp(303,14): error C2131: Ausdruck wurde nicht zu einer Konstanten ausgewertet.
+C:\Users\silas\Documents\GitHub\HPC-Project\cnn.cpp(303,14): message : Der Fehler wurde durch einen Lesezugriff auf eine Variable außerhalb ihrer Lebensdauer verursacht.
+C:\Users\silas\Documents\GitHub\HPC-Project\cnn.cpp(303,14): message : siehe Verwendung von "this"
+C:\Users\silas\Documents\GitHub\HPC-Project\cnn.cpp(305,12): error C3863: Der Arraytyp "float [this->12]" kann nicht zugewiesen werden.
+C:\Users\silas\Documents\GitHub\HPC-Project\cnn.cpp(341,15): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
+C:\Users\silas\Documents\GitHub\HPC-Project\cnn.cpp(343,19): warning C4244: "=": Konvertierung von "int" in "float", möglicher Datenverlust
+C:\Users\silas\Documents\GitHub\HPC-Project\cnn.cpp(345,32): warning C4244: "=": Konvertierung von "double" in "float", möglicher Datenverlust
+  nn.cpp
+C:\Users\silas\Documents\GitHub\HPC-Project\nn.cpp(319,23): warning C4244: "Initialisierung": Konvertierung von "float" in "int", möglicher Datenverlust
+C:\Users\silas\Documents\GitHub\HPC-Project\nn.cpp(329,36): warning C4018: "<": Konflikt zwischen "signed" und "unsigned"
+C:\Users\silas\Documents\GitHub\HPC-Project\nn.cpp(344,14): warning C4244: "Initialisierung": Konvertierung von "double" in "float", möglicher Datenverlust
+C:\Users\silas\Documents\GitHub\HPC-Project\nn.cpp(358,43): warning C4018: "<": Konflikt zwischen "signed" und "unsigned"
+C:\Users\silas\Documents\GitHub\HPC-Project\nn.cpp(361,42): warning C4018: "<": Konflikt zwischen "signed" und "unsigned"
+C:\Users\silas\Documents\GitHub\HPC-Project\nn.cpp(397,36): warning C4018: "<": Konflikt zwischen "signed" und "unsigned"
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.28.29910\include\algorithm(4027,25): warning C4244: "=": Konvertierung von "double" in "float", möglicher Datenverlust
+C:\Users\silas\Documents\GitHub\HPC-Project\nn.cpp(77): message : Siehe Verweis auf die gerade kompilierte Instanziierung "void std::generate<std::_Vector_iterator<std::_Vector_val<std::_Simple_types<_Ty>>>,random_vector::<lambda_0179ba30eba30585aad0016e0620341f>>(_FwdIt,_FwdIt,_Fn)" der Funktions-Vorlage.
+          with
+          [
+              _Ty=float,
+              _FwdIt=std::_Vector_iterator<std::_Vector_val<std::_Simple_types<float>>>,
+              _Fn=random_vector::<lambda_0179ba30eba30585aad0016e0620341f>
+          ]
+  Code wird generiert...

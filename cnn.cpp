@@ -27,21 +27,19 @@ class Conv3x3 {
 public:
 	int num_filters;
 	int size1, size2, size3;
-	float filters[][][];
-	float biases[];
+	vector<vector<vector<float>>> filters;
+	vector<float> biases;
 
-	float last_input[][][];
+	vector<vector<vector<float>>> last_input;
 
 	Conv3x3(int n, int s1, int s2, int s3) {
 		num_filters = n;
 		size1 = s1;
 		size2 = s2;
 		size3 = s3;
-		filters = new float[3][3][num_filters];
-		biases = new float[num_filters];
-		for (int i = 0; i < num_filters; i++) {
-			biases[i] = 0.0;
-		}
+		filters.resize(3,
+				vector<vector<float> >(3, vector<float>(num_filters)));
+		biases.resize(num_filters, 0.0);
 
 		default_random_engine generator;
 		normal_distribution<double> distribution(0.0, 1.0);
@@ -54,13 +52,15 @@ public:
 		}
 	}
 
-	float* forward(float input[][][]) {
-		float output[size1 * num_filters][size2 - 2][size3 - 2];
+	vector<vector<vector<float>>> forward(vector<vector<vector<float>>> input) {
+		vector<vector<vector<float>>> output(size1 * num_filters,
+				vector<vector<float>>(size2 - 2, vector<float>(size3 - 2)));
 		for (int i = 0; i < size2 - 2; i++) { //per region
 			for (int j = 0; j < size3 - 2; j++) { // per region
 
 				for (int k = 0; k < num_filters; k++) { //per filter
 					for (int l = 0; l < size1; l++) { //per passed representation
+						output[l * num_filters + k][i][j] = 0;
 						output[l * num_filters + k][i][j] = biases[k]; //set output at i j for the input representation l when filter k is applied
 						//matrix multiplication and summation
 						for (int m = 0; m < 3; m++) {
@@ -81,30 +81,13 @@ public:
 		return output;
 	}
 
-	float* backprop(float lossgradient[][][], float learn_rate) {
-		float filtergradient[3][3][num_filters];
-		float filterbias[num_filters];
-		float lossinput[size1][size2][size3];
-
-		for (int i = 0; i < num_filters; i++) {
-			filterbias[i] = 0.0;
-		}
-
-		for (int i = 0; i < 3; i++) {
-			for (int j = 0; j < 3; j++) {
-				for (int k = 0; k < num_filters; k++) {
-					filtergradient[i][j][k] = 0.0;
-				}
-			}
-		}
-
-		for (int i = 0; i < size1; i++) {
-			for (int j = 0; j < size2; j++) {
-				for (int k = 0; k < size3; k++) {
-					lossinput[i][j][k] = 0.0;
-				}
-			}
-		}
+	vector<vector<vector<float>>> backprop(
+			vector<vector<vector<float>>> lossgradient, float learn_rate) {
+		vector<vector<vector<float>>> filtergradient(3,
+						vector<vector<float>>(3, vector<float>(num_filters, 0.0)));
+		vector<float> filterbias(num_filters, 0.0);
+		vector<vector<vector<float>>> lossinput(size1,
+				vector<vector<float>>(size2, vector<float>(size3, 0.0)));
 
 		for (int i = 0; i < size2 - 2; i++) { //per region
 			for (int j = 0; j < size3 - 2; j++) { // per region
@@ -153,7 +136,7 @@ public:
 	int size1, size2, size3;
 	int window, stride;
 
-	float last_input[][][];
+	vector<vector<vector<float>>> last_input;
 
 	MaxPool2(int w, int s, int s1, int s2, int s3) {
 		window = w;
@@ -163,9 +146,10 @@ public:
 		size3 = s3;
 	}
 
-	float* forward(float input[][][]) {
-		float output[size1][((size2 - window) / stride) + 1][((size3 - window)
-				/ stride) + 1];
+	vector<vector<vector<float>>> forward(vector<vector<vector<float>>> input) {
+		vector<vector<vector<float>>> output(size1,
+				vector<vector<float>>(((size2 - window) / stride) + 1,
+						vector<float>(((size3 - window) / stride) + 1)));
 		for (int i = 0; i < size2 - window; i += stride) { //per region
 			for (int j = 0; j < size3 - window; j += stride) { // per region
 
@@ -190,16 +174,10 @@ public:
 		return output;
 	}
 
-	float* backprop(float lossgradient[][][], float learn_rate) {
-		float lossinput[size1][size2][size3];
-
-		for (int i = 0; i < size1; i++) {
-			for (int j = 0; j < size2; j++) {
-				for (int k = 0; k < size3; k++) {
-					lossinput[i][j][k] = 0.0;
-				}
-			}
-		}
+	vector<vector<vector<float>>> backprop(
+			vector<vector<vector<float>>> lossgradient, float learn_rate) {
+		vector<vector<vector<float>>> lossinput(size1,
+				vector<vector<float>>(size2, vector<float>(size3, 0.0)));
 
 		for (int i = 0; i < size2 - window; i += stride) { //per region
 			for (int j = 0; j < size3 - window; j += stride) { // per region
@@ -233,11 +211,11 @@ class FullyConnectedLayer {
 public:
 	int size1, size2, size3;
 	int num_weights;
-	float weights[][];
-	float biases[];
+	vector<vector<float>> weights;
+	vector<float> biases;
 
-	float last_inputv[];
-	float last_totals[];
+	vector<float> last_inputv;
+	vector<float> last_totals;
 	float last_sum = 0.0;
 
 	FullyConnectedLayer(int n, int s1, int s2, int s3) {
@@ -245,11 +223,8 @@ public:
 		size1 = s1;
 		size2 = s2;
 		size3 = s3;
-		weights = new float[size1 * size2 * size3][num_weights];
-		biases = new float[num_weights];
-		for (int i = 0; i < num_weights; i++) {
-			biases[i] = 0.0;
-		}
+		weights.resize(size1 * size2 * size3, vector<float>(num_weights));
+		biases.resize(num_weights, 0.0);
 
 		default_random_engine generator;
 		normal_distribution<double> distribution(0.0, 1.0);
@@ -259,18 +234,18 @@ public:
 			}
 		}
 
-		last_totals = new int[num_weights];
+		last_totals.resize(num_weights);
 	}
 
-	float* forward(float input[][][]) {
-		float output[num_weights];
+	vector<float> forward(vector<vector<vector<float>>> input) {
+		vector<float> output(num_weights);
 
 		for (int i = 0; i < num_weights; i++) {
 			output[i] = biases[i];
 		}
 
 		//flatten (the curve xD)
-		float inputv[size1 * size2 * size3];
+		vector<float> inputv(size1 * size2 * size3);
 		for (int i = 0; i < size1; i++) {
 			for (int j = 0; j < size2; j++) {
 				for (int k = 0; k < size3; k++) {
@@ -304,16 +279,10 @@ public:
 		return output;
 	}
 
-	float* backprop(float lossgradient[], float learn_rate) {
-		float lossinput[size1][size2][size3];
-
-		for (int i = 0; i < size1; i++) {
-			for (int j = 0; j < size2; j++) {
-				for (int k = 0; k < size3; k++) {
-					lossinput[i][j][k] = 0.0;
-				}
-			}
-		}
+	vector<vector<vector<float>>> backprop(vector<float> lossgradient,
+			float learn_rate) {
+		vector<vector<vector<float>>> lossinput(size1,
+				vector<vector<float>>(size2, vector<float>(size3, 0.0)));
 
 		int index = -1;
 		for (int i = 0; i < num_weights; i++) {
@@ -356,7 +325,6 @@ public:
 		return lossinput;
 	}
 };
-
 
 int main() {
 	string line;

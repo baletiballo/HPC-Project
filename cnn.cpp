@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <random>
@@ -45,7 +46,8 @@ public:
 			{
 				for (int k = 0; k < num_filters; k++)
 				{
-					default_random_engine generator;
+					random_device dev;
+					default_random_engine generator(dev());
 					filters[i][j][k] = distribution(generator) / 9;
 				}
 			}
@@ -167,10 +169,8 @@ public:
 					for (int m = 0; m < window; m++)
 					{
 						for (int n = 0; n < window; n++)
-						{
 							if (max < input[l][i + m][j + n])
 								max = input[l][i + m][j + n];
-						}
 
 						output[l][i / stride][j / stride] = max;
 					}
@@ -224,7 +224,7 @@ public:
 class FullyConnectedLayer
 {
 public:
-	int num_featuremaps;	//Number of feature maps the convolutional Layers generate
+	int num_featureMaps;	//Number of feature maps the convolutional Layers generate
 	int size2, size3;		//Dimensions of the feature maps
 	static const int num_weights = 10; //Number of 
 	vector<vector<float>> weights;
@@ -235,18 +235,19 @@ public:
 	float last_sum = 0.0;
 
 	FullyConnectedLayer(int s1, int s2, int s3) {
-		num_featuremaps = s1;
+		num_featureMaps = s1;
 		size2 = s2;
 		size3 = s3;
-		weights.resize(num_featuremaps * size2 * size3, vector<float>(num_weights));
+		weights.resize(num_featureMaps * size2 * size3, vector<float>(num_weights));
 		biases.resize(num_weights, 0.0);
 
 		normal_distribution<float> distribution(0.0, 1.0);
-		for (int i = 0; i < num_featuremaps * size2 * size3; i++)
+		for (int i = 0; i < num_featureMaps * size2 * size3; i++)
 		{
 			for (int j = 0; j < num_weights; j++)
 			{
-				default_random_engine generator;
+				random_device dev;
+				default_random_engine generator(dev());
 				weights[i][j] = distribution(generator) / 9;
 			}
 		}
@@ -261,13 +262,13 @@ public:
 			output[i] = biases[i];
 
 		//flatten (the curve xD)
-		vector<float> inputVector(num_featuremaps * size2 * size3);
-		for (int i = 0; i < num_featuremaps; i++)
+		vector<float> inputVector(num_featureMaps * size2 * size3);
+		for (int i = 0; i < num_featureMaps; i++)
 			for (int j = 0; j < size2; j++)
 				for (int k = 0; k < size3; k++)
 					inputVector[i * size2 * size3 + j * size3 + k] = input[i][j][k];
 
-		for (int i = 0; i < num_featuremaps * size2 * size3; i++) //per feature
+		for (int i = 0; i < num_featureMaps * size2 * size3; i++) //per feature
 			for (int j = 0; j < num_weights; j++) //per weights
 				output[j] += inputVector[i] * weights[i][j];
 
@@ -292,32 +293,30 @@ public:
 
 	vector<vector<vector<float>>> backprop(vector<float> lossGradient, float learn_rate)
 	{
-		vector<vector<vector<float>>> lossInput(num_featuremaps, vector<vector<float>>(size2, vector<float>(size3, 0.0)));
+		vector<vector<vector<float>>> lossInput(num_featureMaps, vector<vector<float>>(size2, vector<float>(size3, 0.0)));
 
 		int index = -1;
 		for (int i = 0; i < num_weights; i++)
-		{
-			if (lossGradient[i] != 0)
+			if (lossGradient[i] < FLT_EPSILON) //TODO maybe change value if not a good fit
 				index = i;
-		}
+		
 		const float gradient = lossGradient[index];
 
 		float doutdt[num_weights];
 		for (int i = 0; i < num_weights; i++)
-		{
 			doutdt[i] = -last_totals[index] * last_totals[i] / (last_sum * last_sum);
-		}
+			
 		doutdt[index] = last_totals[index] * last_sum - last_totals[index] / (last_sum * last_sum);
 
-		float* dLdt = new float[num_weights];
+		const auto dLdt = new float[num_weights];
 		for (int i = 0; i < num_weights; i++)
 			dLdt[i] = gradient * doutdt[i];
 
-		for (int i = 0; i < num_featuremaps * size2 * size3; i++)
+		for (int i = 0; i < num_featureMaps * size2 * size3; i++)
 			for (int j = 0; j < num_weights; j++)
 				lossInput[i / (size2 * size3)][i / size3 % size2][i % size3] += weights[i][j] * dLdt[j];
 
-		for (int i = 0; i < num_featuremaps * size2 * size3; i++)
+		for (int i = 0; i < num_featureMaps * size2 * size3; i++)
 			for (int j = 0; j < num_weights; j++)
 				weights[i][j] -= learn_rate * last_inputVector[i] * dLdt[j];
 
@@ -358,17 +357,24 @@ int main()
 		myFile.close();
 	}
 
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 1000; i++) //TODO only 100?
 	{
 		int randIndex = rand() % (42000 - batchSize);
 		for (unsigned j = 0; j < batchSize; j++)
 		{
 			for (int k = 0; k < 784; k++)
-			{
 				x_batch[k / 28][k % 28][j] = x[j + randIndex][k];
-			}
+			
 			y_batch[j] = y[j + randIndex];
 		}
+
+		float loss = 0;
+		int correct = 0;
+
+		//TODO train
+		
+		if ((i + 1) % 100 == 0) 
+			cout << "Step " << i + 1 << " Average Loss " << loss / 100 << " Accuracy " << correct << "\n";
 	}
 
 	return 0;

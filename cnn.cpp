@@ -209,8 +209,9 @@ public:
 
 class FullyConnectedLayer {
 public:
-	int size1, size2, size3;
-	int num_weights;
+	int num_featuremaps;	//Number of feature maps the convolutional Layers generate
+	int size2, size3;		//Dimensions of the feature maps
+	static const int num_weights = 10; //Number of 
 	vector<vector<float>> weights;
 	vector<float> biases;
 
@@ -218,17 +219,16 @@ public:
 	vector<float> last_totals;
 	float last_sum = 0.0;
 
-	FullyConnectedLayer(int n, int s1, int s2, int s3) {
-		num_weights = n;
-		size1 = s1;
+	FullyConnectedLayer(int s1, int s2, int s3) {
+		num_featuremaps = s1;
 		size2 = s2;
 		size3 = s3;
-		weights.resize(size1 * size2 * size3, vector<float>(num_weights));
+		weights.resize(num_featuremaps * size2 * size3, vector<float>(num_weights));
 		biases.resize(num_weights, 0.0);
 
 		default_random_engine generator;
 		normal_distribution<double> distribution(0.0, 1.0);
-		for (int i = 0; i < size1 * size2 * size3; i++) {
+		for (int i = 0; i < num_featuremaps * size2 * size3; i++) {
 			for (int j = 0; j < num_weights; j++) {
 				weights[i][j] = distribution(generator) / 9;
 			}
@@ -245,8 +245,8 @@ public:
 		}
 
 		//flatten (the curve xD)
-		vector<float> inputv(size1 * size2 * size3);
-		for (int i = 0; i < size1; i++) {
+		vector<float> inputv(num_featuremaps * size2 * size3);
+		for (int i = 0; i < num_featuremaps; i++) {
 			for (int j = 0; j < size2; j++) {
 				for (int k = 0; k < size3; k++) {
 					inputv[(i * size2 * size3) + (j * size3) + k] =
@@ -255,7 +255,7 @@ public:
 			}
 		}
 
-		for (int i = 0; i < size1 * size2 * size3; i++) { //per feature
+		for (int i = 0; i < num_featuremaps * size2 * size3; i++) { //per feature
 			for (int j = 0; j < num_weights; j++) { //per weights
 				output[j] += inputv[i] * weights[i][j];
 			}
@@ -281,7 +281,7 @@ public:
 
 	vector<vector<vector<float>>> backprop(vector<float> lossgradient,
 			float learn_rate) {
-		vector<vector<vector<float>>> lossinput(size1,
+		vector<vector<vector<float>>> lossinput(num_featuremaps,
 				vector<vector<float>>(size2, vector<float>(size3, 0.0)));
 
 		int index = -1;
@@ -292,7 +292,7 @@ public:
 		}
 		float gradient = lossgradient[index];
 
-		vector<float> doutdt(num_weights);
+		float doutdt[num_weights];
 		for (int i = 0; i < num_weights; i++) {
 			doutdt[i] = -(last_totals[index]) * (last_totals[i])
 					/ (last_sum * last_sum);
@@ -305,14 +305,14 @@ public:
 			dLdt[i] = gradient * doutdt[i];
 		}
 
-		for (int i = 0; i < size1 * size2 * size3; i++) {
+		for (int i = 0; i < num_featuremaps * size2 * size3; i++) {
 			for (int j = 0; j < num_weights; j++) {
 				lossinput[i / (size2 * size3)][(i / (size3)) % size2][i % size3] +=
 						weights[i][j] * dLdt[j];
 			}
 		}
 
-		for (int i = 0; i < size1 * size2 * size3; i++) {
+		for (int i = 0; i < num_featuremaps * size2 * size3; i++) {
 			for (int j = 0; j < num_weights; j++) {
 				weights[i][j] -= learn_rate * last_inputv[i] * dLdt[j];
 			}

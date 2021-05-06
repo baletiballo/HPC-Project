@@ -292,7 +292,7 @@ public:
 		}
 		float gradient = lossgradient[index];
 
-		float doutdt[num_weights];
+		vector<float> doutdt(num_weights);
 		for (int i = 0; i < num_weights; i++) {
 			doutdt[i] = -(last_totals[index]) * (last_totals[i])
 					/ (last_sum * last_sum);

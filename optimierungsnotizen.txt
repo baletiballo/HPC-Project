@@ -1,0 +1,1 @@
+Dimensionenreihenfolge des Filter-Arrays (um Cachemiss zu vermeiden). Fällt evtl mit exa-Stencil weg

@@ -44,11 +44,11 @@ public:
 		{
 			for (int j = 0; j < 3; j++)
 			{
-				for (int k = 0; k < num_filters; k++)
+				for (int cur_filter = 0; cur_filter < num_filters; cur_filter++)
 				{
 					random_device dev;
 					default_random_engine generator(dev());
-					filters[i][j][k] = distribution(generator) / 9;
+					filters[i][j][cur_filter] = distribution(generator) / 9;
 				}
 			}
 		}
@@ -57,27 +57,27 @@ public:
 	vector<vector<vector<float>>> forward(vector<vector<vector<float>>> input)
 	{
 		vector<vector<vector<float>>> output(size1 * num_filters, vector<vector<float>>(size2 - 2, vector<float>(size3 - 2)));
-		for (int i = 0; i < size2 - 2; i++)
+		for (int x = 0; x < size2 - 2; x++)
 		{
 			//per region
-			for (int j = 0; j < size3 - 2; j++)
+			for (int y = 0; y < size3 - 2; y++)
 			{
 				// per region
 
-				for (int k = 0; k < num_filters; k++)
+				for (int cur_filter = 0; cur_filter < num_filters; cur_filter++)
 				{
 					//per filter
-					for (int l = 0; l < size1; l++)
+					for (int cur_featureMap = 0; cur_featureMap < size1; cur_featureMap++)
 					{
 						//per passed representation
-						output[l * num_filters + k][i][j] = 0;
-						output[l * num_filters + k][i][j] = biases[k];
+						output[cur_featureMap * num_filters + cur_filter][x][y] = 0;
+						output[cur_featureMap * num_filters + cur_filter][x][y] = biases[cur_filter];
 
-						//set output at i j for the input representation l when filter k is applied
+						//set output at x y for the input representation cur_featureMap when filter cur_filter is applied
 						//matrix multiplication and summation
 						for (int m = 0; m < 3; m++)
 							for (int n = 0; n < 3; n++)
-								output[l * num_filters + k][i][j] += input[l][i + m][j + n] * filters[m][n][k];
+								output[cur_featureMap * num_filters + cur_filter][x][y] += input[cur_featureMap][x + m][y + n] * filters[m][n][cur_filter];
 					}
 				}
 			}
@@ -93,16 +93,16 @@ public:
 		vector<float> filterBias(num_filters, 0.0);
 		vector<vector<vector<float>>> lossInput(size1, vector<vector<float>>(size2, vector<float>(size3, 0.0)));
 
-		for (int i = 0; i < size2 - 2; i++)
+		for (int x = 0; x < size2 - 2; x++)
 		{
 			//per region
-			for (int j = 0; j < size3 - 2; j++)
+			for (int y = 0; y < size3 - 2; y++)
 			{
 				// per region
-				for (int k = 0; k < num_filters; k++)
+				for (int cur_filter = 0; cur_filter < num_filters; cur_filter++)
 				{
 					//per filter
-					for (int l = 0; l < size1; l++)
+					for (int cur_featureMap = 0; cur_featureMap < size1; cur_featureMap++)
 					{
 						//per passed representation
 						//matrix multiplication and summation
@@ -110,12 +110,12 @@ public:
 						{
 							for (int n = 0; n < 3; n++)
 							{
-								filterGradient[m][n][k] += lossGradient[l * num_filters + k][i][j] * last_input[l][i + m][j + n];
-								lossInput[l][i + m][j + n] += lossGradient[l * num_filters + k][i][j] * filters[m][n][k];
+								filterGradient[m][n][cur_filter] += lossGradient[cur_featureMap * num_filters + cur_filter][x][y] * last_input[cur_featureMap][x + m][y + n];
+								lossInput[cur_featureMap][x + m][y + n] += lossGradient[cur_featureMap * num_filters + cur_filter][x][y] * filters[m][n][cur_filter];
 							}
 						}
 
-						filterBias[k] += lossGradient[l * num_filters + k][i][j];
+						filterBias[cur_filter] += lossGradient[cur_featureMap * num_filters + cur_filter][x][y];
 					}
 				}
 			}
@@ -154,25 +154,25 @@ public:
 	{
 		vector<vector<vector<float>>> output(size1, vector<vector<float>>(((size2 - window) / stride) + 1,
 			vector<float>(((size3 - window) / stride) + 1)));
-		for (int i = 0; i < size2 - window; i += stride)
+		for (int x = 0; x < size2 - window; x += stride)
 		{
 			//per region
-			for (int j = 0; j < size3 - window; j += stride)
+			for (int y = 0; y < size3 - window; y += stride)
 			{
 				// per region
 
-				for (int l = 0; l < size1; l++)
+				for (int cur_featureMap = 0; cur_featureMap < size1; cur_featureMap++)
 				{
 					//per passed representation
 					//matrix max pooling
-					float max = input[l][i][j];
+					float max = input[cur_featureMap][x][y];
 					for (int m = 0; m < window; m++)
 					{
 						for (int n = 0; n < window; n++)
-							if (max < input[l][i + m][j + n])
-								max = input[l][i + m][j + n];
+							if (max < input[cur_featureMap][x + m][y + n])
+								max = input[cur_featureMap][x + m][y + n];
 
-						output[l][i / stride][j / stride] = max;
+						output[cur_featureMap][x / stride][y / stride] = max;
 					}
 				}
 			}
@@ -186,33 +186,34 @@ public:
 	{
 		vector<vector<vector<float>>> lossInput(size1, vector<vector<float>>(size2, vector<float>(size3, 0.0)));
 
-		for (int i = 0; i < size2 - window; i += stride)
+		for (int x = 0; x < size2 - window; x += stride)
 		{
 			//per region
-			for (int j = 0; j < size3 - window; j += stride)
+			for (int y = 0; y < size3 - window; y += stride)
 			{
 				// per region
-				for (int l = 0; l < size1; l++)
+				for (int cur_featureMap = 0; cur_featureMap < size1; cur_featureMap++)
 				{
 					//per passed representation
 					//matrix max pooling
-					float max = last_input[l][i][j];
+					float max = last_input[cur_featureMap][x][y];
 					int indexX = 0;
 					int indexY = 0;
 					for (int m = 0; m < window; m++)
 					{
 						for (int n = 0; n < window; n++)
 						{
-							if (max < last_input[l][i + m][j + n])
+							if (max < last_input[cur_featureMap][x + m][y + n])
 							{
-								max = last_input[l][i + m][j + n];
+								max = last_input[cur_featureMap][x + m][y + n];
 								indexX = m;
 								indexY = n;
 							}
 						}
-
-						lossInput[l][i + indexX][j + indexY] = lossGradient[l][i][j];
 					}
+
+					//set only the lossInput of the "pixel" max pool kept
+					lossInput[cur_featureMap][x + indexX][y + indexY] = lossGradient[cur_featureMap][x][y];
 				}
 			}
 		}

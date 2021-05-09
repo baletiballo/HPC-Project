@@ -369,13 +369,13 @@ int main()
 			y_batch[j] = y[j + randIndex];
 		}
 
-		float loss = 0;
+		float loss = 0; //Welche Einheit hat der loss? In der Ausgabe entsprechend angeben
 		int correct = 0;
 
 		//TODO train
 		
 		if ((i + 1) % 100 == 0) 
-			cout << "Step " << i + 1 << " Average Loss " << loss / 100 << " Accuracy " << correct << "\n";
+			cout << "Step " << i + 1 << " Average Loss " << loss  << " Accuracy " << correct << "\n";
 	}
 
 	return 0;

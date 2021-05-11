@@ -374,7 +374,7 @@ int main()
 			for (unsigned j = 0; j < batchSize; j++)
 			{
 				for (int k = 0; k < 784; k++)
-					x_batch[k / imageSize][k % imageSize][j] = x[j + randIndex][k];
+					x_batch[j][k / imageSize][k % imageSize] = x[j + randIndex][k];
 
 				y_batch[j] = y[j + randIndex];
 			}

@@ -13,12 +13,6 @@
 #include <random>
 
 using namespace std;
-float x[42000][784];
-float y[42000];
-
-const int batchSize = 10;
-float x_batch[batchSize][28][28];
-float y_batch[batchSize];
 
 class Conv3x3
 {
@@ -57,27 +51,25 @@ public:
 	vector<vector<vector<float>>> forward(vector<vector<vector<float>>> input)
 	{
 		vector<vector<vector<float>>> output(size1 * num_filters, vector<vector<float>>(size2 - 2, vector<float>(size3 - 2)));
-		for (int x = 0; x < size2 - 2; x++)
+		for (int i = 0; i < size2 - 2; i++)
 		{
 			//per region
-			for (int y = 0; y < size3 - 2; y++)
+			for (int j = 0; j < size3 - 2; j++)
 			{
 				// per region
-
 				for (int cur_filter = 0; cur_filter < num_filters; cur_filter++)
 				{
 					//per filter
 					for (int cur_featureMap = 0; cur_featureMap < size1; cur_featureMap++)
 					{
 						//per passed representation
-						output[cur_featureMap * num_filters + cur_filter][x][y] = 0;
-						output[cur_featureMap * num_filters + cur_filter][x][y] = biases[cur_filter];
+						output[cur_featureMap * num_filters + cur_filter][i][j] = biases[cur_filter];
 
-						//set output at x y for the input representation cur_featureMap when filter cur_filter is applied
+						//set output at i j for the input representation cur_featureMap when filter cur_filter is applied
 						//matrix multiplication and summation
 						for (int m = 0; m < 3; m++)
 							for (int n = 0; n < 3; n++)
-								output[cur_featureMap * num_filters + cur_filter][x][y] += input[cur_featureMap][x + m][y + n] * filters[m][n][cur_filter];
+								output[cur_featureMap * num_filters + cur_filter][i][j] += input[cur_featureMap][i + m][j + n] * filters[m][n][cur_filter];
 					}
 				}
 			}
@@ -93,10 +85,10 @@ public:
 		vector<float> filterBias(num_filters, 0.0);
 		vector<vector<vector<float>>> lossInput(size1, vector<vector<float>>(size2, vector<float>(size3, 0.0)));
 
-		for (int x = 0; x < size2 - 2; x++)
+		for (int i = 0; i < size2 - 2; i++)
 		{
 			//per region
-			for (int y = 0; y < size3 - 2; y++)
+			for (int j = 0; j < size3 - 2; j++)
 			{
 				// per region
 				for (int cur_filter = 0; cur_filter < num_filters; cur_filter++)
@@ -110,12 +102,12 @@ public:
 						{
 							for (int n = 0; n < 3; n++)
 							{
-								filterGradient[m][n][cur_filter] += lossGradient[cur_featureMap * num_filters + cur_filter][x][y] * last_input[cur_featureMap][x + m][y + n];
-								lossInput[cur_featureMap][x + m][y + n] += lossGradient[cur_featureMap * num_filters + cur_filter][x][y] * filters[m][n][cur_filter];
+								filterGradient[m][n][cur_filter] += lossGradient[cur_featureMap * num_filters + cur_filter][i][j] * last_input[cur_featureMap][i + m][j + n];
+								lossInput[cur_featureMap][i + m][j + n] += lossGradient[cur_featureMap * num_filters + cur_filter][i][j] * filters[m][n][cur_filter];
 							}
 						}
 
-						filterBias[cur_filter] += lossGradient[cur_featureMap * num_filters + cur_filter][x][y];
+						filterBias[cur_filter] += lossGradient[cur_featureMap * num_filters + cur_filter][i][j];
 					}
 				}
 			}
@@ -152,27 +144,25 @@ public:
 
 	vector<vector<vector<float>>> forward(vector<vector<vector<float>>> input)
 	{
-		vector<vector<vector<float>>> output(size1, vector<vector<float>>(((size2 - window) / stride) + 1,
-			vector<float>(((size3 - window) / stride) + 1)));
-		for (int x = 0; x < size2 - window; x += stride)
+		vector<vector<vector<float>>> output(size1, vector<vector<float>>((size2 - window) / stride + 1, vector<float>((size3 - window) / stride + 1)));
+		for (int i = 0; i < size2 - window; i += stride)
 		{
 			//per region
-			for (int y = 0; y < size3 - window; y += stride)
+			for (int j = 0; j < size3 - window; j += stride)
 			{
 				// per region
-
 				for (int cur_featureMap = 0; cur_featureMap < size1; cur_featureMap++)
 				{
 					//per passed representation
 					//matrix max pooling
-					float max = input[cur_featureMap][x][y];
+					float max = input[cur_featureMap][i][j];
 					for (int m = 0; m < window; m++)
 					{
 						for (int n = 0; n < window; n++)
-							if (max < input[cur_featureMap][x + m][y + n])
-								max = input[cur_featureMap][x + m][y + n];
+							if (max < input[cur_featureMap][i + m][j + n])
+								max = input[cur_featureMap][i + m][j + n];
 
-						output[cur_featureMap][x / stride][y / stride] = max;
+						output[cur_featureMap][i / stride][j / stride] = max;
 					}
 				}
 			}
@@ -186,26 +176,26 @@ public:
 	{
 		vector<vector<vector<float>>> lossInput(size1, vector<vector<float>>(size2, vector<float>(size3, 0.0)));
 
-		for (int x = 0; x < size2 - window; x += stride)
+		for (int i = 0; i < size2 - window; i += stride)
 		{
 			//per region
-			for (int y = 0; y < size3 - window; y += stride)
+			for (int j = 0; j < size3 - window; j += stride)
 			{
 				// per region
 				for (int cur_featureMap = 0; cur_featureMap < size1; cur_featureMap++)
 				{
 					//per passed representation
 					//matrix max pooling
-					float max = last_input[cur_featureMap][x][y];
+					float max = last_input[cur_featureMap][i][j];
 					int indexX = 0;
 					int indexY = 0;
 					for (int m = 0; m < window; m++)
 					{
 						for (int n = 0; n < window; n++)
 						{
-							if (max < last_input[cur_featureMap][x + m][y + n])
+							if (max < last_input[cur_featureMap][i + m][j + n])
 							{
-								max = last_input[cur_featureMap][x + m][y + n];
+								max = last_input[cur_featureMap][i + m][j + n];
 								indexX = m;
 								indexY = n;
 							}
@@ -213,7 +203,7 @@ public:
 					}
 
 					//set only the lossInput of the "pixel" max pool kept
-					lossInput[cur_featureMap][x + indexX][y + indexY] = lossGradient[cur_featureMap][x][y];
+					lossInput[cur_featureMap][i + indexX][j + indexY] = lossGradient[cur_featureMap][i][j];
 				}
 			}
 		}
@@ -311,72 +301,105 @@ public:
 
 		const auto dLdt = new float[num_weights];
 		for (int i = 0; i < num_weights; i++)
+		{
 			dLdt[i] = gradient * doutdt[i];
-
-		for (int i = 0; i < num_featureMaps * size2 * size3; i++)
-			for (int j = 0; j < num_weights; j++)
-				lossInput[i / (size2 * size3)][i / size3 % size2][i % size3] += weights[i][j] * dLdt[j];
-
-		for (int i = 0; i < num_featureMaps * size2 * size3; i++)
-			for (int j = 0; j < num_weights; j++)
-				weights[i][j] -= learn_rate * last_inputVector[i] * dLdt[j];
-
-		for (int i = 0; i < num_weights; i++)
 			biases[i] -= learn_rate * dLdt[i];
-
+		}
+			
+		for (int i = 0; i < num_featureMaps * size2 * size3; i++)
+		{
+			for (int j = 0; j < num_weights; j++)
+			{
+				lossInput[i / (size2 * size3)][i / size3 % size2][i % size3] += weights[i][j] * dLdt[j];
+				weights[i][j] -= learn_rate * last_inputVector[i] * dLdt[j];
+			}
+		}
+		
 		delete[] dLdt;
 		return lossInput;
 	}
 };
 
-int main()
+int main() 
 {
-	string line_v[785];
-
-	ifstream myFile("train.txt");
-	if (myFile.is_open())
+	try
 	{
-		int lineNum = 0;
-		string line;
-		while (getline(myFile, line))
+		float x[42000][784];
+		int y[42000];
+
+		string line_v[785];
+
+		ifstream myFile("train.txt");
+		if (myFile.is_open())
 		{
-			istringstream ss(line);
-			string token;
-			int i = 0;
-			while (getline(ss, token, '\t'))
+			int lineNum = 0;
+			string line;
+			while (getline(myFile, line))
 			{
-				float digit = strtof(token.c_str(), nullptr);
-				if (i == 0)
-					y[lineNum] = digit;
-				else
-					x[lineNum][i - 1] = digit / 255;
+				istringstream ss(line);
+				string token;
+				int i = 0;
+				while (getline(ss, token, '\t'))
+				{
+					int digit = stoi(token, nullptr);
+					if (i == 0)
+						y[lineNum] = digit;
+					else
+						x[lineNum][i - 1] = static_cast<float>(digit) / static_cast<float>(255);
 
-				i++;
+					i++;
+				}
+				lineNum++;
 			}
-			lineNum++;
+			myFile.close();
 		}
-		myFile.close();
-	}
 
-	for (int i = 0; i < 1000; i++) //TODO only 100?
-	{
-		int randIndex = rand() % (42000 - batchSize);
-		for (unsigned j = 0; j < batchSize; j++)
+		const int batchSize = 10;
+		const int imageSize = 28;
+		const int convLayers = 8;
+		const int poolDimensions = 2;
+
+		vector<vector<vector<float>>> x_batch(batchSize, vector<vector<float>>(imageSize, vector<float>(imageSize)));
+		vector<int> y_batch(batchSize);
+
+		Conv3x3 conv(convLayers, batchSize, imageSize, imageSize);
+		MaxPool2 pool(poolDimensions, poolDimensions, convLayers * batchSize, imageSize - 2, imageSize - 2);
+		FullyConnectedLayer conn(batchSize, (imageSize - 2) / 2, (imageSize - 2) / 2);
+
+		const float learnRate = 0.01f / batchSize;
+
+		for (int i = 0; i < 100; i++) //TODO only 100?
 		{
-			for (int k = 0; k < 784; k++)
-				x_batch[k / 28][k % 28][j] = x[j + randIndex][k];
-			
-			y_batch[j] = y[j + randIndex];
+			int randIndex = rand() % (42000 - batchSize);
+			for (unsigned j = 0; j < batchSize; j++)
+			{
+				for (int k = 0; k < 784; k++)
+					x_batch[k / imageSize][k % imageSize][j] = x[j + randIndex][k];
+
+				y_batch[j] = y[j + randIndex];
+			}
+
+			vector<vector<vector<float>>> help = conv.forward(x_batch);
+			help = pool.forward(help);
+			vector<float> res = conn.forward(help);
+
+			help = conn.backprop(res, learnRate); //TODO change res?
+			help = pool.backprop(help, learnRate);
+			conv.backprop(help, learnRate);
+
+			float loss = 0; //Welche Einheit hat der loss? In der Ausgabe entsprechend angeben
+			int correct = 0;
+
+			//TODO calculate loss and correct guesses
+
+			if ((i + 1) % 100 == 0)
+				cout << "Step " << i + 1 << " Average Loss " << loss << " Accuracy " << correct << "\n";
 		}
 
-		float loss = 0; //Welche Einheit hat der loss? In der Ausgabe entsprechend angeben
-		int correct = 0;
-
-		//TODO train
-		
-		if ((i + 1) % 100 == 0) 
-			cout << "Step " << i + 1 << " Average Loss " << loss  << " Accuracy " << correct << "\n";
+		return 0;
 	}
-
-	return 0;
+	catch(const exception&)
+	{
+		return -1;
+	}
 }

@@ -1,2 +1,3 @@
 Dimensionenreihenfolge des Filter-Arrays (um Cachemiss zu vermeiden). Fällt evtl mit exa-Stencil weg
 Flachklopfen der convolutional Layer output zu fully connected input sparen
+MaxPool gesetzte Pixel für backprop merken

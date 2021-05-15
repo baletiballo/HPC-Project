@@ -14,29 +14,30 @@
 
 using namespace std;
 
-class Conv3x3
+class Conv5x5
 {
 public:
 	int num_filters;
 	int size1, size2, size3;
+	const int conv_size = 5;
 	vector<vector<vector<float>>> filters;
 	vector<float> biases;
 
 	vector<vector<vector<float>>> last_input;
 
-	Conv3x3(int n, int s1, int s2, int s3)
+	Conv5x5(int n, int s1, int s2, int s3)
 	{
 		num_filters = n;
 		size1 = s1;
 		size2 = s2;
 		size3 = s3;
-		filters.resize(3, vector<vector<float>>(3, vector<float>(num_filters)));
+		filters.resize(conv_size, vector<vector<float>>(conv_size, vector<float>(num_filters)));
 		biases.resize(num_filters, 0.0);
 
 		normal_distribution<float> distribution(0.0, 1.0);
-		for (int i = 0; i < 3; i++)
+		for (int i = 0; i < conv_size; i++)
 		{
-			for (int j = 0; j < 3; j++)
+			for (int j = 0; j < conv_size; j++)
 			{
 				for (int cur_filter = 0; cur_filter < num_filters; cur_filter++)
 				{
@@ -50,7 +51,7 @@ public:
 
 	vector<vector<vector<float>>> forward(vector<vector<vector<float>>> input)
 	{
-		vector<vector<vector<float>>> output(size1 * num_filters, vector<vector<float>>(size2 - 2, vector<float>(size3 - 2)));
+		vector<vector<vector<float>>> output(size1 * num_filters, vector<vector<float>>(size2 - (conv_size-1), vector<float>(size3 - (conv_size-1))));
 		for (int i = 0; i < size2 - 2; i++)
 		{
 			//per region
@@ -67,8 +68,8 @@ public:
 
 						//set output at i j for the input representation cur_featureMap when filter cur_filter is applied
 						//matrix multiplication and summation
-						for (int m = 0; m < 3; m++)
-							for (int n = 0; n < 3; n++)
+						for (int m = 0; m < conv_size; m++)
+							for (int n = 0; n < conv_size; n++)
 								output[cur_featureMap * num_filters + cur_filter][i][j] += input[cur_featureMap][i + m][j + n] * filters[m][n][cur_filter];
 					}
 				}
@@ -125,7 +126,7 @@ public:
 	}
 };
 
-class MaxPool2
+class MaxPool
 {
 public:
 	int size1, size2, size3;
@@ -133,7 +134,7 @@ public:
 
 	vector<vector<vector<float>>> last_input;
 
-	MaxPool2(int w, int s, int s1, int s2, int s3)
+	MaxPool(int w, int s, int s1, int s2, int s3)
 	{
 		window = w;
 		stride = s;
@@ -362,8 +363,8 @@ int main()
 		vector<vector<vector<float>>> x_batch(batchSize, vector<vector<float>>(imageSize, vector<float>(imageSize)));
 		vector<int> y_batch(batchSize);
 
-		Conv3x3 conv(convLayers, batchSize, imageSize, imageSize);
-		MaxPool2 pool(poolDimensions, poolDimensions, convLayers * batchSize, imageSize - 2, imageSize - 2);
+		Conv5x5 conv(convLayers, batchSize, imageSize, imageSize);
+		MaxPool pool(poolDimensions, poolDimensions, convLayers * batchSize, imageSize - 2, imageSize - 2);
 		FullyConnectedLayer conn(batchSize, (imageSize - 2) / 2, (imageSize - 2) / 2);
 
 		const float learnRate = 0.01f / batchSize;

@@ -324,12 +324,12 @@ int main() {
 		MaxPool pool(poolDimensions, poolDimensions, convLayers * batchSize, imageSize - 2, imageSize - 2);
 		FullyConnectedLayer conn(batchSize, (imageSize - 2) / 2, (imageSize - 2) / 2);
 
-		const float learnRate = 0.001f;
-		const float firstMomentum = 0.9f;
-		const float secondMomentum = 0.999f;
+		//const float firstMomentum = 0.9f;
+		//const float secondMomentum = 0.999f;
 
 		for (int i = 0; i < 100; i++) //TODO only 100?
-				{
+		{
+			const float learnRate = 0.001f;
 			int randIndex = rand() % (42000 - batchSize);
 			for (unsigned j = 0; j < batchSize; j++) {
 				for (int k = 0; k < 784; k++)
@@ -338,14 +338,14 @@ int main() {
 				y_batch[j] = y[j + randIndex];
 			}
 
-			vector < vector<vector<float>> > help = conv.forward(x_batch);
+			vector<vector<vector<float>> > help = conv.forward(x_batch);
 			help = pool.forward(help);
 			vector<float> res = conn.forward(help);
-			for (int j = 0; j < num_weights; j++) {
-				if (j == y_batch[i]) {
-					res -= 1;
-				}
-			}
+			for (int j = 0; j < FullyConnectedLayer::num_weights; j++)
+				if (j == y_batch[i])
+					res[j] -= 1 / res[j];
+				else
+					res[j] = 0;
 
 			help = conn.backprop(res, learnRate); //TODO change res?
 			help = pool.backprop(help, learnRate);

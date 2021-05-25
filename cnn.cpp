@@ -2,7 +2,7 @@
  * cnn.cpp
  *
  *  Created on: 03.05.2021
- *      Author: Stefan, Hannah
+ *      Author: Stefan, Hannah, Silas
  */
 
 #include <vector>
@@ -367,7 +367,9 @@ int main()
 		MaxPool pool(poolDimensions, poolDimensions, convLayers * batchSize, imageSize - 2, imageSize - 2);
 		FullyConnectedLayer conn(batchSize, (imageSize - 2) / 2, (imageSize - 2) / 2);
 
-		const float learnRate = 0.01f / batchSize;
+		const float learnRate = 0.001f;
+		const float firstMomentum = 0.9f;
+		const float secondMomentum = 0.999f;
 
 		for (int i = 0; i < 100; i++) //TODO only 100?
 		{

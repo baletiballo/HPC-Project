@@ -11,6 +11,7 @@
 #include <sstream>
 #include <string>
 #include <random>
+#include <float.h>
 
 using namespace std;
 
@@ -343,7 +344,7 @@ int main() {
 			vector<float> res = conn.forward(help);
 			for (int j = 0; j < FullyConnectedLayer::num_weights; j++)
 				if (j == y_batch[i])
-					res[j] -= 1 / res[j];
+					res[j] =- 1 / res[j];
 				else
 					res[j] = 0;
 

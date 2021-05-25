@@ -411,3 +411,16 @@ int main()
 		return -1;
 	}
 }
+
+
+int adamGD(int batch, int n_c, int params, int cost) //TODO Die Datentypen der Eingangsparameter und der Rückgabe passen noch nicht
+{
+	const int num_classes = 10; //Anzahl der Klassifikationsklassen (Hier 0 bis 9)
+	const float lr = 0.01;		//Lernrate
+	const float beta1 = 0.95;	//Erstes Moment
+	const float beta2 = 0.99;	//Zweites Moment
+	const int img_dim = 28;		//Größe der Bilder: 28x28 Pixel	
+	
+	//TODO Bisher nur ein Methodenstumpf
+	return 0;
+}

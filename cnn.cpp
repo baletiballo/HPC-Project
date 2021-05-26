@@ -73,21 +73,21 @@ public:
 	}
 
 	vector<vector<vector<float>>> backprop(vector<vector<vector<float>>> &lossGradient, float learn_rate) {
-		vector<vector<vector<float>>> filterGradient(3, vector<vector<float>>(3, vector<float>(num_filters, 0.0)));
+		vector<vector<vector<float>>> filterGradient(conv_size, vector<vector<float>>(conv_size, vector<float>(num_filters, 0.0)));
 		vector<float> filterBias(num_filters, 0.0);
 		vector<vector<vector<float>>> lossInput(size1, vector<vector<float>>(size2, vector<float>(size3, 0.0)));
 
-		for (int i = 0; i < size2 - 2; i++) {
+		for (int i = 0; i < size2 - (conv_size-1); i++) {
 			//per region
-			for (int j = 0; j < size3 - 2; j++) {
+			for (int j = 0; j < size3 - (conv_size-1); j++) {
 				// per region
 				for (int cur_filter = 0; cur_filter < num_filters; cur_filter++) {
 					//per filter
 					for (int cur_featureMap = 0; cur_featureMap < size1; cur_featureMap++) {
 						//per passed representation
 						//matrix multiplication and summation
-						for (int m = 0; m < 3; m++) {
-							for (int n = 0; n < 3; n++) {
+						for (int m = 0; m < conv_size; m++) {
+							for (int n = 0; n < conv_size; n++) {
 								filterGradient[m][n][cur_filter] += lossGradient[cur_featureMap * num_filters + cur_filter][i][j]
 										* last_input[cur_featureMap][i + m][j + n];
 								lossInput[cur_featureMap][i + m][j + n] += lossGradient[cur_featureMap * num_filters + cur_filter][i][j]
@@ -104,8 +104,8 @@ public:
 		for (int i = 0; i < num_filters; i++)
 			biases[i] -= learn_rate * filterBias[i];
 
-		for (int i = 0; i < 3; i++)
-			for (int j = 0; j < 3; j++)
+		for (int i = 0; i < conv_size; i++)
+			for (int j = 0; j < conv_size; j++)
 				for (int k = 0; k < num_filters; k++)
 					filters[i][j][k] -= learn_rate * filterGradient[i][j][k];
 
@@ -236,7 +236,7 @@ public:
 		last_inputVector = inputVector;
 
 		//activation function
-		float total = 0.001;
+		float total = 0.0;
 		for (int i = 0; i < num_weights; i++) {
 			output[i] = exp(output[i]);
 			last_totals[i] = output[i];
@@ -245,12 +245,9 @@ public:
 		last_sum = total;
 
 		//normalize
-		//cout <<"out";
 		for (int i = 0; i < num_weights; i++) {
 			output[i] = output[i] / total;
-			//cout << output[i] << " ";
 		}
-		//cout << "\n";
 		return output;
 	}
 
@@ -259,9 +256,8 @@ public:
 
 		int index = -1;
 		for (int i = 0; i < num_weights; i++) {
-			if (lossGradient[i] !=0) //TODO maybe change value if not a good fit
+			if (lossGradient[i] !=0)
 				index = i;
-			//cout << lossGradient[i] << "\n";
 		}
 
 		const float gradient = lossGradient[index];
@@ -276,7 +272,6 @@ public:
 		for (int i = 0; i < num_weights; i++) {
 			dLdt[i] = gradient * dOutDt[i];
 			biases[i] -= learn_rate * dLdt[i];
-			//cout << biases[i] << " dldt" << dLdt[i] << " ";
 		}
 
 		for (int i = 0; i < num_featureMaps * size2 * size3; i++) {
@@ -291,19 +286,67 @@ public:
 	}
 };
 
+class CNN {
+public:
+	static const int sizeX=28;
+	static const int sizeY=28;
+	static const int num_conv_layers=1;
+	const int conv_layers_num_filters[num_conv_layers]={8};
+	const int pool_layers_window[num_conv_layers]={2};
+	const int pool_layers_stride[num_conv_layers]={2};
+
+	vector<Conv5x5> conv_layers;
+	vector<MaxPool> pooling_layers;
+	FullyConnectedLayer *connected_layer;
+
+	CNN() {
+		int currX=sizeX;
+		int currY=sizeY;
+		int images=1;
+		for(unsigned i=0;i<num_conv_layers;i++) {
+			conv_layers.push_back(Conv5x5(conv_layers_num_filters[i],images,currX,currY));
+			currX-=4;
+			currY-=4;
+			images*=conv_layers_num_filters[i];
+			pooling_layers.push_back(MaxPool(pool_layers_window[i], pool_layers_stride[i], images, currX, currY));
+			currX=(currX - pool_layers_window[i]) / pool_layers_stride[i] + 1;
+			currY=(currY - pool_layers_window[i]) / pool_layers_stride[i] + 1;
+		}
+		connected_layer=new FullyConnectedLayer(images, currX, currY);
+	}
+
+	vector<float> forward(vector<vector<vector<float>> > &image) {
+		vector<vector<vector<float>> > help=conv_layers[0].forward(image);
+		help=pooling_layers[0].forward(help);
+		for(int i=1;i<num_conv_layers;i++) {
+			help=conv_layers[i].forward(help);
+			help=pooling_layers[i].forward(help);
+		}
+		return (*connected_layer).forward(help);
+	}
+
+	void backprop(vector<float> &res, float lr) {
+		vector<vector<vector<float>> > help= (*connected_layer).backprop(res, lr);
+		for(int i=num_conv_layers-1;i>-1;i--) {
+			help = pooling_layers[i].backprop(help);
+			help = conv_layers[i].backprop(help, lr);
+		}
+	}
+};
+
 int main() {
 	try {
 		vector<vector<float>> x(42000, vector<float>(784));
 		vector<int> y(42000);
 		//auto line_v = new vector<string>(785);
 
-		cout << 1 << "\n";
+		//cout << 1 << "\n";
 
 		ifstream myFile("train.txt");
 		if (myFile.is_open()) {
 			int lineNum = 0;
 			string line;
-			while (getline(myFile, line)) //TODO Remove lineNum < 1000
+			while (getline(myFile, line))
 			{
 				istringstream ss(line);
 				string token;
@@ -323,9 +366,9 @@ int main() {
 			myFile.close();
 		}
 
-		cout << 2 << "\n";
+		//cout << 2 << "\n";
 
-		const int batchSize = 10;
+		const int batchSize = 1000;
 		const int imageSize = 28;
 		const int filters = 8;
 		const int poolDimensions = 2;
@@ -333,17 +376,17 @@ int main() {
 		vector<vector<vector<float>>> x_batch(batchSize, vector<vector<float>>(imageSize, vector<float>(imageSize)));
 		vector<int> y_batch(batchSize);
 
-		Conv5x5 conv(filters, 1, imageSize, imageSize);
+		/*Conv5x5 conv(filters, 1, imageSize, imageSize);
 		MaxPool pool(poolDimensions, poolDimensions, filters, imageSize - 2, imageSize - 2);
-		FullyConnectedLayer conn(filters, (imageSize - 2) / 2, (imageSize - 2) / 2);
-
+		FullyConnectedLayer conn(filters, (imageSize - 2) / 2, (imageSize - 2) / 2);*/
+		CNN cnn;
 		//const float firstMomentum = 0.9f;
 		//const float secondMomentum = 0.999f;
 
-		cout << 3 << "\n";
+		//cout << 3 << "\n";
 
 		for (int i = 0; i < 100; i++) {
-			const float learnRate = 0.001f;
+			const float learnRate = 0.001;
 			int randIndex = rand() % (42000 - batchSize);
 			for (unsigned j = 0; j < batchSize; j++) {
 				for (int k = 0; k < 784; k++)
@@ -358,9 +401,7 @@ int main() {
 			for (unsigned j = 0; j < batchSize; j++) {
 				vector<vector<vector<float>> > xhelp(1, vector<vector<float>>(imageSize, vector<float>(imageSize)));
 				xhelp[0] = x_batch[j];
-				vector<vector<vector<float>> > help = conv.forward(xhelp);
-				help = pool.forward(help);
-				vector<float> res = conn.forward(help);
+				vector<float> res = cnn.forward(xhelp);
 
 				//cout << res[y_batch[j]] << "\n";
 				loss += -log(res[y_batch[j]]);
@@ -379,13 +420,11 @@ int main() {
 
 				for (int k = 0; k < FullyConnectedLayer::num_weights; k++)
 					if (k == y_batch[j])
-						res[k] = -1 / (res[k] + 0.001);
+						res[k] = -1 / res[k];
 					else
 						res[k] = 0;
 
-				help = conn.backprop(res, learnRate);
-				help = pool.backprop(help); //TODO ERROR: conn.backprop return vector with size batchSize, pool.backprop needs vector with size batchSize * convLayers
-				conv.backprop(help, learnRate);
+				cnn.backprop(res,learnRate);
 			}
 
 			cout << "Step " << i + 1 << " Average Loss " << loss / batchSize << " Accuracy " << correct / batchSize << "\n";
@@ -406,5 +445,21 @@ int adamGD(int batch, int n_c, int params, int cost) //TODO Die Datentypen der E
 	const int img_dim = 28;		//Größe der Bilder: 28x28 Pixel	
 
 	//TODO Bisher nur ein Methodenstumpf
+	return 0;
+}
+
+/*vector<float> forward(vector<vector<vector<float>> > &image) {
+	vector<vector<vector<float>> > help = conv.forward(xhelp);
+	help = pool.forward(help);
+	vector<float> res = conn.forward(help);
+}*/
+
+int adam(vector<vector<vector<float>>> &x_batch, vector<int> &y_batch) {
+	const float lr = 0.01;		//Lernrate
+	const float beta1 = 0.95;	//Erstes Moment
+	const float beta2 = 0.99;	//Zweites Moment
+
+
+
 	return 0;
 }

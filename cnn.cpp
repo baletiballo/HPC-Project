@@ -12,6 +12,8 @@
 #include <string>
 #include <random>
 #include <float.h>
+#include <chrono>
+#include <ctime> 
 
 using namespace std;
 
@@ -385,7 +387,11 @@ int main() {
 
 		//cout << 3 << "\n";
 
-		for (int i = 0; i < 100; i++) {
+
+		auto totalStart = chrono::system_clock::now(); // Interner Timer um die Laufzeit zu messen
+
+		const int num_steps = 300;
+		for (int i = 0; i < num_steps; i++) {
 			const float learnRate = 0.001;
 			int randIndex = rand() % (42000 - batchSize);
 			for (unsigned j = 0; j < batchSize; j++) {
@@ -430,6 +436,10 @@ int main() {
 			cout << "Step " << i + 1 << " Average Loss " << loss / batchSize << " Accuracy " << correct / batchSize << "\n";
 		}
 
+		auto totalEnd = chrono::system_clock::now();
+		chrono::duration<double> totalTime = totalEnd-totalStart;
+		cout << "Total time: " << (int)(totalTime.count()/60) << " minutes " << (int)(totalTime.count()) % 60 << " seconds\n";
+		//cout << "Average batch time: " << (totalTime.count()/ num_steps) << "\n";
 		return 0;
 	} catch (const exception&) {
 		return -1;

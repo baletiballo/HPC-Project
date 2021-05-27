@@ -292,13 +292,13 @@ class CNN {
 public:
 	static const int sizeX=28;
 	static const int sizeY=28;
-	static const int num_conv_layers=1;
-	const int conv_layers_num_filters[num_conv_layers]={8};
-	const int pool_layers_window[num_conv_layers]={2};
-	const int pool_layers_stride[num_conv_layers]={2};
+	static const int num_conv_layers=2;
+	const int conv_layers_num_filters[num_conv_layers]={8,8};
+	const int pool_layers_window=2;
+	const int pool_layers_stride=2;
 
 	vector<Conv5x5> conv_layers;
-	vector<MaxPool> pooling_layers;
+	MaxPool *pooling_layer;
 	FullyConnectedLayer *connected_layer;
 
 	CNN() {
@@ -310,27 +310,26 @@ public:
 			currX-=4;
 			currY-=4;
 			images*=conv_layers_num_filters[i];
-			pooling_layers.push_back(MaxPool(pool_layers_window[i], pool_layers_stride[i], images, currX, currY));
-			currX=(currX - pool_layers_window[i]) / pool_layers_stride[i] + 1;
-			currY=(currY - pool_layers_window[i]) / pool_layers_stride[i] + 1;
 		}
+		pooling_layer = new MaxPool(pool_layers_window, pool_layers_stride, images, currX, currY);
+		currX=(currX - pool_layers_window) / pool_layers_stride + 1;
+		currY=(currY - pool_layers_window) / pool_layers_stride + 1;
 		connected_layer=new FullyConnectedLayer(images, currX, currY);
 	}
 
 	vector<float> forward(vector<vector<vector<float>> > &image) {
-		vector<vector<vector<float>> > help=conv_layers[0].forward(image);
-		help=pooling_layers[0].forward(help);
-		for(int i=1;i<num_conv_layers;i++) {
+		vector<vector<vector<float>> > help = image;
+		for(int i=0;i<num_conv_layers;i++) {
 			help=conv_layers[i].forward(help);
-			help=pooling_layers[i].forward(help);
 		}
+		help = (*pooling_layer).forward(help);
 		return (*connected_layer).forward(help);
 	}
 
 	void backprop(vector<float> &res, float lr) {
-		vector<vector<vector<float>> > help= (*connected_layer).backprop(res, lr);
-		for(int i=num_conv_layers-1;i>-1;i--) {
-			help = pooling_layers[i].backprop(help);
+		vector<vector<vector<float>> > help = (*connected_layer).backprop(res, lr);
+		help = (*pooling_layer).backprop(help);
+		for(int i=num_conv_layers-1;i>-1;i--) {	
 			help = conv_layers[i].backprop(help, lr);
 		}
 	}
@@ -366,11 +365,12 @@ int main() {
 				lineNum++;
 			}
 			myFile.close();
+			cout << "Images ready, training starts now.\n";
 		}
 
 		//cout << 2 << "\n";
 
-		const int batchSize = 1000;
+		const int batchSize = 1;
 		const int imageSize = 28;
 		const int filters = 8;
 		const int poolDimensions = 2;
@@ -390,7 +390,7 @@ int main() {
 
 		auto totalStart = chrono::system_clock::now(); // Interner Timer um die Laufzeit zu messen
 
-		const int num_steps = 300;
+		const int num_steps = 20;
 		for (int i = 0; i < num_steps; i++) {
 			const float learnRate = 0.001;
 			int randIndex = rand() % (42000 - batchSize);
@@ -442,6 +442,7 @@ int main() {
 		//cout << "Average batch time: " << (totalTime.count()/ num_steps) << "\n";
 		return 0;
 	} catch (const exception&) {
+		cout << "something broke";
 		return -1;
 	}
 }

@@ -292,10 +292,10 @@ class CNN {
 public:
 	static const int sizeX=28;
 	static const int sizeY=28;
-	static const int num_conv_layers=1;
-	const int conv_layers_num_filters[num_conv_layers]={8};
-	const int pool_layers_window[num_conv_layers]={2};
-	const int pool_layers_stride[num_conv_layers]={2};
+	static const int num_conv_layers=2;
+	const int conv_layers_num_filters[num_conv_layers]={8, 8};
+	const int pool_layers_window[num_conv_layers]={2, 2};
+	const int pool_layers_stride[num_conv_layers]={2, 2};
 
 	vector<Conv5x5> conv_layers;
 	vector<MaxPool> pooling_layers;
@@ -372,8 +372,6 @@ int main() {
 
 		const int batchSize = 1000;
 		const int imageSize = 28;
-		const int filters = 8;
-		const int poolDimensions = 2;
 
 		vector<vector<vector<float>>> x_batch(batchSize, vector<vector<float>>(imageSize, vector<float>(imageSize)));
 		vector<int> y_batch(batchSize);
@@ -446,7 +444,7 @@ int main() {
 	}
 }
 
-int adamGD(int batch, int n_c, int params, int cost) //TODO Die Datentypen der Eingangsparameter und der Rückgabe passen noch nicht
+/*int adamGD(int batch, int n_c, int params, int cost) //TODO Die Datentypen der Eingangsparameter und der Rückgabe passen noch nicht
 		{
 	const int num_classes = 10; //Anzahl der Klassifikationsklassen (Hier 0 bis 9)
 	const float lr = 0.01;		//Lernrate
@@ -458,11 +456,11 @@ int adamGD(int batch, int n_c, int params, int cost) //TODO Die Datentypen der E
 	return 0;
 }
 
-/*vector<float> forward(vector<vector<vector<float>> > &image) {
+vector<float> forward(vector<vector<vector<float>> > &image) {
 	vector<vector<vector<float>> > help = conv.forward(xhelp);
 	help = pool.forward(help);
 	vector<float> res = conn.forward(help);
-}*/
+}
 
 int adam(vector<vector<vector<float>>> &x_batch, vector<int> &y_batch) {
 	const float lr = 0.01;		//Lernrate
@@ -472,4 +470,4 @@ int adam(vector<vector<vector<float>>> &x_batch, vector<int> &y_batch) {
 
 
 	return 0;
-}
+}*/

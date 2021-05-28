@@ -292,10 +292,10 @@ class CNN {
 public:
 	static const int sizeX=28;
 	static const int sizeY=28;
-	static const int num_conv_layers=1;
-	const int conv_layers_num_filters[num_conv_layers]={8};
-	const int pool_layers_window[num_conv_layers]={2};
-	const int pool_layers_stride[num_conv_layers]={2};
+	static const int num_conv_layers=2;
+	const int conv_layers_num_filters[num_conv_layers]={8,8};
+	const int pool_layers_window[num_conv_layers]={2,2};
+	const int pool_layers_stride[num_conv_layers]={2,2};
 
 	vector<Conv5x5> conv_layers;
 	vector<MaxPool> pooling_layers;
@@ -338,12 +338,13 @@ public:
 
 int main() {
 	try {
-		vector<vector<float>> x(42000, vector<float>(784));
-		vector<int> y(42000);
+		vector<vector<float>> training_images(42000, vector<float>(784));
+		vector<int> correct_lables(42000);
 		//auto line_v = new vector<string>(785);
 
 		//cout << 1 << "\n";
 
+		/* Einlesen der Trainingsdaten*/
 		ifstream myFile("train.txt");
 		if (myFile.is_open()) {
 			int lineNum = 0;
@@ -355,10 +356,10 @@ int main() {
 				int i = 0;
 				while (getline(ss, token, '\t')) {
 					int digit = stoi(token, nullptr);
-					if (i == 0)
-						y[lineNum] = digit;
-					else
-						x[lineNum][i - 1] = static_cast<float>(digit) / static_cast<float>(255);
+					if (i == 0)			//erste Zahl jeder Zeile ist das lable
+						correct_lables[lineNum] = digit;
+					else				//der Rest das Graustufenbild
+						training_images[lineNum][i - 1] = static_cast<float>(digit) / static_cast<float>(255);
 
 					i++;
 				}
@@ -370,53 +371,53 @@ int main() {
 
 		//cout << 2 << "\n";
 
+		/*Vorbereiten des Netzwerks für das Training*/
 		const int batchSize = 1000;
 		const int imageSize = 28;
-		const int filters = 8;
-		const int poolDimensions = 2;
+		const int num_steps = 100;
+		const float learnRate = 0.001;
 
-		vector<vector<vector<float>>> x_batch(batchSize, vector<vector<float>>(imageSize, vector<float>(imageSize)));
-		vector<int> y_batch(batchSize);
+		vector<vector<vector<float>>> batch_images(batchSize, vector<vector<float>>(imageSize, vector<float>(imageSize)));
+		vector<int> batch_lables(batchSize);
 
 		/*Conv5x5 conv(filters, 1, imageSize, imageSize);
 		MaxPool pool(poolDimensions, poolDimensions, filters, imageSize - 2, imageSize - 2);
 		FullyConnectedLayer conn(filters, (imageSize - 2) / 2, (imageSize - 2) / 2);*/
 		CNN cnn;
-		//const float firstMomentum = 0.9f;
-		//const float secondMomentum = 0.999f;
 
 		//cout << 3 << "\n";
 
 
 		auto totalStart = chrono::system_clock::now(); // Interner Timer um die Laufzeit zu messen
-
-		const int num_steps = 300;
 		for (int i = 0; i < num_steps; i++) {
-			const float learnRate = 0.001;
-			int randIndex = rand() % (42000 - batchSize);
-			for (unsigned j = 0; j < batchSize; j++) {
-				for (int k = 0; k < 784; k++)
-					x_batch[j][k / imageSize][k % imageSize] = x[j + randIndex][k];
 
-				y_batch[j] = y[j + randIndex];
+			/* Vorberiten des Trainingsbatches */
+			int randIndex = rand() % (42000 - batchSize);
+			for (unsigned j = 0; j < batchSize; j++) { //erstelle einen zufälligen Batch für das Training
+				for (int k = 0; k < 784; k++)//Reformatierung des flachen Vektors in Zeilen und Spalten
+					batch_images[j][k / imageSize][k % imageSize] = training_images[j + randIndex][k]; 
+
+				batch_lables[j] = correct_lables[j + randIndex];
 			}
 
-			float loss = 0; //Welche Einheit hat der loss? In der Ausgabe entsprechend angeben
+			float loss = 0; 
 			float correct = 0;
 
-			for (unsigned j = 0; j < batchSize; j++) {
-				vector<vector<vector<float>> > xhelp(1, vector<vector<float>>(imageSize, vector<float>(imageSize)));
-				xhelp[0] = x_batch[j];
-				vector<float> res = cnn.forward(xhelp);
+			/* Tatsächliches Training */
+			for (unsigned step = 0; step < batchSize; step++) {
+				vector<vector<vector<float>> > image(1, vector<vector<float>>(imageSize, vector<float>(imageSize))); //Die Conv Layer generieren zusätzliche Bilder, daher ein dreifach-Vektor
+				image[0] = batch_images[step];
+				vector<float> res = cnn.forward(image);
 
-				//cout << res[y_batch[j]] << "\n";
-				loss += -log(res[y_batch[j]]);
+				//cout << res[batch_lables[step]] << "\n";
+				loss += -log(res[batch_lables[step]]);
 
-				int argmax = 0;
+				/* Bestimme die Vorhersage des Netzwerks <=> Das Lable mit der höchsten Wahrscheinlichkeit */
+				int predicted = 0;
 				for (int k = 0; k < FullyConnectedLayer::num_weights; k++)
-					if (res[k] >= res[argmax])
-						argmax = k;
-				if (argmax == y_batch[j]) {
+					if (res[k] >= res[predicted])
+						predicted = k;
+				if (predicted == batch_lables[step]) {
 					correct += 1;
 					//cout << "Right" << "\n";
 				} else {
@@ -425,7 +426,7 @@ int main() {
 				}
 
 				for (int k = 0; k < FullyConnectedLayer::num_weights; k++)
-					if (k == y_batch[j])
+					if (k == batch_lables[step])
 						res[k] = -1 / res[k];
 					else
 						res[k] = 0;
@@ -433,13 +434,13 @@ int main() {
 				cnn.backprop(res,learnRate);
 			}
 
-			cout << "Step " << i + 1 << " Average Loss " << loss / batchSize << " Accuracy " << correct / batchSize << "\n";
+			cout << "Batch " << i + 1 << " Average Loss " << loss / batchSize << " Accuracy " << correct / batchSize << "\n";
 		}
 
 		auto totalEnd = chrono::system_clock::now();
 		chrono::duration<double> totalTime = totalEnd-totalStart;
 		cout << "Total time: " << (int)(totalTime.count()/60) << " minutes " << (int)(totalTime.count()) % 60 << " seconds\n";
-		//cout << "Average batch time: " << (totalTime.count()/ num_steps) << "\n";
+		cout << "Average batch time: " << (totalTime.count()/ num_steps) << "seconds\n";
 		return 0;
 	} catch (const exception&) {
 		return -1;
@@ -459,7 +460,7 @@ int adamGD(int batch, int n_c, int params, int cost) //TODO Die Datentypen der E
 }
 
 /*vector<float> forward(vector<vector<vector<float>> > &image) {
-	vector<vector<vector<float>> > help = conv.forward(xhelp);
+	vector<vector<vector<float>> > help = conv.forward(image);
 	help = pool.forward(help);
 	vector<float> res = conn.forward(help);
 }*/

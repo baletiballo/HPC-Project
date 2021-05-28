@@ -192,7 +192,7 @@ class FullyConnectedLayer {
 public:
 	int num_featureMaps; //Number of feature maps the convolutional Layers generate
 	int size2, size3; //Dimensions of the feature maps
-	static const int num_weights = 10; //Number of 
+	static const int num_weights = 10; //Anzahl der Ausgabeklassen
 	vector<vector<float>> weights;
 	vector<float> biases;
 
@@ -340,12 +340,77 @@ int main() {
 	try {
 		vector<vector<float>> training_images(42000, vector<float>(784));
 		vector<int> correct_lables(42000);
-		//auto line_v = new vector<string>(785);
-
-		//cout << 1 << "\n";
 
 		/* Einlesen der Trainingsdaten*/
-		ifstream myFile("train.txt");
+		read_trainingData("train.txt",training_images,correct_lables);
+
+		/*Vorbereiten des Netzwerks für das Training*/
+		const int batchSize = 1000;
+		const int imageSize = 28;
+		const int num_steps = 10;
+		const float learnRate = 0.001;
+
+		vector<vector<vector<float>>> batch_images(batchSize, vector<vector<float>>(imageSize, vector<float>(imageSize)));
+		vector<int> batch_lables(batchSize);
+		CNN cnn; //Das benutzte Netzwerk. Topologieänderungen bitte in der Klasse CNN
+		auto training_startTime = chrono::system_clock::now(); // Interner Timer um die Laufzeit zu messen
+
+		for (int i = 0; i < num_steps; i++) {
+
+			/* Vorberiten des Trainingsbatches */
+			int randIndex = rand() % (42000 - batchSize);
+			for (unsigned j = 0; j < batchSize; j++) { //erstelle einen zufälligen Batch für das Training
+				for (int k = 0; k < 784; k++)//Reformatierung des flachen Vektors in Zeilen und Spalten
+					batch_images[j][k / imageSize][k % imageSize] = training_images[j + randIndex][k]; 
+
+				batch_lables[j] = correct_lables[j + randIndex];
+			}
+
+			float loss = 0; 
+			float correct = 0;
+
+			/* Tatsächliches Training */
+			for (unsigned step = 0; step < batchSize; step++) {
+				vector<vector<vector<float>> > image(1, vector<vector<float>>(imageSize, vector<float>(imageSize))); //Die Conv Layer generieren zusätzliche Bilder, daher ein 3D-Vektor
+				image[0] = batch_images[step];
+				vector<float> res = cnn.forward(image);
+
+				loss += -log(res[batch_lables[step]]);
+
+				/* Bestimme die Vorhersage des Netzwerks <=> Das Lable mit der höchsten Wahrscheinlichkeit */
+				int predicted = 0;
+				for (int k = 0; k < FullyConnectedLayer::num_weights; k++)
+					if (res[k] >= res[predicted])
+						predicted = k;
+				if (predicted == batch_lables[step]) {
+					correct += 1;
+				} 
+
+				for (int k = 0; k < FullyConnectedLayer::num_weights; k++)
+					if (k == batch_lables[step])
+						res[k] = -1 / res[k];
+					else
+						res[k] = 0;
+
+				cnn.backprop(res,learnRate);
+			}
+
+			cout << "Batch " << i + 1 << " Average Loss " << loss / batchSize << " Accuracy " << correct / batchSize << "\n";
+		}
+
+		auto training_endTime = chrono::system_clock::now();
+		chrono::duration<double> totalTime = training_endTime-training_startTime;
+		cout << "Total time: " << (int)(totalTime.count()/60) << " minutes " << (int)(totalTime.count()) % 60 << " seconds\n";
+		cout << "Average batch time: " << (totalTime.count()/ num_steps) << "seconds\n";
+		return 0;
+	} catch (const exception&) {
+		return -1;
+	}
+}
+
+int read_trainingData(string filename, vector<vector<float>> training_images, vector<int> correct_lables)
+{
+	ifstream myFile(filename);
 		if (myFile.is_open()) {
 			int lineNum = 0;
 			string line;
@@ -369,82 +434,6 @@ int main() {
 			myFile.close();
 		}
 
-		//cout << 2 << "\n";
-
-		/*Vorbereiten des Netzwerks für das Training*/
-		const int batchSize = 1000;
-		const int imageSize = 28;
-		const int num_steps = 100;
-		const float learnRate = 0.001;
-
-		vector<vector<vector<float>>> batch_images(batchSize, vector<vector<float>>(imageSize, vector<float>(imageSize)));
-		vector<int> batch_lables(batchSize);
-
-		/*Conv5x5 conv(filters, 1, imageSize, imageSize);
-		MaxPool pool(poolDimensions, poolDimensions, filters, imageSize - 2, imageSize - 2);
-		FullyConnectedLayer conn(filters, (imageSize - 2) / 2, (imageSize - 2) / 2);*/
-		CNN cnn;
-
-		//cout << 3 << "\n";
-
-
-		auto totalStart = chrono::system_clock::now(); // Interner Timer um die Laufzeit zu messen
-		for (int i = 0; i < num_steps; i++) {
-
-			/* Vorberiten des Trainingsbatches */
-			int randIndex = rand() % (42000 - batchSize);
-			for (unsigned j = 0; j < batchSize; j++) { //erstelle einen zufälligen Batch für das Training
-				for (int k = 0; k < 784; k++)//Reformatierung des flachen Vektors in Zeilen und Spalten
-					batch_images[j][k / imageSize][k % imageSize] = training_images[j + randIndex][k]; 
-
-				batch_lables[j] = correct_lables[j + randIndex];
-			}
-
-			float loss = 0; 
-			float correct = 0;
-
-			/* Tatsächliches Training */
-			for (unsigned step = 0; step < batchSize; step++) {
-				vector<vector<vector<float>> > image(1, vector<vector<float>>(imageSize, vector<float>(imageSize))); //Die Conv Layer generieren zusätzliche Bilder, daher ein dreifach-Vektor
-				image[0] = batch_images[step];
-				vector<float> res = cnn.forward(image);
-
-				//cout << res[batch_lables[step]] << "\n";
-				loss += -log(res[batch_lables[step]]);
-
-				/* Bestimme die Vorhersage des Netzwerks <=> Das Lable mit der höchsten Wahrscheinlichkeit */
-				int predicted = 0;
-				for (int k = 0; k < FullyConnectedLayer::num_weights; k++)
-					if (res[k] >= res[predicted])
-						predicted = k;
-				if (predicted == batch_lables[step]) {
-					correct += 1;
-					//cout << "Right" << "\n";
-				} else {
-					correct += 0;
-					//cout << "Wrong" << "\n";
-				}
-
-				for (int k = 0; k < FullyConnectedLayer::num_weights; k++)
-					if (k == batch_lables[step])
-						res[k] = -1 / res[k];
-					else
-						res[k] = 0;
-
-				cnn.backprop(res,learnRate);
-			}
-
-			cout << "Batch " << i + 1 << " Average Loss " << loss / batchSize << " Accuracy " << correct / batchSize << "\n";
-		}
-
-		auto totalEnd = chrono::system_clock::now();
-		chrono::duration<double> totalTime = totalEnd-totalStart;
-		cout << "Total time: " << (int)(totalTime.count()/60) << " minutes " << (int)(totalTime.count()) % 60 << " seconds\n";
-		cout << "Average batch time: " << (totalTime.count()/ num_steps) << "seconds\n";
-		return 0;
-	} catch (const exception&) {
-		return -1;
-	}
 }
 
 /*int adamGD(int batch, int n_c, int params, int cost) //TODO Die Datentypen der Eingangsparameter und der Rückgabe passen noch nicht

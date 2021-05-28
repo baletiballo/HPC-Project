@@ -447,7 +447,7 @@ int main() {
 	}
 }
 
-int adamGD(int batch, int n_c, int params, int cost) //TODO Die Datentypen der Eingangsparameter und der Rückgabe passen noch nicht
+/*int adamGD(int batch, int n_c, int params, int cost) //TODO Die Datentypen der Eingangsparameter und der Rückgabe passen noch nicht
 		{
 	const int num_classes = 10; //Anzahl der Klassifikationsklassen (Hier 0 bis 9)
 	const float lr = 0.01;		//Lernrate
@@ -463,7 +463,7 @@ int adamGD(int batch, int n_c, int params, int cost) //TODO Die Datentypen der E
 	vector<vector<vector<float>> > help = conv.forward(image);
 	help = pool.forward(help);
 	vector<float> res = conn.forward(help);
-}*/
+}
 
 int adam(vector<vector<vector<float>>> &x_batch, vector<int> &y_batch) {
 	const float lr = 0.01;		//Lernrate
@@ -473,4 +473,4 @@ int adam(vector<vector<vector<float>>> &x_batch, vector<int> &y_batch) {
 
 
 	return 0;
-}
+}*/

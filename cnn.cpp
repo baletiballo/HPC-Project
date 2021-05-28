@@ -17,21 +17,24 @@
 
 using namespace std;
 
-class Conv5x5 {
+void read_trainingData(string filename, vector<vector<float>> &training_images, vector<int> &correct_lables);
+
+class Conv {
 public:
 	int num_filters;
 	int size1, size2, size3;
-	const int conv_size = 5;
+	int conv_size;
 	vector<vector<vector<float>>> filters;
 	vector<float> biases;
 
 	vector<vector<vector<float>>> last_input;
 
-	Conv5x5(int n, int s1, int s2, int s3) {
+	Conv(int n, int s1, int s2, int s3, int conv_s) {
 		num_filters = n;
 		size1 = s1;
 		size2 = s2;
 		size3 = s3;
+		conv_size = conv_s;
 		filters.resize(conv_size, vector<vector<float>>(conv_size, vector<float>(num_filters)));
 		biases.resize(num_filters, 0.0);
 
@@ -290,31 +293,29 @@ public:
 
 class CNN {
 public:
-	static const int sizeX=28;
-	static const int sizeY=28;
+	static const int imageSize=28;
 	static const int num_conv_layers=2;
-	const int conv_layers_num_filters[num_conv_layers]={8,8};
-	const int pool_layers_window[num_conv_layers]={2,2};
-	const int pool_layers_stride[num_conv_layers]={2,2};
+	static const int conv_size = 3;
+	const int conv_layers_num_filters = 8;
+	const int pool_layers_window = 2;
+	const int pool_layers_stride = 2;
 
-	vector<Conv5x5> conv_layers;
+	vector<Conv> conv_layers;
 	vector<MaxPool> pooling_layers;
 	FullyConnectedLayer *connected_layer;
 
 	CNN() {
-		int currX=sizeX;
-		int currY=sizeY;
+		cout << num_conv_layers <<" Conv Layers\t Conv size:" << conv_size << "\t 100 Batches\n";
+		int curr_size=imageSize;
 		int images=1;
 		for(unsigned i=0;i<num_conv_layers;i++) {
-			conv_layers.push_back(Conv5x5(conv_layers_num_filters[i],images,currX,currY));
-			currX-=4;
-			currY-=4;
-			images*=conv_layers_num_filters[i];
-			pooling_layers.push_back(MaxPool(pool_layers_window[i], pool_layers_stride[i], images, currX, currY));
-			currX=(currX - pool_layers_window[i]) / pool_layers_stride[i] + 1;
-			currY=(currY - pool_layers_window[i]) / pool_layers_stride[i] + 1;
+			conv_layers.push_back(Conv(conv_layers_num_filters,images,curr_size,curr_size, conv_size));
+			curr_size -= conv_size-1;
+			images*=conv_layers_num_filters;
+			pooling_layers.push_back(MaxPool(pool_layers_window, pool_layers_stride, images, curr_size, curr_size));
+			curr_size=(curr_size - pool_layers_window) / pool_layers_stride + 1;
 		}
-		connected_layer=new FullyConnectedLayer(images, currX, currY);
+		connected_layer=new FullyConnectedLayer(images, curr_size, curr_size);
 	}
 
 	vector<float> forward(vector<vector<vector<float>> > &image) {
@@ -347,8 +348,11 @@ int main() {
 		/*Vorbereiten des Netzwerks für das Training*/
 		const int batchSize = 1000;
 		const int imageSize = 28;
-		const int num_steps = 10;
+		const int num_steps = 100;
 		const float learnRate = 0.001;
+
+			float endLoss;
+			float endCorr;		
 
 		vector<vector<vector<float>>> batch_images(batchSize, vector<vector<float>>(imageSize, vector<float>(imageSize)));
 		vector<int> batch_lables(batchSize);
@@ -395,20 +399,27 @@ int main() {
 				cnn.backprop(res,learnRate);
 			}
 
-			cout << "Batch " << i + 1 << " Average Loss " << loss / batchSize << " Accuracy " << correct / batchSize << "\n";
+			/*zusätzliche Daten zum Topologievergleich*/
+			if(num_steps-i <= 10){
+				endLoss += loss;
+				endCorr += correct; 
+			}
+
+			//cout << "Batch " << i + 1 << " Average Loss " << loss / batchSize << " Accuracy " << correct / batchSize << "\n";
 		}
 
 		auto training_endTime = chrono::system_clock::now();
 		chrono::duration<double> totalTime = training_endTime-training_startTime;
 		cout << "Total time: " << (int)(totalTime.count()/60) << " minutes " << (int)(totalTime.count()) % 60 << " seconds\n";
 		cout << "Average batch time: " << (totalTime.count()/ num_steps) << "seconds\n";
+		cout << "Average loss in last 10 batches:" << endLoss/(10*batchSize) << ", Average accuracy in last 10 batches: " << endCorr/(10*batchSize) <<"\n";
 		return 0;
 	} catch (const exception&) {
 		return -1;
 	}
 }
 
-int read_trainingData(string filename, vector<vector<float>> training_images, vector<int> correct_lables)
+void read_trainingData(string filename, vector<vector<float>> &training_images, vector<int> &correct_lables)
 {
 	ifstream myFile(filename);
 		if (myFile.is_open()) {

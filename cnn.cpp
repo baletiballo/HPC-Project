@@ -16,119 +16,122 @@
 
 using namespace std;
 
-class Conv5x5 {
+class Conv {
 public:
 	int num_filters;
-	int size1, size2, size3;
-	static const int conv_size = 5;
+	int num_of_inputs, input_size1, input_size2;
+	int conv_size1, conv_size2;
+	int num_windows1, num_windows2;
 	vector<vector<vector<float>>> filters;
 	vector<float> biases;
 
-	vector<vector<vector<float>>> last_input;
+	Conv(int f, int c1, int c2, int n, int s1, int s2) {
+		num_filters = f;
+		conv_size1 = c1;
+		conv_size2 = c2;
+		num_of_inputs = n;
+		input_size1 = s1;
+		input_size2 = s2;
+		num_windows1 = input_size1 - conv_size1 + 1;
+		num_windows2 = input_size2 - conv_size2 + 1;
 
-	Conv5x5(int n, int s1, int s2, int s3) {
-		num_filters = n;
-		size1 = s1;
-		size2 = s2;
-		size3 = s3;
-		filters.resize(conv_size, vector<vector<float>>(conv_size, vector<float>(num_filters)));
+		filters.resize(num_filters, vector<vector<float>>(conv_size1, vector<float>(conv_size2)));
 		biases.resize(num_filters, 0.0);
 
 		normal_distribution<float> distribution(0.0, 1.0);
-		for (int i = 0; i < conv_size; i++) {
-			for (int j = 0; j < conv_size; j++) {
-				for (int cur_filter = 0; cur_filter < num_filters; cur_filter++) {
-					random_device dev;
-					default_random_engine generator(dev());
-					filters[i][j][cur_filter] = distribution(generator) / (conv_size * conv_size);
+		random_device dev;
+		default_random_engine generator(dev());
+		for (int cur_filter = 0; cur_filter < num_filters; cur_filter++) {
+			for (int i = 0; i < conv_size1; i++) {
+				for (int j = 0; j < conv_size2; j++) {
+					filters[cur_filter][i][j] = distribution(generator) / (conv_size1 * conv_size2);
 				}
 			}
 		}
 	}
 
 	vector<vector<vector<float>>> forward(vector<vector<vector<float>>> &input) {
-		const int numWindows = size2 - conv_size + 1;
-		vector<vector<vector<float>>> output(size1 * num_filters, vector<vector<float>>(numWindows, vector<float>(size3 - (conv_size - 1), 0.0)));
-		for (int i = 0; i < numWindows; i++) {
-			//per region
-			for (int j = 0; j < numWindows; j++) {
-				// per region
-				for (int cur_filter = 0; cur_filter < num_filters; cur_filter++) {
-					//per filter
-					for (int cur_featureMap = 0; cur_featureMap < size1; cur_featureMap++) {
-						//per passed representation
-						output[cur_featureMap * num_filters + cur_filter][i][j] = biases[cur_filter];
+		vector<vector<vector<float>>> output(num_of_inputs * num_filters, vector<vector<float>>(num_windows1, vector<float>(num_windows2)));
+		for (int cur_filter = 0; cur_filter < num_filters; cur_filter++) { //per filter
+			for (int cur_featureMap = 0; cur_featureMap < num_of_inputs; cur_featureMap++) { //per input
+				for (int i = 0; i < num_windows1; i++) {
+					//per region
+					for (int j = 0; j < num_windows2; j++) {
+						// per region
+
+						output[cur_featureMap + num_of_inputs * cur_filter][i][j] = biases[cur_filter];
 
 						//set output at i j for the input representation cur_featureMap when filter cur_filter is applied
 						//matrix multiplication and summation
-						for (int m = 0; m < conv_size; m++)
-							for (int n = 0; n < conv_size; n++)
-								output[cur_featureMap * num_filters + cur_filter][i][j] += input[cur_featureMap][i + m][j + n] * filters[m][n][cur_filter];
+						for (int m = 0; m < conv_size1; m++) {
+							for (int n = 0; n < conv_size2; n++) {
+								output[cur_featureMap + num_of_inputs * cur_filter][i][j] += input[cur_featureMap][i + m][j + n] * filters[cur_filter][m][n];
+							}
+						}
 					}
 				}
 			}
 		}
 
-		last_input = input;
 		return output;
 	}
 
-	tuple<vector<vector<vector<float>>>, vector<float>, vector<vector<vector<float>>>> backprop(vector<vector<vector<float>>> &lossGradient) {
-		vector<vector<vector<float>>> filterGradient(conv_size, vector<vector<float>>(conv_size, vector<float>(num_filters, 0.0)));
-		vector<float> filterBias(num_filters, 0.0);
-		vector<vector<vector<float>>> lossInput(size1, vector<vector<float>>(size2, vector<float>(size3, 0.0)));
+	tuple<vector<vector<vector<float>>>, vector<float>, vector<vector<vector<float>>>> backprop(vector<vector<vector<float>>> &loss_gradient,
+			vector<vector<vector<float>>> &last_input) {
+		vector<vector<vector<float>>> filter_gradient(num_filters, vector<vector<float>>(conv_size1, vector<float>(conv_size2, 0.0)));
+		vector<float> bias_gradient(num_filters, 0.0);
+		vector<vector<vector<float>>> loss_input(num_of_inputs, vector<vector<float>>(input_size1, vector<float>(input_size2, 0.0)));
 
-		for (int i = 0; i < size2 - (conv_size - 1); i++) {
-			//per region
-			for (int j = 0; j < size3 - (conv_size - 1); j++) {
-				// per region
-				for (int cur_filter = 0; cur_filter < num_filters; cur_filter++) {
-					//per filter
-					for (int cur_featureMap = 0; cur_featureMap < size1; cur_featureMap++) {
-						//per passed representation
+		for (int cur_filter = 0; cur_filter < num_filters; cur_filter++) { //per filter
+			for (int cur_featureMap = 0; cur_featureMap < num_of_inputs; cur_featureMap++) { //per input
+				for (int i = 0; i < num_windows1; i++) {
+					//per region
+					for (int j = 0; j < num_windows2; j++) {
+						// per region
 						//matrix multiplication and summation
-						for (int m = 0; m < conv_size; m++) {
-							for (int n = 0; n < conv_size; n++) {
-								filterGradient[m][n][cur_filter] += lossGradient[cur_featureMap * num_filters + cur_filter][i][j]
+						for (int m = 0; m < conv_size1; m++) {
+							for (int n = 0; n < conv_size2; n++) {
+								filter_gradient[cur_filter][m][n] += loss_gradient[cur_featureMap + num_of_inputs * cur_filter][i][j]
 										* last_input[cur_featureMap][i + m][j + n];
-								lossInput[cur_featureMap][i + m][j + n] += lossGradient[cur_featureMap * num_filters + cur_filter][i][j]
-										* filters[m][n][cur_filter];
+								loss_input[cur_featureMap][i + m][j + n] += loss_gradient[cur_featureMap + num_of_inputs * cur_filter][i][j]
+										* filters[cur_filter][m][n];
 							}
 						}
 
-						filterBias[cur_filter] += lossGradient[cur_featureMap * num_filters + cur_filter][i][j];
+						bias_gradient[cur_filter] += loss_gradient[cur_featureMap * num_filters + cur_filter][i][j];
 					}
 				}
 			}
 		}
 
-		return {filterGradient, filterBias, lossInput};
+		return {filter_gradient, bias_gradient, loss_input};
 	}
 };
 
 class MaxPool {
 public:
-	int size1, size2, size3;
+	int num_of_inputs, input_size1, input_size2;
 	int window, stride;
+	int output_size1, output_size2;
 
-	vector<vector<vector<float>>> last_input;
-
-	MaxPool(int w, int s, int s1, int s2, int s3) {
+	MaxPool(int w, int s, int n, int s1, int s2) {
 		window = w;
 		stride = s;
-		size1 = s1;
-		size2 = s2;
-		size3 = s3;
+		num_of_inputs = n;
+		input_size1 = s1;
+		input_size2 = s2;
+		output_size1 = (input_size1 - window) / stride + 1;
+		output_size2 = (input_size2 - window) / stride + 1;
 	}
 
 	vector<vector<vector<float>>> forward(vector<vector<vector<float>>> &input) {
-		vector<vector<vector<float>> > output(size1, vector<vector<float>>((size2 - window) / stride + 1, vector<float>((size3 - window) / stride + 1, 0.0)));
-		for (int i = 0; i < size2 - window; i += stride) {
-			//per region
-			for (int j = 0; j < size3 - window; j += stride) {
-				// per region
-				for (int cur_featureMap = 0; cur_featureMap < size1; cur_featureMap++) {
-					//per passed representation
+		vector<vector<vector<float>>> output(num_of_inputs, vector<vector<float>>(output_size1, vector<float>(output_size2, 0.0)));
+		for (int cur_featureMap = 0; cur_featureMap < num_of_inputs; cur_featureMap++) { //per input
+			for (int i = 0; i < input_size1 - window; i += stride) {
+				//per region
+				for (int j = 0; j < input_size2 - window; j += stride) {
+					// per region
+
 					//matrix max pooling
 					float max = input[cur_featureMap][i][j];
 					for (int m = 0; m < window; m++) {
@@ -142,19 +145,21 @@ public:
 			}
 		}
 
-		last_input = input;
 		return output;
 	}
 
-	vector<vector<vector<float>>> backprop(vector<vector<vector<float>>> &lossGradient) {
-		vector<vector<vector<float>>> lossInput(size1, vector<vector<float>>(size2, vector<float>(size3, 0.0)));
+	vector<vector<vector<float>>> backprop(vector<vector<vector<float>>> &loss_gradient, vector<vector<vector<float>>> &last_input) {
+		vector<vector<vector<float>>> loss_input(num_of_inputs, vector<vector<float>>(input_size1, vector<float>(input_size2, 0.0)));
+		/*cout<<"\n";
+		cout<<last_input.size()<<" "<<num_of_inputs<<"\n";
+		cout<<last_input[0].size()<<" "<<input_size1<<"\n";
+		cout<<last_input[0][0].size()<<" "<<input_size2<<"\n";*/
+		for (int cur_featureMap = 0; cur_featureMap < num_of_inputs; cur_featureMap++) { //per input
+			for (int i = 0; i < input_size1 - window; i += stride) {
+				//per region
+				for (int j = 0; j < input_size2 - window; j += stride) {
+					// per region
 
-		for (int i = 0; i < size2 - window; i += stride) {
-			//per region
-			for (int j = 0; j < size3 - window; j += stride) {
-				// per region
-				for (int cur_featureMap = 0; cur_featureMap < size1; cur_featureMap++) {
-					//per passed representation
 					//matrix max pooling
 					float max = last_input[cur_featureMap][i][j];
 					int indexX = 0;
@@ -170,96 +175,88 @@ public:
 					}
 
 					//set only the lossInput of the "pixel" max pool kept
-					lossInput[cur_featureMap][i + indexX][j + indexY] = lossGradient[cur_featureMap][i / stride][j / stride];
+					loss_input[cur_featureMap][i + indexX][j + indexY] = loss_gradient[cur_featureMap][i / stride][j / stride];
 				}
 			}
 		}
 
-		return lossInput;
+		return loss_input;
 	}
 };
 
 class FullyConnectedLayer {
 public:
-	int num_featureMaps; //Number of feature maps the convolutional Layers generate
-	int size2, size3; //Dimensions of the feature maps
-	static const int num_weights = 10; //Number of 
+	int num_of_inputs, input_size1, input_size2;
+	int num_weights;
+	int total_size;
 	vector<vector<float>> weights;
 	vector<float> biases;
 
-	vector<float> last_inputVector;
-	vector<float> last_totals;
-	float last_sum = 0.0;
-
-	FullyConnectedLayer(int s1, int s2, int s3) {
-		num_featureMaps = s1;
-		size2 = s2;
-		size3 = s3;
-		weights.resize(num_featureMaps * size2 * size3, vector<float>(num_weights));
+	FullyConnectedLayer(int w, int n, int s1, int s2) {
+		num_weights = w;
+		num_of_inputs = n;
+		input_size1 = s1;
+		input_size2 = s2;
+		total_size = num_of_inputs * input_size1 * input_size2;
+		weights.resize(num_weights, vector<float>(total_size));
 		biases.resize(num_weights, 0.0);
 
 		normal_distribution<float> distribution(0.0, 1.0);
-		for (int i = 0; i < num_featureMaps * size2 * size3; i++) {
-			for (int j = 0; j < num_weights; j++) {
+		for (int i = 0; i < num_weights; i++) {
+			for (int j = 0; j < total_size; j++) {
 				random_device dev;
 				default_random_engine generator(dev());
-				weights[i][j] = distribution(generator) / (num_featureMaps * size2 * size3);
+				weights[i][j] = distribution(generator) / (total_size);
 			}
 		}
-
-		last_totals.resize(num_weights);
 	}
 
-	vector<float> forward(vector<vector<vector<float>>> &input) {
+	vector<float> forward(vector<float> &input) {
 		vector<float> output(num_weights);
 		for (int i = 0; i < num_weights; i++)
 			output[i] = biases[i];
 
-		//flatten (the curve xD)
-		vector<float> inputVector(num_featureMaps * size2 * size3);
-		for (int i = 0; i < num_featureMaps; i++)
-			for (int j = 0; j < size2; j++)
-				for (int k = 0; k < size3; k++)
-					inputVector[i * size2 * size3 + j * size3 + k] = input[i][j][k];
+		/*//flatten (the curve xD)
+		 vector<float> input_vector(total_size);
+		 for (int i = 0; i < num_of_inputs; i++)
+		 for (int j = 0; j < input_size1; j++)
+		 for (int k = 0; k < input_size2; k++)
+		 input_vector[i * input_size1 * input_size2 + j * input_size2 + k] = input[i][j][k];
+		 */ //relocate this
+		for (int i = 0; i < num_weights; i++) //per feature
+			for (int j = 0; j < total_size; j++) //per weights
+				output[i] += input[j] * weights[i][j];
 
-		for (int i = 0; i < num_featureMaps * size2 * size3; i++) //per feature
-			for (int j = 0; j < num_weights; j++) //per weights
-				output[j] += inputVector[i] * weights[i][j];
+		/*//activation function
+		 float total = 0.0;
+		 for (int i = 0; i < num_weights; i++) {
+		 output[i] = exp(output[i]);
+		 total += output[i];
+		 }
 
-		last_inputVector = inputVector;
-
-		//activation function
-		float total = 0.0;
-		for (int i = 0; i < num_weights; i++) {
-			output[i] = exp(output[i]);
-			last_totals[i] = output[i];
-			total += output[i];
-		}
-		last_sum = total;
-
-		//normalize
-		for (int i = 0; i < num_weights; i++) {
-			output[i] = output[i] / total;
-		}
+		 //normalize
+		 for (int i = 0; i < num_weights; i++) {
+		 output[i] = output[i] / total;
+		 }*/ //relocate this
 		return output;
 	}
 
-	tuple<vector<vector<float>>, vector<float>, vector<vector<vector<float>>>> backprop(vector<float> lossGradient) {
-		vector<vector<vector<float>>> lossInput(num_featureMaps, vector<vector<float>>(size2, vector<float>(size3, 0.0)));
-		vector<vector<float>> weightGradient(num_featureMaps * size2 * size3, vector<float>(num_weights, 0.0));
-		vector<float> biasGradient(num_weights, 0.0);
+	tuple<vector<vector<float>>, vector<float>, vector<float>> backprop(vector<float> &loss_gradient, vector<float> &last_input) {
+		vector<float> loss_input(total_size, 0.0);
+		vector<vector<float>> weight_gradient(num_weights, vector<float>(total_size));
+		vector<float> bias_gradient(num_weights);
 
-		for (int i = 0; i < num_featureMaps * size2 * size3; i++) {
-			for (int j = 0; j < num_weights; j++) {
-				weightGradient[i][j] = lossGradient[j] * last_inputVector[i];
+		for (int i = 0; i < num_weights; i++) {
+			for (int j = 0; j < total_size; j++) {
+				weight_gradient[i][j] = loss_gradient[i] * last_input[j];
 			}
 		}
 		for (int i = 0; i < num_weights; i++) {
-			biasGradient[i] = lossGradient[i];
+			bias_gradient[i] = loss_gradient[i];
 		}
-		for (int i = 0; i < num_featureMaps * size2 * size3; i++) {
-			for (int j = 0; j < num_weights; j++) {
-				lossInput[i / (size2 * size3)][(i / size3) % size2][i % size3] += lossGradient[j] * weights[i][j];
+		for (int i = 0; i < num_weights; i++) {
+			for (int j = 0; j < total_size; j++) {
+				loss_input[j] += loss_gradient[i] * weights[i][j];
 			}
 		}
 
@@ -289,7 +286,7 @@ public:
 		 }
 		 }*/
 
-		return {weightGradient, biasGradient, lossInput};
+		return {weight_gradient, bias_gradient, loss_input};
 	}
 };
 
@@ -298,123 +295,113 @@ public:
 	static const int sizeX = 28;
 	static const int sizeY = 28;
 	static const int num_conv_layers = 1;
-	const int conv_layers_num_filters = 8;
+	const int num_filters = 8;
 	const int pool_layers_window = 2;
 	const int pool_layers_stride = 2;
+	const int conv_size1 = 3;
+	const int conv_size2 = 3;
+	const int num_weights = 10;
 	const float EPSILON = 1 * 10 ^ (-7);
 
-	vector<Conv5x5> conv_layers;
+	vector<Conv> conv_layers;
 	vector<MaxPool> pooling_layers;
 	FullyConnectedLayer *connected_layer;
 
-	vector<vector<vector<vector<float>>>> firstMomentumFilterGradients;
-	vector<vector<vector<vector<float>>>> secondMomentumFilterGradients;
-	vector<vector<float>> firstMomentumFilterBiases;
-	vector<vector<float>> secondMomentumFilterBiases;
-	vector<vector<float>> firstMomentumWeightGradient;
-	vector<vector<float>> secondMomentumWeightGradient;
-	vector<float> firstMomentumWeightBiases;
-	vector<float> secondMomentumWeightBiases;
+	vector<vector<vector<vector<float>>>> first_momentum_filters;
+	vector<vector<vector<vector<float>>>> second_momentum_filters;
+	vector<vector<float>> first_momentum_conv_biases;
+	vector<vector<float>> second_momentum_conv_biases;
+	vector<vector<float>> first_momentum_weights;
+	vector<vector<float>> second_momentum_weights;
+	vector<float> first_momentum_conn_biases;
+	vector<float> second_momentum_conn_biases;
 
 	CNN() {
 		int currX = sizeX;
 		int currY = sizeY;
 		int images = 1;
 		for (unsigned i = 0; i < num_conv_layers; i++) {
-			connected_layer = new FullyConnectedLayer(images, currX, currY);
 
-			vector<vector<vector<float>>> firstMomentum(Conv5x5::conv_size,
-					vector<vector<float>>(Conv5x5::conv_size, vector<float>(conv_layers_num_filters, 0.0)));
-			firstMomentumFilterGradients.push_back(firstMomentum);
-			vector<vector<vector<float>>> secondMomentum(Conv5x5::conv_size,
-					vector<vector<float>>(Conv5x5::conv_size, vector<float>(conv_layers_num_filters, 0.0)));
-			secondMomentumFilterGradients.push_back(firstMomentum);
-			vector<float> firstMomentumBiases(conv_layers_num_filters, 0.0);
-			firstMomentumFilterBiases.push_back(firstMomentumBiases);
-			vector<float> secondMomentumBiases(conv_layers_num_filters, 0.0);
-			secondMomentumFilterBiases.push_back(secondMomentumBiases);
+			vector<vector<vector<float>>> firstMomentum(num_filters, vector<vector<float>>(conv_size1, vector<float>(conv_size2, 0.0)));
+			first_momentum_filters.push_back(firstMomentum);
+			vector<vector<vector<float>>> secondMomentum(num_filters, vector<vector<float>>(conv_size1, vector<float>(conv_size2, 0.0)));
+			second_momentum_filters.push_back(secondMomentum);
+			vector<float> firstMomentumBiases(num_filters, 0.0);
+			first_momentum_conv_biases.push_back(firstMomentumBiases);
+			vector<float> secondMomentumBiases(num_filters, 0.0);
+			second_momentum_conv_biases.push_back(secondMomentumBiases);
 
-			conv_layers.push_back(Conv5x5(conv_layers_num_filters, images, currX, currY));
-			currX -= 4;
-			currY -= 4;
-			images *= conv_layers_num_filters;
+			conv_layers.push_back(Conv(num_filters, conv_size1, conv_size2, images, currX, currY));
+			currX -= (conv_size1 - 1);
+			currY -= (conv_size2 - 1);
+			images *= num_filters;
 			pooling_layers.push_back(MaxPool(pool_layers_window, pool_layers_stride, images, currX, currY));
 			currX = (currX - pool_layers_window) / pool_layers_stride + 1;
 			currY = (currY - pool_layers_window) / pool_layers_stride + 1;
 		}
-		connected_layer = new FullyConnectedLayer(images, currX, currY);
-		firstMomentumWeightGradient.resize((images * currX * currY), vector<float>(FullyConnectedLayer::num_weights));
-		secondMomentumWeightGradient.resize((images * currX * currY), vector<float>(FullyConnectedLayer::num_weights));
-		firstMomentumWeightBiases.resize(FullyConnectedLayer::num_weights);
-		secondMomentumWeightBiases.resize(FullyConnectedLayer::num_weights);
-	}
-
-	vector<float> forward(vector<vector<vector<float>> > &image) {
-		vector<vector<vector<float>> > help = conv_layers[0].forward(image);
-		//ReLu3D(help);
-		help = pooling_layers[0].forward(help);
-		for (int i = 1; i < num_conv_layers; i++) {
-			help = conv_layers[i].forward(help);
-			//ReLu3D(help);
-			help = pooling_layers[i].forward(help);
-		}
-		return (*connected_layer).forward(help);
-	}
-
-	tuple<vector<vector<vector<vector<float>>>>, vector<vector<float>>, vector<vector<float>>, vector<float>> backprop(vector<float> &res) {
-		vector<vector<vector<vector<float>>>> filterGradients;
-		vector<vector<float>> filterBiases;
-		vector<vector<float>> weigthGradient;
-		vector<float> weightBiases;
-
-		tuple<vector<vector<float>>, vector<float>, vector<vector<vector<float>>>> helpconn = (*connected_layer).backprop(res);
-		weigthGradient = get<0>(helpconn);
-		weightBiases = get<1>(helpconn);
-		//ReLu3D(get<2>(helpconn));
-
-		tuple<vector<vector<vector<float>>>, vector<float>, vector<vector<vector<float>>>> helpconv;
-		vector<vector<vector<float>>> t = pooling_layers[num_conv_layers - 1].backprop(get<2>(helpconn));
-		helpconv = conv_layers[num_conv_layers - 1].backprop(t);
-		//ReLu3D(get<2>(helpconv));
-		filterGradients.push_back(get<0>(helpconv));
-		filterBiases.push_back(get<1>(helpconv));
-
-		for (int i = num_conv_layers - 2; i > -1; i--) {
-			t = pooling_layers[i].backprop(get<2>(helpconv));
-			helpconv = conv_layers[i].backprop(t);
-			//ReLu3D(get<2>(helpconv));
-			filterGradients.push_back(get<0>(helpconv));
-			filterBiases.push_back(get<1>(helpconv));
-		}
-		return {filterGradients, filterBiases, weigthGradient, weightBiases};
+		connected_layer = new FullyConnectedLayer(num_weights, images, currX, currY);
+		first_momentum_weights.resize((images * currX * currY), vector<float>(num_weights));
+		second_momentum_weights.resize((images * currX * currY), vector<float>(num_weights));
+		first_momentum_conn_biases.resize(num_weights);
+		second_momentum_conn_biases.resize(num_weights);
 	}
 
 	tuple<float, int, tuple<vector<vector<vector<vector<float>>>>, vector<vector<float>>, vector<vector<float>>, vector<float>>> conv(
-			vector<vector<vector<float>> > &image, int label) {
-		vector<float> res = forward(image);
-		/*cout << res[label] << "\n";
-		 if (res[label] == 1) {
-		 cout << "hello " << label << "\n";
-		 }*/
-		float loss = -log(res[label]);
+			vector<vector<vector<float>>> &image, int label) {
+		vector<vector<vector<vector<float>>>> z;
+		z.push_back(image);
+		for (int i = 0; i < num_conv_layers; i++) {
+			vector<vector<vector<float>>> help = conv_layers[i].forward(z.back());
+			ReLu(help);
+			z.push_back(help);
+			help = pooling_layers[i].forward(z.back());
+			z.push_back(help);
+		}
+		vector<float> h = flatten(z.back());
+		vector<float> res = (*connected_layer).forward(h);
+
+		vector<float> probs = softmax(res);
+
+		float loss = -log(probs[label]);
 		int correct = 0;
 
 		int argmax = 0;
-		for (int i = 0; i < FullyConnectedLayer::num_weights; i++)
-			if (res[i] >= res[argmax])
+		for (int i = 0; i < num_weights; i++)
+			if (probs[i] >= probs[argmax])
 				argmax = i;
 
 		if (argmax == label)
 			correct = 1;
 
-		res[label] -= 1;
-		/*for (int i = 0; i < FullyConnectedLayer::num_weights; i++)
-		 if (i == label)
-		 res[i] = -1 / res[i];
-		 else
-		 res[i] = 0;*/
+		probs[label] -= 1;
 
-		return {loss, correct, backprop(res)};
+		vector<vector<vector<vector<float>>>> filter_gradients;
+		vector<vector<float>> conv_bias_gradients;
+		vector<vector<float>> weight_gradient;
+		vector<float> conn_bias_gradient;
+
+		tuple<vector<vector<float>>, vector<float>, vector<float>> helpconn = (*connected_layer).backprop(probs, h);
+		weight_gradient=get<0>(helpconn);
+		conn_bias_gradient=get<1>(helpconn);
+		vector<vector<vector<float>>> helpback=deflatten(get<2>(helpconn), (*connected_layer).num_of_inputs, (*connected_layer).input_size1, (*connected_layer).input_size2);
+		/*cout<<"hello";
+		cout<<z.size();*/
+		for (int i = num_conv_layers-1; i > -1; i--) {
+			//cout<<"hello";
+			helpback=pooling_layers[i].backprop(helpback, z[2*i+1]);
+
+			//cout<<"hello";
+			tuple<vector<vector<vector<float>>>, vector<float>, vector<vector<vector<float>>>> helpconv = conv_layers[i].backprop(helpback, z[2*i]);
+			filter_gradients.push_back(get<0>(helpconv));
+			conv_bias_gradients.push_back(get<1>(helpconv));
+			ReLu(get<2>(helpconv));
+			helpback=get<2>(helpconv);
+			//cout<<"hello";
+
+		}
+		//cout<<"hello";
+
+		return {loss, correct, {filter_gradients, conv_bias_gradients, weight_gradient, conn_bias_gradient}};
 	}
 
 	tuple<float, float> learn(float alpha, float beta1, float beta2, vector<vector<vector<float>> > &x_batch, vector<int> &y_batch, int batchSize) {
@@ -439,9 +426,9 @@ public:
 			correct += get<1>(t);
 			//cout << "loss" << loss << "correct" << correct << "\n";
 			thelp = get<2>(t);
-			add4DMatrix(filterGradients, get<0>(thelp));
-			add2DMatrix(filterBiases, get<1>(thelp));
-			add2DMatrix(weightGradient, get<2>(thelp));
+			addVectors(filterGradients, get<0>(thelp));
+			addVectors(filterBiases, get<1>(thelp));
+			addVectors(weightGradient, get<2>(thelp));
 			addVectors(weightBiases, get<3>(thelp));
 			/*if(i%10==0) {
 			 for (unsigned i = 0; i < filterGradients.size(); i++) {
@@ -459,17 +446,54 @@ public:
 		}
 
 		/*updateFilterMomentum(filterGradients, filterBiases, beta1, beta2, batchSize);
-		updateFilters(alpha);
-		updateWeightMomentum(weightGradient, weightBiases, beta1, beta2, batchSize);
-		updateWeights(alpha);*/
+		 updateFilters(alpha);
+		 updateWeightMomentum(weightGradient, weightBiases, beta1, beta2, batchSize);
+		 updateWeights(alpha);*/
 
 		updateFilters2(alpha, filterGradients, filterBiases, batchSize);
-		 updateWeights2(alpha, weightGradient, weightBiases, batchSize);
+		updateWeights2(alpha, weightGradient, weightBiases, batchSize);
 
 		return {loss, correct};
 	}
 
-	void ReLu1D(vector<float> &t1) {
+	vector<float> flatten(vector<vector<vector<float>>> &t1) {
+		vector<float> out(t1.size() * t1[0].size() * t1[0][0].size());
+		for (unsigned i = 0; i < t1.size(); i++) {
+			for (unsigned j = 0; j < t1[0].size(); j++) {
+				for (unsigned k = 0; k < t1[0][0].size(); k++) {
+					out[i * t1[0].size() * t1[0][0].size() + j * t1[0][0].size() + k] = t1[i][j][k];
+				}
+			}
+		}
+		return out;
+	}
+
+	vector<vector<vector<float>>> deflatten(vector<float> &t1, int s1, int s2, int s3) {
+		vector<vector<vector<float>>> out(s1, vector<vector<float>>(s2, vector<float>(s3)));
+		for (int i = 0; i < s1; i++) {
+			for (int j = 0; j < s2; j++) {
+				for (int k = 0; k < s3; k++) {
+					out[i][j][k] = t1[i * s2 * s3 + j * s3 + k];
+				}
+			}
+		}
+		return out;
+	}
+
+	vector<float> softmax(vector<float> &t1) {
+		float sum = 0.0;
+		vector<float> res(t1.size());
+		for (unsigned i = 0; i < t1.size(); i++) {
+			res[i] = exp(t1[i]);
+			sum += res[i];
+		}
+		for (unsigned i = 0; i < t1.size(); i++) {
+			res[i] = res[i]/sum;
+		}
+		return res;
+	}
+
+	void ReLu(vector<float> &t1) {
 		for (unsigned i = 0; i < t1.size(); i++) {
 			if (t1[i] <= 0) {
 				t1[i] = 0;
@@ -477,25 +501,25 @@ public:
 		}
 	}
 
-	void ReLu2D(vector<vector<float>> &t1) {
+	void ReLu(vector<vector<float>> &t1) {
 		for (unsigned i = 0; i < t1.size(); i++) {
-			ReLu1D(t1[i]);
+			ReLu(t1[i]);
 		}
 	}
 
-	void ReLu3D(vector<vector<vector<float>>> &t1) {
+	void ReLu(vector<vector<vector<float>>> &t1) {
 		for (unsigned i = 0; i < t1.size(); i++) {
-			ReLu2D(t1[i]);
+			ReLu(t1[i]);
 		}
 	}
 
-	void ReLu4D(vector<vector<vector<vector<float>>>> &t1) {
+	void ReLu(vector<vector<vector<vector<float>>>> &t1) {
 		for (unsigned i = 0; i < t1.size(); i++) {
-			ReLu3D(t1[i]);
+			ReLu(t1[i]);
 		}
 	}
 
-	void updateFilterMomentum(vector<vector<vector<vector<float>>>> &filterGradients, vector<vector<float>> &filterBiases, float beta1, float beta2,
+	/*void updateFilterMomentum(vector<vector<vector<vector<float>>>> &filterGradients, vector<vector<float>> &filterBiases, float beta1, float beta2,
 			int batchSize) {
 		for (unsigned i = 0; i < firstMomentumFilterGradients.size(); i++) {
 			for (unsigned j = 0; j < firstMomentumFilterGradients.at(i).size(); j++) {
@@ -551,7 +575,7 @@ public:
 						- alpha * (firstMomentumFilterBiases.at(i).at(j)) / (sqrt(secondMomentumFilterBiases.at(i).at(j)) + EPSILON);
 			}
 		}
-	}
+	}*/
 
 	void updateFilters2(float alpha, vector<vector<vector<vector<float>>>> &filterGradients, vector<vector<float>> &filterBiases, int batchSize) {
 		for (unsigned i = 0; i < filterGradients.size(); i++) {
@@ -570,7 +594,7 @@ public:
 		}
 	}
 
-	void updateWeightMomentum(vector<vector<float>> &weightGradient, vector<float> &weightBiases, float beta1, float beta2, int batchSize) {
+	/*void updateWeightMomentum(vector<vector<float>> &weightGradient, vector<float> &weightBiases, float beta1, float beta2, int batchSize) {
 		for (unsigned i = 0; i < firstMomentumWeightGradient.size(); i++) {
 			for (unsigned j = 0; j < firstMomentumWeightGradient.at(i).size(); j++) {
 				firstMomentumWeightGradient.at(i).at(j) = (beta1 * firstMomentumWeightGradient.at(i).at(j))
@@ -603,7 +627,7 @@ public:
 			(*connected_layer).biases[i] = (*connected_layer).biases[i]
 					- alpha * (firstMomentumWeightBiases.at(i)) / (sqrt(secondMomentumWeightBiases.at(i)) + EPSILON);
 		}
-	}
+	}*/
 
 	void updateWeights2(float alpha, vector<vector<float>> &weigthGradient, vector<float> &weightBiases, int batchSize) {
 		for (unsigned i = 0; i < weigthGradient.size(); i++) {
@@ -622,21 +646,21 @@ public:
 		}
 	}
 
-	void add2DMatrix(vector<vector<float>> &t1, vector<vector<float>> &t2) {
+	void addVectors(vector<vector<float>> &t1, vector<vector<float>> &t2) {
 		for (unsigned i = 0; i < t1.size(); i++) {
 			addVectors(t1[i], t2[i]);
 		}
 	}
 
-	void add3DMatrix(vector<vector<vector<float>>> &t1, vector<vector<vector<float>>> &t2) {
+	void addVectors(vector<vector<vector<float>>> &t1, vector<vector<vector<float>>> &t2) {
 		for (unsigned i = 0; i < t1.size(); i++) {
-			add2DMatrix(t1[i], t2[i]);
+			addVectors(t1[i], t2[i]);
 		}
 	}
 
-	void add4DMatrix(vector<vector<vector<vector<float>>>> &t1, vector<vector<vector<vector<float>>>> &t2) {
+	void addVectors(vector<vector<vector<vector<float>>>> &t1, vector<vector<vector<vector<float>>>> &t2) {
 		for (unsigned i = 0; i < t1.size(); i++) {
-			add3DMatrix(t1[i], t2[i]);
+			addVectors(t1[i], t2[i]);
 		}
 	}
 
@@ -675,7 +699,7 @@ int main() {
 
 		//cout << 2 << "\n";
 
-		const int batchSize = 1000;
+		const int batchSize = 32;
 		const int imageSize = 28;
 
 		vector<vector<vector<float>>> x_batch(batchSize, vector<vector<float>>(imageSize, vector<float>(imageSize)));
@@ -686,8 +710,8 @@ int main() {
 		 FullyConnectedLayer conn(filters, (imageSize - 2) / 2, (imageSize - 2) / 2);*/
 		CNN cnn;
 		const float alpha = 0.01;		//Lernrate
-		const float beta1 = 0.95;	//Erstes Moment
-		const float beta2 = 0.99;	//Zweites Moment
+		const float beta1 = 0.95;		//Erstes Moment
+		const float beta2 = 0.99;		//Zweites Moment
 
 		//cout << 3 << "\n";
 

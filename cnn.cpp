@@ -152,10 +152,6 @@ public:
 
 	vector<vector<vector<float>>> backprop(vector<vector<vector<float>>> &loss_gradient, vector<vector<vector<float>>> &last_input) {
 		vector<vector<vector<float>>> loss_input(num_of_inputs, vector<vector<float>>(input_size1, vector<float>(input_size2, 0.0)));
-		/*cout<<"\n";
-		cout<<last_input.size()<<" "<<num_of_inputs<<"\n";
-		cout<<last_input[0].size()<<" "<<input_size1<<"\n";
-		cout<<last_input[0][0].size()<<" "<<input_size2<<"\n";*/
 		for (int cur_featureMap = 0; cur_featureMap < num_of_inputs; cur_featureMap++) { //per input
 			for (int i = 0; i < input_size1 - window; i += stride) {
 				//per region
@@ -217,29 +213,9 @@ public:
 		vector<float> output(num_weights);
 		for (int i = 0; i < num_weights; i++)
 			output[i] = biases[i];
-
-		/*//flatten (the curve xD)
-		 vector<float> input_vector(total_size);
-		 for (int i = 0; i < num_of_inputs; i++)
-		 for (int j = 0; j < input_size1; j++)
-		 for (int k = 0; k < input_size2; k++)
-		 input_vector[i * input_size1 * input_size2 + j * input_size2 + k] = input[i][j][k];
-		 */ //relocate this
 		for (int i = 0; i < num_weights; i++) //per feature
 			for (int j = 0; j < total_size; j++) //per weights
 				output[i] += input[j] * weights[i][j];
-
-		/*//activation function
-		 float total = 0.0;
-		 for (int i = 0; i < num_weights; i++) {
-		 output[i] = exp(output[i]);
-		 total += output[i];
-		 }
-
-		 //normalize
-		 for (int i = 0; i < num_weights; i++) {
-		 output[i] = output[i] / total;
-		 }*/ //relocate this
 		return output;
 	}
 
@@ -261,32 +237,6 @@ public:
 				loss_input[j] += loss_gradient[i] * weights[i][j];
 			}
 		}
-
-		/*int index = -1;
-		 for (int i = 0; i < num_weights; i++) {
-		 if (lossGradient[i] != 0)
-		 index = i;
-		 }
-
-		 const float gradient = lossGradient[index];
-
-		 vector<float> dOutDt(num_weights);
-		 for (int i = 0; i < num_weights; i++)
-		 dOutDt[i] = -last_totals[index] * last_totals[i] / (last_sum * last_sum);
-
-		 dOutDt[index] = last_totals[index] * (last_sum - last_totals[index]) / (last_sum * last_sum);
-
-		 vector<float> dLdt(num_weights);
-		 for (int i = 0; i < num_weights; i++) {
-		 dLdt[i] = gradient * dOutDt[i];
-		 }
-
-		 for (int i = 0; i < num_featureMaps * size2 * size3; i++) {
-		 for (int j = 0; j < num_weights; j++) {
-		 lossInput[i / (size2 * size3)][i / size3 % size2][i % size3] += weights[i][j] * dLdt[j];
-		 weightGradient[i][j] += last_inputVector[i] * dLdt[j];
-		 }
-		 }*/
 
 		return {weight_gradient, bias_gradient, loss_input};
 	}
@@ -386,22 +336,16 @@ public:
 		weight_gradient=get<0>(helpconn);
 		conn_bias_gradient=get<1>(helpconn);
 		vector<vector<vector<float>>> helpback=deflatten(get<2>(helpconn), (*connected_layer).num_of_inputs, (*connected_layer).input_size1, (*connected_layer).input_size2);
-		/*cout<<"hello";
-		cout<<z.size();*/
 		for (int i = num_conv_layers-1; i > -1; i--) {
-			//cout<<"hello";
 			helpback=pooling_layers[i].backprop(helpback, z[2*i+1]);
 
-			//cout<<"hello";
 			tuple<vector<vector<vector<float>>>, vector<float>, vector<vector<vector<float>>>> helpconv = conv_layers[i].backprop(helpback, z[2*i]);
 			filter_gradients.push_back(get<0>(helpconv));
 			conv_bias_gradients.push_back(get<1>(helpconv));
 			ReLu(get<2>(helpconv));
 			helpback=get<2>(helpconv);
-			//cout<<"hello";
 
 		}
-		//cout<<"hello";
 
 		return {loss, correct, {filter_gradients, conv_bias_gradients, weight_gradient, conn_bias_gradient}};
 	}
@@ -426,25 +370,11 @@ public:
 			t = conv(image, label);
 			loss += get<0>(t);
 			correct += get<1>(t);
-			//cout << "loss" << loss << "correct" << correct << "\n";
 			thelp = get<2>(t);
 			addVectors(filterGradients, get<0>(thelp));
 			addVectors(filterBiases, get<1>(thelp));
 			addVectors(weightGradient, get<2>(thelp));
 			addVectors(weightBiases, get<3>(thelp));
-			/*if(i%10==0) {
-			 for (unsigned i = 0; i < filterGradients.size(); i++) {
-			 for (unsigned j = 0; j < filterGradients.at(i).size(); j++) {
-			 for (unsigned k = 0; k < filterGradients.at(i).at(j).size(); k++) {
-			 for (unsigned l = 0; l < filterGradients.at(i).at(j).at(k).size(); l++) {
-			 cout<<filterGradients.at(i).at(j).at(k).at(l)<<" ";
-			 }
-			 cout<<"\n";
-			 }
-			 }
-			 }
-			 cout<<"\n";
-			 }*/
 		}
 
 		/*updateFilterMomentum(filterGradients, filterBiases, beta1, beta2, batchSize);

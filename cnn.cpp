@@ -13,6 +13,8 @@
 #include <random>
 #include <tuple>
 #include <float.h>
+#include <chrono>
+#include <ctime> 
 
 using namespace std;
 
@@ -294,7 +296,7 @@ class CNN {
 public:
 	static const int sizeX = 28;
 	static const int sizeY = 28;
-	static const int num_conv_layers = 1;
+	static const int num_conv_layers = 2;
 	const int num_filters = 8;
 	const int pool_layers_window = 2;
 	const int pool_layers_stride = 2;
@@ -668,26 +670,84 @@ public:
 
 int main() {
 	try {
-		vector<vector<float>> x(42000, vector<float>(784));
-		vector<int> y(42000);
-		//auto line_v = new vector<string>(785);
+		vector<vector<float>> training_images(42000, vector<float>(784));
+		vector<int> correct_lables(42000);
 
-		//cout << 1 << "\n";
+		/* Einlesen der Trainingsdaten*/
+		read_trainingData("train.txt",training_images,correct_lables);
 
-		ifstream myFile("train.txt");
+		/*Vorbereiten des Netzwerks für das Training*/
+		const int batchSize = 1000;
+		const int imageSize = 28;
+		const int num_steps = 100;
+		const float learnRate = 0.001;
+
+			float endLoss;
+			float endCorr;		
+
+		vector<vector<vector<float>>> batch_images(batchSize, vector<vector<float>>(imageSize, vector<float>(imageSize)));
+		vector<int> batch_lables(batchSize);
+		CNN cnn; //Das benutzte Netzwerk. Topologieänderungen bitte in der Klasse CNN
+    const float alpha = 0.01;		//Lernrate
+		const float beta1 = 0.95;		//Erstes Moment
+		const float beta2 = 0.99;		//Zweites Moment
+		auto training_startTime = chrono::system_clock::now(); // Interner Timer um die Laufzeit zu messen
+
+		for (int i = 0; i < num_steps; i++) {
+
+			/* Vorberiten des Trainingsbatches */
+			int randIndex = rand() % (42000 - batchSize);
+			for (unsigned j = 0; j < batchSize; j++) { //erstelle einen zufälligen Batch für das Training
+				for (int k = 0; k < 784; k++)//Reformatierung des flachen Vektors in Zeilen und Spalten
+					batch_images[j][k / imageSize][k % imageSize] = training_images[j + randIndex][k]; 
+
+				batch_lables[j] = correct_lables[j + randIndex];
+			}
+
+			tuple<float, float> res = cnn.learn(alpha, beta1, beta2, x_batch, y_batch, batchSize);
+
+			float loss = get<0>(res);
+			float correct = get<1>(res);
+
+			cout << "Batch " << i + 1 << " Average Loss " << loss / batchSize << " Accuracy " << correct / batchSize << "\n";
+
+			/*zusätzliche Daten zum Topologievergleich*/
+			if(num_steps-i <= 10){
+				endLoss += loss;
+				endCorr += correct; 
+			}
+
+			//cout << "Batch " << i + 1 << " Average Loss " << loss / batchSize << " Accuracy " << correct / batchSize << "\n";
+		}
+
+		auto training_endTime = chrono::system_clock::now();
+		chrono::duration<double> totalTime = training_endTime-training_startTime;
+		cout << "Total time: " << (int)(totalTime.count()/60) << " minutes " << (int)(totalTime.count()) % 60 << " seconds\n";
+		cout << "Average batch time: " << (totalTime.count()/ num_steps) << "seconds\n";
+		cout << "Average loss in last 10 batches:" << endLoss/(10*batchSize) << ", Average accuracy in last 10 batches: " << endCorr/(10*batchSize) <<"\n";
+		return 0;
+	} catch (const exception&) {
+		return -1;
+	}
+}
+
+void read_trainingData(string filename, vector<vector<float>> &training_images, vector<int> &correct_lables)
+{
+	ifstream myFile(filename);
 		if (myFile.is_open()) {
 			int lineNum = 0;
 			string line;
-			while (getline(myFile, line)) {
+			while (getline(myFile, line))
+			{
 				istringstream ss(line);
 				string token;
 				int i = 0;
 				while (getline(ss, token, '\t')) {
 					int digit = stoi(token, nullptr);
-					if (i == 0)
-						y[lineNum] = digit;
-					else
-						x[lineNum][i - 1] = static_cast<float>(digit) / static_cast<float>(255);
+					if (i == 0)			//erste Zahl jeder Zeile ist das lable
+						correct_lables[lineNum] = digit;
+					else				//der Rest das Graustufenbild
+						training_images[lineNum][i - 1] = static_cast<float>(digit) / static_cast<float>(255);
 
 					i++;
 				}
@@ -697,43 +757,4 @@ int main() {
 			myFile.close();
 		}
 
-		//cout << 2 << "\n";
-
-		const int batchSize = 32;
-		const int imageSize = 28;
-
-		vector<vector<vector<float>>> x_batch(batchSize, vector<vector<float>>(imageSize, vector<float>(imageSize)));
-		vector<int> y_batch(batchSize);
-
-		/*Conv5x5 conv(filters, 1, imageSize, imageSize);
-		 MaxPool pool(poolDimensions, poolDimensions, filters, imageSize - 2, imageSize - 2);
-		 FullyConnectedLayer conn(filters, (imageSize - 2) / 2, (imageSize - 2) / 2);*/
-		CNN cnn;
-		const float alpha = 0.01;		//Lernrate
-		const float beta1 = 0.95;		//Erstes Moment
-		const float beta2 = 0.99;		//Zweites Moment
-
-		//cout << 3 << "\n";
-
-		for (int i = 0; i < 1000; i++) {
-			int randIndex = rand() % (42000 - batchSize);
-			for (unsigned j = 0; j < batchSize; j++) {
-				for (int k = 0; k < 784; k++)
-					x_batch[j][k / imageSize][k % imageSize] = x[j + randIndex][k];
-
-				y_batch[j] = y[j + randIndex];
-			}
-
-			tuple<float, float> res = cnn.learn(alpha, beta1, beta2, x_batch, y_batch, batchSize);
-
-			float loss = get<0>(res);
-			float correct = get<1>(res);
-
-			cout << "Batch " << i + 1 << " Average Loss " << loss / batchSize << " Accuracy " << correct / batchSize << "\n";
-		}
-
-		return 0;
-	} catch (const exception&) {
-		return -1;
-	}
 }

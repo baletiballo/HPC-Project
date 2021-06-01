@@ -377,7 +377,7 @@ public:
 			addVectors(weightBiases, get<3>(thelp));
 		}
 
-		/*updateFilterMomentum(filterGradients, filterBiases, beta1, beta2, batchSize);
+		/*updateFilterMomentum(filterGradients, filterBiases, beta1, beta2, batchSize); //if you want to use adam uncomment this and comment updateFilters2, updateWeights2
 		 updateFilters(alpha);
 		 updateWeightMomentum(weightGradient, weightBiases, beta1, beta2, batchSize);
 		 updateWeights(alpha);*/
@@ -451,63 +451,63 @@ public:
 		}
 	}
 
-	/*void updateFilterMomentum(vector<vector<vector<vector<float>>>> &filterGradients, vector<vector<float>> &filterBiases, float beta1, float beta2,
+	void updateFilterMomentum(vector<vector<vector<vector<float>>>> &filterGradients, vector<vector<float>> &filterBiases, float beta1, float beta2,
 			int batchSize) {
-		for (unsigned i = 0; i < firstMomentumFilterGradients.size(); i++) {
-			for (unsigned j = 0; j < firstMomentumFilterGradients.at(i).size(); j++) {
-				for (unsigned k = 0; k < firstMomentumFilterGradients.at(i).at(j).size(); k++) {
-					for (unsigned l = 0; l < firstMomentumFilterGradients.at(i).at(j).at(k).size(); l++) {
+		for (unsigned i = 0; i < first_momentum_filters.size(); i++) {
+			for (unsigned j = 0; j < first_momentum_filters.at(i).size(); j++) {
+				for (unsigned k = 0; k < first_momentum_filters.at(i).at(j).size(); k++) {
+					for (unsigned l = 0; l < first_momentum_filters.at(i).at(j).at(k).size(); l++) {
 						//cout << firstMomentumFilterGradients.at(i).at(j).at(k).at(l) << " ";
-						firstMomentumFilterGradients.at(i).at(j).at(k).at(l) = (beta1 * firstMomentumFilterGradients.at(i).at(j).at(k).at(l))
+						first_momentum_filters.at(i).at(j).at(k).at(l) = (beta1 * first_momentum_filters.at(i).at(j).at(k).at(l))
 								+ ((1 - beta1) * filterGradients.at(i).at(j).at(k).at(l)) / batchSize;
 					}
 					//cout << "\n";
 				}
 			}
 		}
-		for (unsigned i = 0; i < firstMomentumFilterBiases.size(); i++) {
-			for (unsigned j = 0; j < firstMomentumFilterBiases.at(i).size(); j++) {
-				firstMomentumFilterBiases.at(i).at(j) = (beta1 * firstMomentumFilterBiases.at(i).at(j)) + ((1 - beta1) * filterBiases.at(i).at(j)) / batchSize;
+		for (unsigned i = 0; i < first_momentum_conv_biases.size(); i++) {
+			for (unsigned j = 0; j < first_momentum_conv_biases.at(i).size(); j++) {
+				first_momentum_conv_biases.at(i).at(j) = (beta1 * first_momentum_conv_biases.at(i).at(j)) + ((1 - beta1) * filterBiases.at(i).at(j)) / batchSize;
 			}
 		}
 
-		for (unsigned i = 0; i < secondMomentumFilterGradients.size(); i++) {
-			for (unsigned j = 0; j < secondMomentumFilterGradients.at(i).size(); j++) {
-				for (unsigned k = 0; k < secondMomentumFilterGradients.at(i).at(j).size(); k++) {
-					for (unsigned l = 0; l < secondMomentumFilterGradients.at(i).at(j).at(k).size(); l++) {
-						secondMomentumFilterGradients.at(i).at(j).at(k).at(l) = (beta2 * secondMomentumFilterGradients.at(i).at(j).at(k).at(l))
+		for (unsigned i = 0; i < second_momentum_filters.size(); i++) {
+			for (unsigned j = 0; j < second_momentum_filters.at(i).size(); j++) {
+				for (unsigned k = 0; k < second_momentum_filters.at(i).at(j).size(); k++) {
+					for (unsigned l = 0; l < second_momentum_filters.at(i).at(j).at(k).size(); l++) {
+						second_momentum_filters.at(i).at(j).at(k).at(l) = (beta2 * second_momentum_filters.at(i).at(j).at(k).at(l))
 								+ ((1 - beta2) * pow((filterGradients.at(i).at(j).at(k).at(l)) / batchSize, 2));
 					}
 				}
 			}
 		}
-		for (unsigned i = 0; i < secondMomentumFilterBiases.size(); i++) {
-			for (unsigned j = 0; j < secondMomentumFilterBiases.at(i).size(); j++) {
-				secondMomentumFilterBiases.at(i).at(j) = (beta2 * secondMomentumFilterBiases.at(i).at(j))
+		for (unsigned i = 0; i < second_momentum_conv_biases.size(); i++) {
+			for (unsigned j = 0; j < second_momentum_conv_biases.at(i).size(); j++) {
+				second_momentum_conv_biases.at(i).at(j) = (beta2 * second_momentum_conv_biases.at(i).at(j))
 						+ ((1 - beta2) * pow((filterBiases.at(i).at(j)) / batchSize, 2));
 			}
 		}
 	}
 
 	void updateFilters(float alpha) {
-		for (unsigned i = 0; i < firstMomentumFilterGradients.size(); i++) {
-			for (unsigned j = 0; j < firstMomentumFilterGradients.at(i).size(); j++) {
-				for (unsigned k = 0; k < firstMomentumFilterGradients.at(i).at(j).size(); k++) {
-					for (unsigned l = 0; l < firstMomentumFilterGradients.at(i).at(j).at(k).size(); l++) {
+		for (unsigned i = 0; i < first_momentum_filters.size(); i++) {
+			for (unsigned j = 0; j < first_momentum_filters.at(i).size(); j++) {
+				for (unsigned k = 0; k < first_momentum_filters.at(i).at(j).size(); k++) {
+					for (unsigned l = 0; l < first_momentum_filters.at(i).at(j).at(k).size(); l++) {
 						conv_layers[i].filters[j][k][l] = conv_layers[i].filters[j][k][l]
-								- alpha * (firstMomentumFilterGradients.at(i).at(j).at(k).at(l))
-										/ (sqrt(secondMomentumFilterGradients.at(i).at(j).at(k).at(l)) + EPSILON);
+								- alpha * (first_momentum_filters.at(i).at(j).at(k).at(l))
+										/ (sqrt(second_momentum_filters.at(i).at(j).at(k).at(l)) + EPSILON);
 					}
 				}
 			}
 		}
-		for (unsigned i = 0; i < firstMomentumFilterBiases.size(); i++) {
-			for (unsigned j = 0; j < firstMomentumFilterBiases.at(i).size(); j++) {
+		for (unsigned i = 0; i < first_momentum_conv_biases.size(); i++) {
+			for (unsigned j = 0; j < first_momentum_conv_biases.at(i).size(); j++) {
 				conv_layers[i].biases[j] = conv_layers[i].biases[j]
-						- alpha * (firstMomentumFilterBiases.at(i).at(j)) / (sqrt(secondMomentumFilterBiases.at(i).at(j)) + EPSILON);
+						- alpha * (first_momentum_conv_biases.at(i).at(j)) / (sqrt(second_momentum_conv_biases.at(i).at(j)) + EPSILON);
 			}
 		}
-	}*/
+	}
 
 	void updateFilters2(float alpha, vector<vector<vector<vector<float>>>> &filterGradients, vector<vector<float>> &filterBiases, int batchSize) {
 		for (unsigned i = 0; i < filterGradients.size(); i++) {
@@ -526,40 +526,40 @@ public:
 		}
 	}
 
-	/*void updateWeightMomentum(vector<vector<float>> &weightGradient, vector<float> &weightBiases, float beta1, float beta2, int batchSize) {
-		for (unsigned i = 0; i < firstMomentumWeightGradient.size(); i++) {
-			for (unsigned j = 0; j < firstMomentumWeightGradient.at(i).size(); j++) {
-				firstMomentumWeightGradient.at(i).at(j) = (beta1 * firstMomentumWeightGradient.at(i).at(j))
+	void updateWeightMomentum(vector<vector<float>> &weightGradient, vector<float> &weightBiases, float beta1, float beta2, int batchSize) {
+		for (unsigned i = 0; i < first_momentum_weights.size(); i++) {
+			for (unsigned j = 0; j < first_momentum_weights.at(i).size(); j++) {
+				first_momentum_weights.at(i).at(j) = (beta1 * first_momentum_weights.at(i).at(j))
 						+ ((1 - beta1) * weightGradient.at(i).at(j)) / batchSize;
 			}
 		}
-		for (unsigned i = 0; i < firstMomentumWeightBiases.size(); i++) {
-			firstMomentumWeightBiases.at(i) = (beta1 * firstMomentumWeightBiases.at(i)) + ((1 - beta1) * weightBiases.at(i)) / batchSize;
+		for (unsigned i = 0; i < first_momentum_conn_biases.size(); i++) {
+			first_momentum_conn_biases.at(i) = (beta1 * first_momentum_conn_biases.at(i)) + ((1 - beta1) * weightBiases.at(i)) / batchSize;
 		}
 
-		for (unsigned i = 0; i < secondMomentumWeightGradient.size(); i++) {
-			for (unsigned j = 0; j < secondMomentumWeightGradient.at(i).size(); j++) {
-				secondMomentumWeightGradient.at(i).at(j) = (beta2 * secondMomentumWeightGradient.at(i).at(j))
+		for (unsigned i = 0; i < second_momentum_weights.size(); i++) {
+			for (unsigned j = 0; j < second_momentum_weights.at(i).size(); j++) {
+				second_momentum_weights.at(i).at(j) = (beta2 * second_momentum_weights.at(i).at(j))
 						+ ((1 - beta2) * pow(weightGradient.at(i).at(j) / batchSize, 2));
 			}
 		}
-		for (unsigned i = 0; i < secondMomentumWeightBiases.size(); i++) {
-			secondMomentumWeightBiases.at(i) = (beta2 * secondMomentumWeightBiases.at(i)) + ((1 - beta2) * pow(weightBiases.at(i) / batchSize, 2));
+		for (unsigned i = 0; i < second_momentum_conn_biases.size(); i++) {
+			second_momentum_conn_biases.at(i) = (beta2 * second_momentum_conn_biases.at(i)) + ((1 - beta2) * pow(weightBiases.at(i) / batchSize, 2));
 		}
 	}
 
 	void updateWeights(float alpha) {
-		for (unsigned i = 0; i < firstMomentumWeightGradient.size(); i++) {
-			for (unsigned j = 0; j < firstMomentumWeightGradient.at(i).size(); j++) {
+		for (unsigned i = 0; i < first_momentum_weights.size(); i++) {
+			for (unsigned j = 0; j < first_momentum_weights.at(i).size(); j++) {
 				(*connected_layer).weights[i][j] = (*connected_layer).weights[i][j]
-						- alpha * (firstMomentumWeightGradient.at(i).at(j)) / (sqrt(secondMomentumWeightGradient.at(i).at(j)) + EPSILON);
+						- alpha * (first_momentum_weights.at(i).at(j)) / (sqrt(second_momentum_weights.at(i).at(j)) + EPSILON);
 			}
 		}
-		for (unsigned i = 0; i < firstMomentumWeightBiases.size(); i++) {
+		for (unsigned i = 0; i < first_momentum_conn_biases.size(); i++) {
 			(*connected_layer).biases[i] = (*connected_layer).biases[i]
-					- alpha * (firstMomentumWeightBiases.at(i)) / (sqrt(secondMomentumWeightBiases.at(i)) + EPSILON);
+					- alpha * (first_momentum_conn_biases.at(i)) / (sqrt(second_momentum_conn_biases.at(i)) + EPSILON);
 		}
-	}*/
+	}
 
 	void updateWeights2(float alpha, vector<vector<float>> &weigthGradient, vector<float> &weightBiases, int batchSize) {
 		for (unsigned i = 0; i < weigthGradient.size(); i++) {

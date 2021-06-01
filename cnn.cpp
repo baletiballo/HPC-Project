@@ -668,6 +668,8 @@ public:
 
 };
 
+void read_trainingData(string filename, vector<vector<float>> &training_images, vector<int> &correct_lables);
+
 int main() {
 	try {
 		vector<vector<float>> training_images(42000, vector<float>(784));
@@ -680,7 +682,6 @@ int main() {
 		const int batchSize = 1000;
 		const int imageSize = 28;
 		const int num_steps = 100;
-		const float learnRate = 0.001;
 
 			float endLoss;
 			float endCorr;		
@@ -688,7 +689,7 @@ int main() {
 		vector<vector<vector<float>>> batch_images(batchSize, vector<vector<float>>(imageSize, vector<float>(imageSize)));
 		vector<int> batch_lables(batchSize);
 		CNN cnn; //Das benutzte Netzwerk. Topologieänderungen bitte in der Klasse CNN
-    const float alpha = 0.01;		//Lernrate
+		const float alpha = 0.001;		//Lernrate
 		const float beta1 = 0.95;		//Erstes Moment
 		const float beta2 = 0.99;		//Zweites Moment
 		auto training_startTime = chrono::system_clock::now(); // Interner Timer um die Laufzeit zu messen
@@ -704,7 +705,7 @@ int main() {
 				batch_lables[j] = correct_lables[j + randIndex];
 			}
 
-			tuple<float, float> res = cnn.learn(alpha, beta1, beta2, x_batch, y_batch, batchSize);
+			tuple<float, float> res = cnn.learn(alpha, beta1, beta2, batch_images, batch_lables, batchSize);
 
 			float loss = get<0>(res);
 			float correct = get<1>(res);

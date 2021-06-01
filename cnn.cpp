@@ -246,7 +246,7 @@ class CNN {
 public:
 	static const int sizeX = 28;
 	static const int sizeY = 28;
-	static const int num_conv_layers = 2;
+	static const int num_conv_layers = 1;
 	const int num_filters = 8;
 	const int pool_layers_window = 2;
 	const int pool_layers_stride = 2;
@@ -292,8 +292,8 @@ public:
 			currY = (currY - pool_layers_window) / pool_layers_stride + 1;
 		}
 		connected_layer = new FullyConnectedLayer(num_weights, images, currX, currY);
-		first_momentum_weights.resize((images * currX * currY), vector<float>(num_weights));
-		second_momentum_weights.resize((images * currX * currY), vector<float>(num_weights));
+		first_momentum_weights.resize((num_weights), vector<float>(images * currX * currY));
+		second_momentum_weights.resize((num_weights), vector<float>(images * currX * currY));
 		first_momentum_conn_biases.resize(num_weights);
 		second_momentum_conn_biases.resize(num_weights);
 	}
@@ -377,7 +377,7 @@ public:
 			addVectors(weightBiases, get<3>(thelp));
 		}
 
-		/*updateFilterMomentum(filterGradients, filterBiases, beta1, beta2, batchSize); //if you want to use adam uncomment this and comment updateFilters2, updateWeights2
+		 /*updateFilterMomentum(filterGradients, filterBiases, beta1, beta2, batchSize); //if you want to use adam uncomment this and comment updateFilters2, updateWeights2
 		 updateFilters(alpha);
 		 updateWeightMomentum(weightGradient, weightBiases, beta1, beta2, batchSize);
 		 updateWeights(alpha);*/
@@ -457,11 +457,9 @@ public:
 			for (unsigned j = 0; j < first_momentum_filters.at(i).size(); j++) {
 				for (unsigned k = 0; k < first_momentum_filters.at(i).at(j).size(); k++) {
 					for (unsigned l = 0; l < first_momentum_filters.at(i).at(j).at(k).size(); l++) {
-						//cout << firstMomentumFilterGradients.at(i).at(j).at(k).at(l) << " ";
 						first_momentum_filters.at(i).at(j).at(k).at(l) = (beta1 * first_momentum_filters.at(i).at(j).at(k).at(l))
 								+ ((1 - beta1) * filterGradients.at(i).at(j).at(k).at(l)) / batchSize;
 					}
-					//cout << "\n";
 				}
 			}
 		}
@@ -609,9 +607,9 @@ int main() {
 		read_trainingData("train.txt",training_images,correct_lables);
 
 		/*Vorbereiten des Netzwerks für das Training*/
-		const int batchSize = 1000;
+		const int batchSize = 32;
 		const int imageSize = 28;
-		const int num_steps = 100;
+		const int num_steps = 1000;
 
 			float endLoss;
 			float endCorr;		
@@ -619,7 +617,7 @@ int main() {
 		vector<vector<vector<float>>> batch_images(batchSize, vector<vector<float>>(imageSize, vector<float>(imageSize)));
 		vector<int> batch_lables(batchSize);
 		CNN cnn; //Das benutzte Netzwerk. Topologieänderungen bitte in der Klasse CNN
-		const float alpha = 0.001;		//Lernrate
+		const float alpha = 0.01;		//Lernrate
 		const float beta1 = 0.95;		//Erstes Moment
 		const float beta2 = 0.99;		//Zweites Moment
 		auto training_startTime = chrono::system_clock::now(); // Interner Timer um die Laufzeit zu messen

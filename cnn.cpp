@@ -18,6 +18,372 @@
 
 using namespace std;
 
+vector<float> flatten(vector<vector<vector<float>>> &t1) {
+	vector<float> out(t1.size() * t1[0].size() * t1[0][0].size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		for (unsigned j = 0; j < t1[0].size(); j++) {
+			for (unsigned k = 0; k < t1[0][0].size(); k++) {
+				out[i * t1[0].size() * t1[0][0].size() + j * t1[0][0].size() + k] = t1[i][j][k];
+			}
+		}
+	}
+	return out;
+}
+
+vector<vector<vector<float>>> deflatten(vector<float> &t1, int s1, int s2, int s3) {
+	vector<vector<vector<float>>> out(s1, vector<vector<float>>(s2, vector<float>(s3)));
+	for (int i = 0; i < s1; i++) {
+		for (int j = 0; j < s2; j++) {
+			for (int k = 0; k < s3; k++) {
+				out[i][j][k] = t1[i * s2 * s3 + j * s3 + k];
+			}
+		}
+	}
+	return out;
+}
+
+vector<vector<float>> transpose(vector<float> &t1) {
+	vector<vector<float>> output(1, vector<float>(t1.size()));
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[0][i] = t1[i];
+	}
+	return output;
+}
+
+vector<vector<float>> transpose(vector<vector<float>> &t1) {
+	vector<vector<float>> output(t1[0].size(), vector<float>(t1.size()));
+	for (unsigned i = 0; i < t1.size(); i++) {
+		for (unsigned j = 0; j < t1[0].size(); j++) {
+			output[j][i] = t1[i][j];
+		}
+	}
+	return output;
+}
+
+vector<vector<float>> addDim(vector<float> &t1) {
+	vector<vector<float>> output(t1.size(), vector<float>(1));
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i][0] = t1[i];
+	}
+	return output;
+}
+
+vector<float> copy(vector<float> &t1) {
+	vector<float> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = t1[i];
+	}
+	return output;
+}
+
+vector<float> softmax(vector<float> &t1) {
+	float sum = 0.0;
+	vector<float> res(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		res[i] = exp(t1[i]);
+		sum += res[i];
+	}
+	for (unsigned i = 0; i < t1.size(); i++) {
+		res[i] = res[i] / sum;
+	}
+	return res;
+}
+
+void ReLu(vector<float> &t1) {
+	for (unsigned i = 0; i < t1.size(); i++) {
+		if (t1[i] <= 0) {
+			t1[i] = 0;
+		}
+	}
+}
+
+void ReLu(vector<vector<float>> &t1) {
+	for (unsigned i = 0; i < t1.size(); i++) {
+		ReLu(t1[i]);
+	}
+}
+
+void ReLu(vector<vector<vector<float>>> &t1) {
+	for (unsigned i = 0; i < t1.size(); i++) {
+		ReLu(t1[i]);
+	}
+}
+
+void ReLu(vector<vector<vector<vector<float>>>> &t1) {
+	for (unsigned i = 0; i < t1.size(); i++) {
+		ReLu(t1[i]);
+	}
+}
+
+void ReLuPrime(vector<float> &t1, vector<float> &t2) {
+	for (unsigned i = 0; i < t1.size(); i++) {
+		if (t2[i] <= 0) {
+			t1[i] = 0;
+		}
+	}
+}
+
+void ReLuPrime(vector<vector<float>> &t1, vector<vector<float>> &t2) {
+	for (unsigned i = 0; i < t1.size(); i++) {
+		ReLuPrime(t1[i], t2[i]);
+	}
+}
+
+void ReLuPrime(vector<vector<vector<float>>> &t1, vector<vector<vector<float>>> &t2) {
+	for (unsigned i = 0; i < t1.size(); i++) {
+		ReLuPrime(t1[i], t2[i]);
+	}
+}
+
+void ReLuPrime(vector<vector<vector<vector<float>>>> &t1, vector<vector<vector<vector<float>>>> &t2) {
+	for (unsigned i = 0; i < t1.size(); i++) {
+		ReLuPrime(t1[i], t2[i]);
+	}
+}
+
+vector<float> multiply(vector<float> t1, float t2) {
+	vector<float> output(t1.size(), 0.0);
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] += t1[i] * t2;
+	}
+	return output;
+}
+
+vector<vector<float>> multiply(vector<vector<float>> &t1, float t2) {
+	vector<vector<float>> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = multiply(t1[i], t2);
+	}
+	return output;
+}
+
+vector<vector<vector<float>>> multiply(vector<vector<vector<float>>> &t1, float t2) {
+	vector<vector<vector<float>>> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = multiply(t1[i], t2);
+	}
+	return output;
+}
+
+vector<vector<vector<vector<float>>>> multiply(vector<vector<vector<vector<float>>>> &t1, float t2) {
+	vector<vector<vector<vector<float>>>> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = multiply(t1[i], t2);
+	}
+	return output;
+}
+
+float multiply(vector<float> &t1, vector<float> &t2) { //t1 and t2 have to have the same size
+	float output = 0.0;
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output += t1[i] * t2[i];
+	}
+	return output;
+}
+
+vector<float> multiply(vector<vector<float>> &t1, vector<float> &t2) { //t1[0] and t2 have to have the same size
+	vector<float> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = multiply(t1[i], t2);
+	}
+	return output;
+}
+
+vector<vector<float>> multiply(vector<vector<float>> &t1, vector<vector<float>> &t2) { //t1[0] and t2 have to have the same size
+	vector<vector<float>> output(t1.size(), vector<float>(t2[0].size()));
+	vector<vector<float>> t2_t = transpose(t2);
+	for (unsigned i = 0; i < t1.size(); i++) {
+		for (unsigned j = 0; j < t2[0].size(); j++) {
+			output[i][j] = multiply(t1[i], t2_t[j]);
+		}
+	}
+	return output;
+}
+
+vector<float> add(vector<float> &t1, vector<float> &t2) {
+	vector<float> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = t1[i] + t2[i];
+	}
+	return output;
+}
+
+vector<vector<float>> add(vector<vector<float>> &t1, vector<vector<float>> &t2) {
+	vector<vector<float>> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = add(t1[i], t2[i]);
+	}
+	return output;
+}
+
+vector<vector<vector<float>>> add(vector<vector<vector<float>>> &t1, vector<vector<vector<float>>> &t2) {
+	vector<vector<vector<float>>> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = add(t1[i], t2[i]);
+	}
+	return output;
+}
+
+vector<vector<vector<vector<float>>>> add(vector<vector<vector<vector<float>>>> &t1, vector<vector<vector<vector<float>>>> &t2) {
+	vector<vector<vector<vector<float>>>> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = add(t1[i], t2[i]);
+	}
+	return output;
+}
+
+vector<float> add(vector<float> &t1, float t2) {
+	vector<float> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = t1[i] + t2;
+	}
+	return output;
+}
+
+vector<vector<float>> add(vector<vector<float>> &t1, float t2) {
+	vector<vector<float>> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = add(t1[i], t2);
+	}
+	return output;
+}
+
+vector<vector<vector<float>>> add(vector<vector<vector<float>>> &t1, float t2) {
+	vector<vector<vector<float>>> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = add(t1[i], t2);
+	}
+	return output;
+}
+
+vector<vector<vector<vector<float>>>> add(vector<vector<vector<vector<float>>>> &t1, float t2) {
+	vector<vector<vector<vector<float>>>> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = add(t1[i], t2);
+	}
+	return output;
+}
+
+vector<float> root(vector<float> &t1) {
+	vector<float> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = sqrt(t1[i]);
+	}
+	return output;
+}
+
+vector<vector<float>> root(vector<vector<float>> &t1) {
+	vector<vector<float>> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = root(t1[i]);
+	}
+	return output;
+}
+
+vector<vector<vector<float>>> root(vector<vector<vector<float>>> &t1) {
+	vector<vector<vector<float>>> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = root(t1[i]);
+	}
+	return output;
+}
+
+vector<vector<vector<vector<float>>>> root(vector<vector<vector<vector<float>>>> &t1) {
+	vector<vector<vector<vector<float>>>> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = root(t1[i]);
+	}
+	return output;
+}
+
+vector<float> divide(vector<float> &t1, vector<float> &t2) {
+	vector<float> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = t1[i] / t2[i];
+	}
+	return output;
+}
+
+vector<vector<float>> divide(vector<vector<float>> &t1, vector<vector<float>> &t2) {
+	vector<vector<float>> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = divide(t1[i], t2[i]);
+	}
+	return output;
+}
+
+vector<vector<vector<float>>> divide(vector<vector<vector<float>>> &t1, vector<vector<vector<float>>> &t2) {
+	vector<vector<vector<float>>> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = divide(t1[i], t2[i]);
+	}
+	return output;
+}
+
+vector<vector<vector<vector<float>>>> divide(vector<vector<vector<vector<float>>>> &t1, vector<vector<vector<vector<float>>>> &t2) {
+	vector<vector<vector<vector<float>>>> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = divide(t1[i], t2[i]);
+	}
+	return output;
+}
+
+vector<float> pow(vector<float> &t1, float t2) {
+	vector<float> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = pow(t1[i], t2);
+	}
+	return output;
+}
+
+vector<vector<float>> pow(vector<vector<float>> &t1, float t2) {
+	vector<vector<float>> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = pow(t1[i], t2);
+	}
+	return output;
+}
+
+vector<vector<vector<float>>> pow(vector<vector<vector<float>>> &t1, float t2) {
+	vector<vector<vector<float>>> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = pow(t1[i], t2);
+	}
+	return output;
+}
+
+vector<vector<vector<vector<float>>>> pow(vector<vector<vector<vector<float>>>> &t1, float t2) {
+	vector<vector<vector<vector<float>>>> output(t1.size());
+	for (unsigned i = 0; i < t1.size(); i++) {
+		output[i] = pow(t1[i], t2);
+	}
+	return output;
+}
+
+void addInPlace(vector<float> &t1, vector<float> &t2) {
+	for (unsigned i = 0; i < t1.size(); i++) {
+		t1[i] += t2[i];
+	}
+}
+
+void addInPlace(vector<vector<float>> &t1, vector<vector<float>> &t2) {
+	for (unsigned i = 0; i < t1.size(); i++) {
+		addInPlace(t1[i], t2[i]);
+	}
+}
+
+void addInPlace(vector<vector<vector<float>>> &t1, vector<vector<vector<float>>> &t2) {
+	for (unsigned i = 0; i < t1.size(); i++) {
+		addInPlace(t1[i], t2[i]);
+	}
+}
+
+void addInPlace(vector<vector<vector<vector<float>>>> &t1, vector<vector<vector<vector<float>>>> &t2) {
+	for (unsigned i = 0; i < t1.size(); i++) {
+		addInPlace(t1[i], t2[i]);
+	}
+}
+
 class Conv {
 public:
 	int num_filters;
@@ -152,10 +518,6 @@ public:
 
 	vector<vector<vector<float>>> backprop(vector<vector<vector<float>>> &loss_gradient, vector<vector<vector<float>>> &last_input) {
 		vector<vector<vector<float>>> loss_input(num_of_inputs, vector<vector<float>>(input_size1, vector<float>(input_size2, 0.0)));
-		/*cout<<"\n";
-		cout<<last_input.size()<<" "<<num_of_inputs<<"\n";
-		cout<<last_input[0].size()<<" "<<input_size1<<"\n";
-		cout<<last_input[0][0].size()<<" "<<input_size2<<"\n";*/
 		for (int cur_featureMap = 0; cur_featureMap < num_of_inputs; cur_featureMap++) { //per input
 			for (int i = 0; i < input_size1 - window; i += stride) {
 				//per region
@@ -214,79 +576,20 @@ public:
 	}
 
 	vector<float> forward(vector<float> &input) {
-		vector<float> output(num_weights);
-		for (int i = 0; i < num_weights; i++)
-			output[i] = biases[i];
-
-		/*//flatten (the curve xD)
-		 vector<float> input_vector(total_size);
-		 for (int i = 0; i < num_of_inputs; i++)
-		 for (int j = 0; j < input_size1; j++)
-		 for (int k = 0; k < input_size2; k++)
-		 input_vector[i * input_size1 * input_size2 + j * input_size2 + k] = input[i][j][k];
-		 */ //relocate this
-		for (int i = 0; i < num_weights; i++) //per feature
-			for (int j = 0; j < total_size; j++) //per weights
-				output[i] += input[j] * weights[i][j];
-
-		/*//activation function
-		 float total = 0.0;
-		 for (int i = 0; i < num_weights; i++) {
-		 output[i] = exp(output[i]);
-		 total += output[i];
-		 }
-
-		 //normalize
-		 for (int i = 0; i < num_weights; i++) {
-		 output[i] = output[i] / total;
-		 }*/ //relocate this
+		vector<float> output = multiply(weights, input);
+		output = add(output, biases);
 		return output;
 	}
 
 	tuple<vector<vector<float>>, vector<float>, vector<float>> backprop(vector<float> &loss_gradient, vector<float> &last_input) {
-		vector<float> loss_input(total_size, 0.0);
-		vector<vector<float>> weight_gradient(num_weights, vector<float>(total_size));
-		vector<float> bias_gradient(num_weights);
+		vector<vector<float>> loss_gradient_2D = addDim(loss_gradient);
+		vector<vector<float>> last_input_t = transpose(last_input);
+		vector<vector<float>> weight_gradient = multiply(loss_gradient_2D, last_input_t);
 
-		for (int i = 0; i < num_weights; i++) {
-			for (int j = 0; j < total_size; j++) {
-				weight_gradient[i][j] = loss_gradient[i] * last_input[j];
-			}
-		}
-		for (int i = 0; i < num_weights; i++) {
-			bias_gradient[i] = loss_gradient[i];
-		}
-		for (int i = 0; i < num_weights; i++) {
-			for (int j = 0; j < total_size; j++) {
-				loss_input[j] += loss_gradient[i] * weights[i][j];
-			}
-		}
+		vector<float> bias_gradient = copy(loss_gradient);
 
-		/*int index = -1;
-		 for (int i = 0; i < num_weights; i++) {
-		 if (lossGradient[i] != 0)
-		 index = i;
-		 }
-
-		 const float gradient = lossGradient[index];
-
-		 vector<float> dOutDt(num_weights);
-		 for (int i = 0; i < num_weights; i++)
-		 dOutDt[i] = -last_totals[index] * last_totals[i] / (last_sum * last_sum);
-
-		 dOutDt[index] = last_totals[index] * (last_sum - last_totals[index]) / (last_sum * last_sum);
-
-		 vector<float> dLdt(num_weights);
-		 for (int i = 0; i < num_weights; i++) {
-		 dLdt[i] = gradient * dOutDt[i];
-		 }
-
-		 for (int i = 0; i < num_featureMaps * size2 * size3; i++) {
-		 for (int j = 0; j < num_weights; j++) {
-		 lossInput[i / (size2 * size3)][i / size3 % size2][i % size3] += weights[i][j] * dLdt[j];
-		 weightGradient[i][j] += last_inputVector[i] * dLdt[j];
-		 }
-		 }*/
+		vector<vector<float>> weights_t = transpose(weights);
+		vector<float> loss_input = multiply(weights_t, loss_gradient);
 
 		return {weight_gradient, bias_gradient, loss_input};
 	}
@@ -296,7 +599,7 @@ class CNN {
 public:
 	static const int sizeX = 28;
 	static const int sizeY = 28;
-	static const int num_conv_layers = 2;
+	static const int num_conv_layers = 1;
 	const int num_filters = 8;
 	const int pool_layers_window = 2;
 	const int pool_layers_stride = 2;
@@ -343,10 +646,10 @@ public:
 			currY = (currY - pool_layers_window) / pool_layers_stride + 1;
 		}
 		connected_layer = new FullyConnectedLayer(num_weights, images, currX, currY);
-		first_momentum_weights.resize((images * currX * currY), vector<float>(num_weights));
-		second_momentum_weights.resize((images * currX * currY), vector<float>(num_weights));
-		first_momentum_conn_biases.resize(num_weights);
-		second_momentum_conn_biases.resize(num_weights);
+		first_momentum_weights.resize((num_weights), vector<float>(images * currX * currY, 0.0));
+		second_momentum_weights.resize((num_weights), vector<float>(images * currX * currY, 0.0));
+		first_momentum_conn_biases.resize(num_weights, 0.0);
+		second_momentum_conn_biases.resize(num_weights, 0.0);
 	}
 
 	tuple<float, int, tuple<vector<vector<vector<vector<float>>>>, vector<vector<float>>, vector<vector<float>>, vector<float>>> conv(
@@ -384,25 +687,19 @@ public:
 		vector<float> conn_bias_gradient;
 
 		tuple<vector<vector<float>>, vector<float>, vector<float>> helpconn = (*connected_layer).backprop(probs, h);
-		weight_gradient=get<0>(helpconn);
-		conn_bias_gradient=get<1>(helpconn);
-		vector<vector<vector<float>>> helpback=deflatten(get<2>(helpconn), (*connected_layer).num_of_inputs, (*connected_layer).input_size1, (*connected_layer).input_size2);
-		/*cout<<"hello";
-		cout<<z.size();*/
-		for (int i = num_conv_layers-1; i > -1; i--) {
-			//cout<<"hello";
-			helpback=pooling_layers[i].backprop(helpback, z[2*i+1]);
-
-			//cout<<"hello";
-			tuple<vector<vector<vector<float>>>, vector<float>, vector<vector<vector<float>>>> helpconv = conv_layers[i].backprop(helpback, z[2*i]);
+		weight_gradient = get<0>(helpconn);
+		conn_bias_gradient = get<1>(helpconn);
+		vector<vector<vector<float>>> helpback = deflatten(get<2>(helpconn), (*connected_layer).num_of_inputs, (*connected_layer).input_size1,
+				(*connected_layer).input_size2);
+		for (int i = num_conv_layers - 1; i > -1; i--) {
+			helpback = pooling_layers[i].backprop(helpback, z[2 * i + 1]);
+			ReLuPrime(helpback, z[2 * i + 1]);
+			tuple<vector<vector<vector<float>>>, vector<float>, vector<vector<vector<float>>>> helpconv = conv_layers[i].backprop(helpback, z[2 * i]);
 			filter_gradients.push_back(get<0>(helpconv));
 			conv_bias_gradients.push_back(get<1>(helpconv));
-			ReLu(get<2>(helpconv));
-			helpback=get<2>(helpconv);
-			//cout<<"hello";
+			helpback = get<2>(helpconv);
 
 		}
-		//cout<<"hello";
 
 		return {loss, correct, {filter_gradients, conv_bias_gradients, weight_gradient, conn_bias_gradient}};
 	}
@@ -425,87 +722,50 @@ public:
 		for (int i = 1; i < batchSize; i++) {
 			image[0] = x_batch[i];
 			label = y_batch[i];
-
 			t = conv(image, label);
 			loss += get<0>(t);
 			correct += get<1>(t);
-			//cout << "loss" << loss << "correct" << correct << "\n";
 			thelp = get<2>(t);
-			addVectors(filterGradients, get<0>(thelp));
-			addVectors(filterBiases, get<1>(thelp));
-			addVectors(weightGradient, get<2>(thelp));
-			addVectors(weightBiases, get<3>(thelp));
-			/*if(i%10==0) {
-			 for (unsigned i = 0; i < filterGradients.size(); i++) {
-			 for (unsigned j = 0; j < filterGradients.at(i).size(); j++) {
-			 for (unsigned k = 0; k < filterGradients.at(i).at(j).size(); k++) {
-			 for (unsigned l = 0; l < filterGradients.at(i).at(j).at(k).size(); l++) {
-			 cout<<filterGradients.at(i).at(j).at(k).at(l)<<" ";
-			 }
-			 cout<<"\n";
-			 }
-			 }
-			 }
-			 cout<<"\n";
-			 }*/
+			filterGradients = add(filterGradients, get<0>(thelp));
+			filterBiases = add(filterBiases, get<1>(thelp));
+			weightGradient = add(weightGradient, get<2>(thelp));
+			weightBiases = add(weightBiases, get<3>(thelp));
 		}
 
-<<<<<<< Updated upstream
-		/*updateFilterMomentum(filterGradients, filterBiases, beta1, beta2, batchSize);
-		 updateFilters(alpha);
-		 updateWeightMomentum(weightGradient, weightBiases, beta1, beta2, batchSize);
-		 updateWeights(alpha);*/
-=======
 		updateFilterMomentum(filterGradients, filterBiases, beta1, beta2, batchSize); //if you want to use adam uncomment this and comment updateFilters2, updateWeights2
 		updateFilters(alpha, beta1, beta2);
 		updateWeightMomentum(weightGradient, weightBiases, beta1, beta2, batchSize);
 		updateWeights(alpha, beta1, beta2);
->>>>>>> Stashed changes
 
-		updateFilters2(alpha, filterGradients, filterBiases, batchSize);
-		updateWeights2(alpha, weightGradient, weightBiases, batchSize);
+		/*updateFilters2(alpha, filterGradients, filterBiases, batchSize);
+		 updateWeights2(alpha, weightGradient, weightBiases, batchSize);*/
 
 		return {loss, correct};
 	}
 
-	vector<float> flatten(vector<vector<vector<float>>> &t1) {
-		vector<float> out(t1.size() * t1[0].size() * t1[0][0].size());
-		for (unsigned i = 0; i < t1.size(); i++) {
-			for (unsigned j = 0; j < t1[0].size(); j++) {
-				for (unsigned k = 0; k < t1[0][0].size(); k++) {
-					out[i * t1[0].size() * t1[0][0].size() + j * t1[0][0].size() + k] = t1[i][j][k];
-				}
-			}
-		}
-		return out;
+	void updateFilterMomentum(vector<vector<vector<vector<float>>>> &filterGradients, vector<vector<float>> &filterBiases, float beta1, float beta2,
+			int batchSize) {
+		vector<vector<vector<vector<float>>>> first_momentum_filters_adj = multiply(first_momentum_filters, beta1);
+		vector<vector<vector<vector<float>>>> filterGradients_adj1 = multiply(filterGradients, (1 - beta1) / batchSize);
+		first_momentum_filters = add(first_momentum_filters_adj, filterGradients_adj1);
+
+		vector<vector<float>> first_momentum_conv_biases_adj = multiply(first_momentum_conv_biases, beta1);
+		vector<vector<float>> filterBiases_adj1 = multiply(filterBiases, (1 - beta1) / batchSize);
+		first_momentum_conv_biases = add(first_momentum_conv_biases_adj, filterBiases_adj1);
+
+		vector<vector<vector<vector<float>>>> second_momentum_filters_adj = multiply(second_momentum_filters, beta2);
+		vector<vector<vector<vector<float>>>> filterGradients_adj2_temp1 = multiply(filterGradients, 1.0 / batchSize);
+		vector<vector<vector<vector<float>>>> filterGradients_adj2_temp2 = pow(filterGradients_adj2_temp1, 2);
+		vector<vector<vector<vector<float>>>> filterGradients_adj2 = multiply(filterGradients_adj2_temp2, (1 - beta2));
+		second_momentum_filters = add(filterGradients_adj2, filterGradients_adj2);
+
+		vector<vector<float>> second_momentum_conv_biases_adj = multiply(second_momentum_conv_biases, beta2);
+		vector<vector<float>> filterBiases_adj2_temp1 = multiply(filterBiases, 1.0 / batchSize);
+		vector<vector<float>> filterBiases_adj2_temp2 = pow(filterBiases_adj2_temp1, 2);
+		vector<vector<float>> filterBiases_adj2 = multiply(filterBiases_adj2_temp2, (1 - beta2));
+		second_momentum_conv_biases = add(second_momentum_conv_biases_adj, filterBiases_adj2);
 	}
 
-<<<<<<< Updated upstream
-	vector<vector<vector<float>>> deflatten(vector<float> &t1, int s1, int s2, int s3) {
-		vector<vector<vector<float>>> out(s1, vector<vector<float>>(s2, vector<float>(s3)));
-		for (int i = 0; i < s1; i++) {
-			for (int j = 0; j < s2; j++) {
-				for (int k = 0; k < s3; k++) {
-					out[i][j][k] = t1[i * s2 * s3 + j * s3 + k];
-				}
-			}
-		}
-		return out;
-	}
-
-	vector<float> softmax(vector<float> &t1) {
-		float sum = 0.0;
-		vector<float> res(t1.size());
-		for (unsigned i = 0; i < t1.size(); i++) {
-			res[i] = exp(t1[i]);
-			sum += res[i];
-		}
-		for (unsigned i = 0; i < t1.size(); i++) {
-			res[i] = res[i]/sum;
-		}
-		return res;
-	}
-=======
 	void updateFilters(float alpha, float beta1, float beta2) {
 		vector<vector<vector<vector<float>>>> first_momentum_filters_adj = multiply(first_momentum_filters, -alpha/(1-pow(beta1, step)));
 		vector<vector<vector<vector<float>>>> second_momentum_filters_adj_temp1 =  multiply(second_momentum_filters, 1/(1-pow(beta2, step)));
@@ -521,145 +781,46 @@ public:
 		vector<vector<float>> second_momentum_conv_biases_adj_temp2 = root(second_momentum_conv_biases_adj_temp1);
 		vector<vector<float>> second_momentum_conv_biases_adj = add(second_momentum_conv_biases_adj_temp2, EPSILON);
 		vector<vector<float>> conv_biases_change = divide(first_momentum_conv_biases_adj, second_momentum_conv_biases_adj);
->>>>>>> Stashed changes
 
-	void ReLu(vector<float> &t1) {
-		for (unsigned i = 0; i < t1.size(); i++) {
-			if (t1[i] <= 0) {
-				t1[i] = 0;
-			}
-		}
+		for (unsigned i = 0; i < first_momentum_conv_biases.size(); i++) {
+		 conv_layers[i].biases = add(conv_layers[i].biases, conv_biases_change[i]);
+		 }
 	}
-
-	void ReLu(vector<vector<float>> &t1) {
-		for (unsigned i = 0; i < t1.size(); i++) {
-			ReLu(t1[i]);
-		}
-	}
-
-	void ReLu(vector<vector<vector<float>>> &t1) {
-		for (unsigned i = 0; i < t1.size(); i++) {
-			ReLu(t1[i]);
-		}
-	}
-
-	void ReLu(vector<vector<vector<vector<float>>>> &t1) {
-		for (unsigned i = 0; i < t1.size(); i++) {
-			ReLu(t1[i]);
-		}
-	}
-
-	/*void updateFilterMomentum(vector<vector<vector<vector<float>>>> &filterGradients, vector<vector<float>> &filterBiases, float beta1, float beta2,
-			int batchSize) {
-		for (unsigned i = 0; i < firstMomentumFilterGradients.size(); i++) {
-			for (unsigned j = 0; j < firstMomentumFilterGradients.at(i).size(); j++) {
-				for (unsigned k = 0; k < firstMomentumFilterGradients.at(i).at(j).size(); k++) {
-					for (unsigned l = 0; l < firstMomentumFilterGradients.at(i).at(j).at(k).size(); l++) {
-						//cout << firstMomentumFilterGradients.at(i).at(j).at(k).at(l) << " ";
-						firstMomentumFilterGradients.at(i).at(j).at(k).at(l) = (beta1 * firstMomentumFilterGradients.at(i).at(j).at(k).at(l))
-								+ ((1 - beta1) * filterGradients.at(i).at(j).at(k).at(l)) / batchSize;
-					}
-					//cout << "\n";
-				}
-			}
-		}
-		for (unsigned i = 0; i < firstMomentumFilterBiases.size(); i++) {
-			for (unsigned j = 0; j < firstMomentumFilterBiases.at(i).size(); j++) {
-				firstMomentumFilterBiases.at(i).at(j) = (beta1 * firstMomentumFilterBiases.at(i).at(j)) + ((1 - beta1) * filterBiases.at(i).at(j)) / batchSize;
-			}
-		}
-
-		for (unsigned i = 0; i < secondMomentumFilterGradients.size(); i++) {
-			for (unsigned j = 0; j < secondMomentumFilterGradients.at(i).size(); j++) {
-				for (unsigned k = 0; k < secondMomentumFilterGradients.at(i).at(j).size(); k++) {
-					for (unsigned l = 0; l < secondMomentumFilterGradients.at(i).at(j).at(k).size(); l++) {
-						secondMomentumFilterGradients.at(i).at(j).at(k).at(l) = (beta2 * secondMomentumFilterGradients.at(i).at(j).at(k).at(l))
-								+ ((1 - beta2) * pow((filterGradients.at(i).at(j).at(k).at(l)) / batchSize, 2));
-					}
-				}
-			}
-		}
-		for (unsigned i = 0; i < secondMomentumFilterBiases.size(); i++) {
-			for (unsigned j = 0; j < secondMomentumFilterBiases.at(i).size(); j++) {
-				secondMomentumFilterBiases.at(i).at(j) = (beta2 * secondMomentumFilterBiases.at(i).at(j))
-						+ ((1 - beta2) * pow((filterBiases.at(i).at(j)) / batchSize, 2));
-			}
-		}
-	}
-
-	void updateFilters(float alpha) {
-		for (unsigned i = 0; i < firstMomentumFilterGradients.size(); i++) {
-			for (unsigned j = 0; j < firstMomentumFilterGradients.at(i).size(); j++) {
-				for (unsigned k = 0; k < firstMomentumFilterGradients.at(i).at(j).size(); k++) {
-					for (unsigned l = 0; l < firstMomentumFilterGradients.at(i).at(j).at(k).size(); l++) {
-						conv_layers[i].filters[j][k][l] = conv_layers[i].filters[j][k][l]
-								- alpha * (firstMomentumFilterGradients.at(i).at(j).at(k).at(l))
-										/ (sqrt(secondMomentumFilterGradients.at(i).at(j).at(k).at(l)) + EPSILON);
-					}
-				}
-			}
-		}
-		for (unsigned i = 0; i < firstMomentumFilterBiases.size(); i++) {
-			for (unsigned j = 0; j < firstMomentumFilterBiases.at(i).size(); j++) {
-				conv_layers[i].biases[j] = conv_layers[i].biases[j]
-						- alpha * (firstMomentumFilterBiases.at(i).at(j)) / (sqrt(secondMomentumFilterBiases.at(i).at(j)) + EPSILON);
-			}
-		}
-	}*/
 
 	void updateFilters2(float alpha, vector<vector<vector<vector<float>>>> &filterGradients, vector<vector<float>> &filterBiases, int batchSize) {
+		vector<vector<vector<vector<float>>>> filterGradients_adj = multiply(filterGradients, -alpha / batchSize);
 		for (unsigned i = 0; i < filterGradients.size(); i++) {
-			for (unsigned j = 0; j < filterGradients.at(i).size(); j++) {
-				for (unsigned k = 0; k < filterGradients.at(i).at(j).size(); k++) {
-					for (unsigned l = 0; l < filterGradients.at(i).at(j).at(k).size(); l++) {
-						conv_layers[i].filters[j][k][l] = conv_layers[i].filters[j][k][l] - alpha * (filterGradients.at(i).at(j).at(k).at(l)) / batchSize;
-					}
-				}
-			}
+			conv_layers[i].filters = add(conv_layers[i].filters, filterGradients_adj[i]);
 		}
+
+		vector<vector<float>> filterBiases_adj = multiply(filterBiases, -alpha / batchSize);
 		for (unsigned i = 0; i < filterBiases.size(); i++) {
-			for (unsigned j = 0; j < filterBiases.at(i).size(); j++) {
-				conv_layers[i].biases[j] = conv_layers[i].biases[j] - alpha * (filterBiases.at(i).at(j)) / batchSize;
-			}
+			conv_layers[i].biases = add(conv_layers[i].biases, filterBiases_adj[i]);
 		}
 	}
 
-	/*void updateWeightMomentum(vector<vector<float>> &weightGradient, vector<float> &weightBiases, float beta1, float beta2, int batchSize) {
-		for (unsigned i = 0; i < firstMomentumWeightGradient.size(); i++) {
-			for (unsigned j = 0; j < firstMomentumWeightGradient.at(i).size(); j++) {
-				firstMomentumWeightGradient.at(i).at(j) = (beta1 * firstMomentumWeightGradient.at(i).at(j))
-						+ ((1 - beta1) * weightGradient.at(i).at(j)) / batchSize;
-			}
-		}
-		for (unsigned i = 0; i < firstMomentumWeightBiases.size(); i++) {
-			firstMomentumWeightBiases.at(i) = (beta1 * firstMomentumWeightBiases.at(i)) + ((1 - beta1) * weightBiases.at(i)) / batchSize;
-		}
+	void updateWeightMomentum(vector<vector<float>> &weightGradient, vector<float> &weightBiases, float beta1, float beta2, int batchSize) {
+		vector<vector<float>> first_momentum_weights_adj = multiply(first_momentum_weights, beta1);
+		vector<vector<float>> weightGradient_adj1 = multiply(weightGradient, (1 - beta1) / batchSize);
+		first_momentum_weights = add(first_momentum_weights_adj, weightGradient_adj1);
 
-		for (unsigned i = 0; i < secondMomentumWeightGradient.size(); i++) {
-			for (unsigned j = 0; j < secondMomentumWeightGradient.at(i).size(); j++) {
-				secondMomentumWeightGradient.at(i).at(j) = (beta2 * secondMomentumWeightGradient.at(i).at(j))
-						+ ((1 - beta2) * pow(weightGradient.at(i).at(j) / batchSize, 2));
-			}
-		}
-		for (unsigned i = 0; i < secondMomentumWeightBiases.size(); i++) {
-			secondMomentumWeightBiases.at(i) = (beta2 * secondMomentumWeightBiases.at(i)) + ((1 - beta2) * pow(weightBiases.at(i) / batchSize, 2));
-		}
+		vector<float> first_momentum_conn_biases_adj = multiply(first_momentum_conn_biases, beta1);
+		vector<float> weightBiases_adj1 = multiply(weightBiases, (1 - beta1) / batchSize);
+		first_momentum_conn_biases = add(first_momentum_conn_biases_adj, weightBiases_adj1);
+
+		vector<vector<float>> second_momentum_weights_adj = multiply(second_momentum_weights, beta2);
+		vector<vector<float>> weightGradient_adj2_temp1 = multiply(weightGradient, 1.0 / batchSize);
+		vector<vector<float>> weightGradient_adj2_temp2 = pow(weightGradient_adj2_temp1, 2);
+		vector<vector<float>> weightGradient_adj2 = multiply(weightGradient_adj2_temp2, (1 - beta2));
+		second_momentum_weights= add(second_momentum_weights_adj, weightGradient_adj2);
+
+		vector<float> second_momentum_conn_biases_adj = multiply(second_momentum_conn_biases, beta2);
+		vector<float> weightBiases_adj2_temp1 = multiply(weightBiases, 1.0 / batchSize);
+		vector<float> weightBiases_adj2_temp2 = pow(weightBiases_adj2_temp1, 2);
+		vector<float> weightBiases_adj2 = multiply(weightBiases_adj2_temp2, (1 - beta2));
+		second_momentum_conn_biases = add(second_momentum_conn_biases_adj, weightBiases_adj2);
 	}
 
-<<<<<<< Updated upstream
-	void updateWeights(float alpha) {
-		for (unsigned i = 0; i < firstMomentumWeightGradient.size(); i++) {
-			for (unsigned j = 0; j < firstMomentumWeightGradient.at(i).size(); j++) {
-				(*connected_layer).weights[i][j] = (*connected_layer).weights[i][j]
-						- alpha * (firstMomentumWeightGradient.at(i).at(j)) / (sqrt(secondMomentumWeightGradient.at(i).at(j)) + EPSILON);
-			}
-		}
-		for (unsigned i = 0; i < firstMomentumWeightBiases.size(); i++) {
-			(*connected_layer).biases[i] = (*connected_layer).biases[i]
-					- alpha * (firstMomentumWeightBiases.at(i)) / (sqrt(secondMomentumWeightBiases.at(i)) + EPSILON);
-		}
-	}*/
-=======
 	void updateWeights(float alpha, float beta1, float beta2) {
 		vector<vector<float>> first_momentum_weights_adj = multiply(first_momentum_weights, -alpha/(1-pow(beta1, step)));
 		vector<vector<float>> second_momentum_weights_adj_temp1 = multiply(second_momentum_weights, 1/(1-pow(beta2, step)));
@@ -675,44 +836,18 @@ public:
 		vector<float> conn_biases_change = divide(first_momentum_conn_biases_adj, second_momentum_conn_biases_adj);
 		(*connected_layer).biases = add((*connected_layer).biases, conn_biases_change);
 	}
->>>>>>> Stashed changes
 
 	void updateWeights2(float alpha, vector<vector<float>> &weigthGradient, vector<float> &weightBiases, int batchSize) {
-		for (unsigned i = 0; i < weigthGradient.size(); i++) {
-			for (unsigned j = 0; j < weigthGradient.at(i).size(); j++) {
-				(*connected_layer).weights[i][j] = (*connected_layer).weights[i][j] - alpha * (weigthGradient.at(i).at(j)) / batchSize;
-			}
-		}
-		for (unsigned i = 0; i < weightBiases.size(); i++) {
-			(*connected_layer).biases[i] = (*connected_layer).biases[i] - alpha * (weightBiases.at(i)) / batchSize;
-		}
-	}
+		vector<vector<float>> weigthGradient_adj = multiply(weigthGradient, -alpha / batchSize);
+		(*connected_layer).weights = add((*connected_layer).weights, weigthGradient_adj);
 
-	void addVectors(vector<float> &t1, vector<float> &t2) {
-		for (unsigned i = 0; i < t1.size(); i++) {
-			t1[i] += t2[i];
-		}
-	}
-
-	void addVectors(vector<vector<float>> &t1, vector<vector<float>> &t2) {
-		for (unsigned i = 0; i < t1.size(); i++) {
-			addVectors(t1[i], t2[i]);
-		}
-	}
-
-	void addVectors(vector<vector<vector<float>>> &t1, vector<vector<vector<float>>> &t2) {
-		for (unsigned i = 0; i < t1.size(); i++) {
-			addVectors(t1[i], t2[i]);
-		}
-	}
-
-	void addVectors(vector<vector<vector<vector<float>>>> &t1, vector<vector<vector<vector<float>>>> &t2) {
-		for (unsigned i = 0; i < t1.size(); i++) {
-			addVectors(t1[i], t2[i]);
-		}
+		vector<float> weightBiases_adj = multiply(weightBiases, -alpha / batchSize);
+		(*connected_layer).biases = add((*connected_layer).biases, weightBiases_adj);
 	}
 
 };
+
+void read_trainingData(string filename, vector<vector<float>> &training_images, vector<int> &correct_lables);
 
 int main() {
 	try {
@@ -720,29 +855,22 @@ int main() {
 		vector<int> correct_lables(42000);
 
 		/* Einlesen der Trainingsdaten*/
-		read_trainingData("train.txt",training_images,correct_lables);
+		read_trainingData("train.txt", training_images, correct_lables);
 
 		/*Vorbereiten des Netzwerks für das Training*/
-		const int batchSize = 1000;
+		const int batchSize = 32;
 		const int imageSize = 28;
-		const int num_steps = 100;
-		const float learnRate = 0.001;
+		const int num_steps = 1000;
 
-			float endLoss;
-			float endCorr;		
+		float endLoss;
+		float endCorr;
 
 		vector<vector<vector<float>>> batch_images(batchSize, vector<vector<float>>(imageSize, vector<float>(imageSize)));
 		vector<int> batch_lables(batchSize);
 		CNN cnn; //Das benutzte Netzwerk. Topologieänderungen bitte in der Klasse CNN
-<<<<<<< Updated upstream
-    const float alpha = 0.01;		//Lernrate
-		const float beta1 = 0.95;		//Erstes Moment
-		const float beta2 = 0.99;		//Zweites Moment
-=======
 		const float alpha = 0.001;		//Lernrate
 		const float beta1 = 0.99;		//Erstes Moment
 		const float beta2 = 0.999;		//Zweites Moment
->>>>>>> Stashed changes
 		auto training_startTime = chrono::system_clock::now(); // Interner Timer um die Laufzeit zu messen
 
 		for (int i = 0; i < num_steps; i++) {
@@ -750,13 +878,13 @@ int main() {
 			/* Vorberiten des Trainingsbatches */
 			int randIndex = rand() % (42000 - batchSize);
 			for (unsigned j = 0; j < batchSize; j++) { //erstelle einen zufälligen Batch für das Training
-				for (int k = 0; k < 784; k++)//Reformatierung des flachen Vektors in Zeilen und Spalten
-					batch_images[j][k / imageSize][k % imageSize] = training_images[j + randIndex][k]; 
+				for (int k = 0; k < 784; k++) //Reformatierung des flachen Vektors in Zeilen und Spalten
+					batch_images[j][k / imageSize][k % imageSize] = training_images[j + randIndex][k];
 
 				batch_lables[j] = correct_lables[j + randIndex];
 			}
 
-			tuple<float, float> res = cnn.learn(alpha, beta1, beta2, x_batch, y_batch, batchSize);
+			tuple<float, float> res = cnn.learn(alpha, beta1, beta2, batch_images, batch_lables, batchSize);
 
 			float loss = get<0>(res);
 			float correct = get<1>(res);
@@ -764,49 +892,49 @@ int main() {
 			cout << "Batch " << i + 1 << " Average Loss " << loss / batchSize << " Accuracy " << correct / batchSize << "\n";
 
 			/*zusätzliche Daten zum Topologievergleich*/
-			if(num_steps-i <= 10){
+			if (num_steps - i <= 10) {
 				endLoss += loss;
-				endCorr += correct; 
+				endCorr += correct;
 			}
 
 			//cout << "Batch " << i + 1 << " Average Loss " << loss / batchSize << " Accuracy " << correct / batchSize << "\n";
 		}
 
 		auto training_endTime = chrono::system_clock::now();
-		chrono::duration<double> totalTime = training_endTime-training_startTime;
-		cout << "Total time: " << (int)(totalTime.count()/60) << " minutes " << (int)(totalTime.count()) % 60 << " seconds\n";
-		cout << "Average batch time: " << (totalTime.count()/ num_steps) << "seconds\n";
-		cout << "Average loss in last 10 batches:" << endLoss/(10*batchSize) << ", Average accuracy in last 10 batches: " << endCorr/(10*batchSize) <<"\n";
+		chrono::duration<double> totalTime = training_endTime - training_startTime;
+		cout << "Total time: " << (int) (totalTime.count() / 60) << " minutes " << (int) (totalTime.count()) % 60 << " seconds\n";
+		cout << "Average batch time: " << (totalTime.count() / num_steps) << "seconds\n";
+		cout << "Average loss in last 10 batches:" << endLoss / (10 * batchSize) << ", Average accuracy in last 10 batches: " << endCorr / (10 * batchSize)
+				<< "\n";
 		return 0;
 	} catch (const exception&) {
 		return -1;
 	}
 }
 
-void read_trainingData(string filename, vector<vector<float>> &training_images, vector<int> &correct_lables)
-{
+void read_trainingData(string filename, vector<vector<float>> &training_images, vector<int> &correct_lables) {
 	ifstream myFile(filename);
-		if (myFile.is_open()) {
-			int lineNum = 0;
-			string line;
-			while (getline(myFile, line))
-			{
-				istringstream ss(line);
-				string token;
-				int i = 0;
-				while (getline(ss, token, '\t')) {
-					int digit = stoi(token, nullptr);
-					if (i == 0)			//erste Zahl jeder Zeile ist das lable
-						correct_lables[lineNum] = digit;
-					else				//der Rest das Graustufenbild
-						training_images[lineNum][i - 1] = static_cast<float>(digit) / static_cast<float>(255);
+	if (myFile.is_open()) {
+		int lineNum = 0;
+		string line;
+		while (getline(myFile, line)) {
+			istringstream ss(line);
+			string token;
+			int i = 0;
+			while (getline(ss, token, '\t')) {
+				int digit = stoi(token, nullptr);
+				if (i == 0)			//erste Zahl jeder Zeile ist das lable
+					correct_lables[lineNum] = digit;
+				else
+					//der Rest das Graustufenbild
+					training_images[lineNum][i - 1] = static_cast<float>(digit) / static_cast<float>(255);
 
-					i++;
-				}
-
-				lineNum++;
+				i++;
 			}
-			myFile.close();
+
+			lineNum++;
 		}
+		myFile.close();
+	}
 
 }

@@ -303,7 +303,8 @@ public:
 	const int conv_size1 = 3;
 	const int conv_size2 = 3;
 	const int num_weights = 10;
-	const float EPSILON = 1 * 10 ^ (-7);
+	const float EPSILON = 1 * 10 ^ (-8);
+	int step=0;
 
 	vector<Conv> conv_layers;
 	vector<MaxPool> pooling_layers;
@@ -407,6 +408,8 @@ public:
 	}
 
 	tuple<float, float> learn(float alpha, float beta1, float beta2, vector<vector<vector<float>> > &x_batch, vector<int> &y_batch, int batchSize) {
+		step++;
+
 		vector<vector<vector<float>> > image(1, vector<vector<float>>(sizeX, vector<float>(sizeY)));
 		image[0] = x_batch[0];
 		int label = y_batch[0];
@@ -447,10 +450,17 @@ public:
 			 }*/
 		}
 
+<<<<<<< Updated upstream
 		/*updateFilterMomentum(filterGradients, filterBiases, beta1, beta2, batchSize);
 		 updateFilters(alpha);
 		 updateWeightMomentum(weightGradient, weightBiases, beta1, beta2, batchSize);
 		 updateWeights(alpha);*/
+=======
+		updateFilterMomentum(filterGradients, filterBiases, beta1, beta2, batchSize); //if you want to use adam uncomment this and comment updateFilters2, updateWeights2
+		updateFilters(alpha, beta1, beta2);
+		updateWeightMomentum(weightGradient, weightBiases, beta1, beta2, batchSize);
+		updateWeights(alpha, beta1, beta2);
+>>>>>>> Stashed changes
 
 		updateFilters2(alpha, filterGradients, filterBiases, batchSize);
 		updateWeights2(alpha, weightGradient, weightBiases, batchSize);
@@ -470,6 +480,7 @@ public:
 		return out;
 	}
 
+<<<<<<< Updated upstream
 	vector<vector<vector<float>>> deflatten(vector<float> &t1, int s1, int s2, int s3) {
 		vector<vector<vector<float>>> out(s1, vector<vector<float>>(s2, vector<float>(s3)));
 		for (int i = 0; i < s1; i++) {
@@ -494,6 +505,23 @@ public:
 		}
 		return res;
 	}
+=======
+	void updateFilters(float alpha, float beta1, float beta2) {
+		vector<vector<vector<vector<float>>>> first_momentum_filters_adj = multiply(first_momentum_filters, -alpha/(1-pow(beta1, step)));
+		vector<vector<vector<vector<float>>>> second_momentum_filters_adj_temp1 =  multiply(second_momentum_filters, 1/(1-pow(beta2, step)));
+		vector<vector<vector<vector<float>>>> second_momentum_filters_adj_temp2 = root(second_momentum_filters_adj_temp1);
+		vector<vector<vector<vector<float>>>> second_momentum_filters_adj = add(second_momentum_filters_adj_temp2, EPSILON);
+		vector<vector<vector<vector<float>>>> filter_change = divide(first_momentum_filters_adj, second_momentum_filters_adj);
+		for (unsigned i = 0; i < first_momentum_filters.size(); i++) {
+		 conv_layers[i].filters = add(conv_layers[i].filters, filter_change[i]);
+		 }
+
+		vector<vector<float>> first_momentum_conv_biases_adj = multiply(first_momentum_conv_biases, -alpha/(1-pow(beta1, step)));
+		vector<vector<float>> second_momentum_conv_biases_adj_temp1=multiply(second_momentum_conv_biases, 1/(1-pow(beta2, step)));
+		vector<vector<float>> second_momentum_conv_biases_adj_temp2 = root(second_momentum_conv_biases_adj_temp1);
+		vector<vector<float>> second_momentum_conv_biases_adj = add(second_momentum_conv_biases_adj_temp2, EPSILON);
+		vector<vector<float>> conv_biases_change = divide(first_momentum_conv_biases_adj, second_momentum_conv_biases_adj);
+>>>>>>> Stashed changes
 
 	void ReLu(vector<float> &t1) {
 		for (unsigned i = 0; i < t1.size(); i++) {
@@ -618,6 +646,7 @@ public:
 		}
 	}
 
+<<<<<<< Updated upstream
 	void updateWeights(float alpha) {
 		for (unsigned i = 0; i < firstMomentumWeightGradient.size(); i++) {
 			for (unsigned j = 0; j < firstMomentumWeightGradient.at(i).size(); j++) {
@@ -630,6 +659,23 @@ public:
 					- alpha * (firstMomentumWeightBiases.at(i)) / (sqrt(secondMomentumWeightBiases.at(i)) + EPSILON);
 		}
 	}*/
+=======
+	void updateWeights(float alpha, float beta1, float beta2) {
+		vector<vector<float>> first_momentum_weights_adj = multiply(first_momentum_weights, -alpha/(1-pow(beta1, step)));
+		vector<vector<float>> second_momentum_weights_adj_temp1 = multiply(second_momentum_weights, 1/(1-pow(beta2, step)));
+		vector<vector<float>> second_momentum_weights_adj_temp2 = root(second_momentum_weights_adj_temp1);
+		vector<vector<float>> second_momentum_weights_adj = add(second_momentum_weights_adj_temp2, EPSILON);
+		vector<vector<float>> weights_change = divide(first_momentum_weights_adj, second_momentum_weights_adj);
+		(*connected_layer).weights = add((*connected_layer).weights, weights_change);
+
+		vector<float> first_momentum_conn_biases_adj = multiply(first_momentum_conn_biases, -alpha/(1-pow(beta1, step)));
+		vector<float> second_momentum_conn_biases_adj_temp1 = multiply(second_momentum_conn_biases, 1/(1-pow(beta2, step)));
+		vector<float> second_momentum_conn_biases_adj_temp2 = root(second_momentum_conn_biases_adj_temp1);
+		vector<float> second_momentum_conn_biases_adj = add(second_momentum_conn_biases_adj_temp2, EPSILON);
+		vector<float> conn_biases_change = divide(first_momentum_conn_biases_adj, second_momentum_conn_biases_adj);
+		(*connected_layer).biases = add((*connected_layer).biases, conn_biases_change);
+	}
+>>>>>>> Stashed changes
 
 	void updateWeights2(float alpha, vector<vector<float>> &weigthGradient, vector<float> &weightBiases, int batchSize) {
 		for (unsigned i = 0; i < weigthGradient.size(); i++) {
@@ -688,9 +734,15 @@ int main() {
 		vector<vector<vector<float>>> batch_images(batchSize, vector<vector<float>>(imageSize, vector<float>(imageSize)));
 		vector<int> batch_lables(batchSize);
 		CNN cnn; //Das benutzte Netzwerk. Topologieänderungen bitte in der Klasse CNN
+<<<<<<< Updated upstream
     const float alpha = 0.01;		//Lernrate
 		const float beta1 = 0.95;		//Erstes Moment
 		const float beta2 = 0.99;		//Zweites Moment
+=======
+		const float alpha = 0.001;		//Lernrate
+		const float beta1 = 0.99;		//Erstes Moment
+		const float beta2 = 0.999;		//Zweites Moment
+>>>>>>> Stashed changes
 		auto training_startTime = chrono::system_clock::now(); // Interner Timer um die Laufzeit zu messen
 
 		for (int i = 0; i < num_steps; i++) {

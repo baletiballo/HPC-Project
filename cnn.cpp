@@ -729,13 +729,19 @@ public:
 			weightBiases = add(weightBiases, get<3>(thelp));
 		}
 
-		updateFilterMomentum(filterGradients, filterBiases, beta1, beta2, batchSize); //if you want to use adam uncomment this and comment updateFilters2, updateWeights2
+		/*
+		//ADAM learning
+		updateFilterMomentum(filterGradients, filterBiases, beta1, beta2, batchSize); 
 		updateFilters(alpha);
 		updateWeightMomentum(weightGradient, weightBiases, beta1, beta2, batchSize);
 		updateWeights(alpha);
+		*/
 
-		/*updateFilters2(alpha, filterGradients, filterBiases, batchSize);
-		 updateWeights2(alpha, weightGradient, weightBiases, batchSize);*/
+		
+		//SGD learning
+		updateFilters2(alpha, filterGradients, filterBiases, batchSize);
+		updateWeights2(alpha, weightGradient, weightBiases, batchSize);
+		
 
 		return {loss, correct};
 	}
@@ -851,9 +857,9 @@ int main() {
 		read_trainingData("train.txt", training_images, correct_lables);
 
 		/*Vorbereiten des Netzwerks für das Training*/
-		const int batchSize = 32;
+		const int batchSize = 32; 
 		const int imageSize = 28;
-		const int num_steps = 1000;
+		const int num_steps = 10000;
 
 		float endLoss;
 		float endCorr;
@@ -864,11 +870,12 @@ int main() {
 		const float alpha = 0.01;		//Lernrate
 		const float beta1 = 0.95;		//Erstes Moment
 		const float beta2 = 0.99;		//Zweites Moment
+		cout << "Beginn des Trainings\n";
 		auto training_startTime = chrono::system_clock::now(); // Interner Timer um die Laufzeit zu messen
 
 		for (int i = 0; i < num_steps; i++) {
 
-			/* Vorberiten des Trainingsbatches */
+			/* Vorbereiten des Trainingsbatches */
 			int randIndex = rand() % (42000 - batchSize);
 			for (unsigned j = 0; j < batchSize; j++) { //erstelle einen zufälligen Batch für das Training
 				for (int k = 0; k < 784; k++) //Reformatierung des flachen Vektors in Zeilen und Spalten
@@ -880,25 +887,22 @@ int main() {
 			tuple<float, float> res = cnn.learn(alpha, beta1, beta2, batch_images, batch_lables, batchSize);
 
 			float loss = get<0>(res);
-			float correct = get<1>(res);
+			float correct = get<1>(res) * 1.0;
 
-			cout << "Batch " << i + 1 << " Average Loss " << loss / batchSize << " Accuracy " << correct / batchSize << "\n";
+			//cout << "Batch " << i + 1 << " \t Average Loss " << loss / batchSize << "\t Accuracy " << correct / batchSize << "\n";
 
-			/*zusätzliche Daten zum Topologievergleich*/
-			if (num_steps - i <= 10) {
+			if(num_steps-i <= 10){
 				endLoss += loss;
 				endCorr += correct;
 			}
-
-			//cout << "Batch " << i + 1 << " Average Loss " << loss / batchSize << " Accuracy " << correct / batchSize << "\n";
 		}
 
 		auto training_endTime = chrono::system_clock::now();
 		chrono::duration<double> totalTime = training_endTime - training_startTime;
 		cout << "Total time: " << (int) (totalTime.count() / 60) << " minutes " << (int) (totalTime.count()) % 60 << " seconds\n";
-		cout << "Average batch time: " << (totalTime.count() / num_steps) << "seconds\n";
-		cout << "Average loss in last 10 batches:" << endLoss / (10 * batchSize) << ", Average accuracy in last 10 batches: " << endCorr / (10 * batchSize)
-				<< "\n";
+		cout << "Average loss in last " << batchSize*10 << " tries:" << endLoss / (10 * batchSize) 
+				<< "\t Average accuracy in last 10 batches: " << endCorr / (10 * batchSize)<< "\n";
+		
 		return 0;
 	} catch (const exception&) {
 		return -1;

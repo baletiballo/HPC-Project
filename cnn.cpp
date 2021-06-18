@@ -12,7 +12,6 @@
 #include <string>
 #include <random>
 #include <tuple>
-#include <float.h>
 #include <chrono>
 #include <ctime> 
 
@@ -521,7 +520,7 @@ public:
 	const int conv_size1 = 3;
 	const int conv_size2 = 3;
 	const int num_weights = 10;
-	const float EPSILON = 1 * 10 ^ (-7);
+	const float EPSILON = 0.00000001;
 
 	vector<Conv> conv_layers;
 	vector<MaxPool> pooling_layers;
@@ -624,7 +623,8 @@ public:
 		vector<vector<vector<float>> > image(1, vector<vector<float>>(sizeX, vector<float>(sizeY)));
 		image[0] = x_batch[0];
 		int label = y_batch[0];
-		tuple<float, int, tuple<vector<vector<vector<vector<float>>>>, vector<vector<float>>, vector<vector<float>>, vector<float>>> t = conv(image, label);
+		tuple<float, int, tuple<vector<vector<vector<vector<float>>>>, vector<vector<float>>, vector<vector<float>>, vector<float>>> t = conv(image,
+				label);
 		tuple<vector<vector<vector<vector<float>>>>, vector<vector<float>>, vector<vector<float>>, vector<float>> thelp = get<2>(t);
 		vector<vector<vector<vector<float>>>> filterGradients = get<0>(thelp);
 		vector<vector<float>> filterBiases = get<1>(thelp);
@@ -652,38 +652,45 @@ public:
 		multiply(weightGradient, 1.0 / batchSize, weightGradient);
 		multiply(weightBiases, 1.0 / batchSize, weightBiases);
 
+		//ADAM learning
+		updateFilterMomentum(filterGradients, filterBiases, beta1, beta2);
+		updateFilters(alpha);
+		updateWeightMomentum(weightGradient, weightBiases, beta1, beta2);
+		updateWeights(alpha);
+
 		/*
-		 //ADAM learning
-		 updateFilterMomentum(filterGradients, filterBiases, beta1, beta2, batchSize);
-		 updateFilters(alpha);
-		 updateWeightMomentum(weightGradient, weightBiases, beta1, beta2, batchSize);
-		 updateWeights(alpha);
+		 //SGD learning
+		 updateFilters2(alpha, filterGradients, filterBiases);
+		 updateWeights2(alpha, weightGradient, weightBiases);
 		 */
-
-		//SGD learning
-		updateFilters2(alpha, filterGradients, filterBiases);
-		updateWeights2(alpha, weightGradient, weightBiases);
-
 		return {loss, correct};
 	}
 
 	void updateFilterMomentum(vector<vector<vector<vector<float>>>> &filterGradients, vector<vector<float>> &filterBiases, float beta1, float beta2) {
 		multiply(first_momentum_filters, beta1, first_momentum_filters);
-		multiply(filterGradients, (1 - beta1), filterGradients);
+		multiply(filterGradients, (1.0 - beta1), filterGradients);
 		add(first_momentum_filters, filterGradients, first_momentum_filters);
 
 		multiply(first_momentum_conv_biases, beta1, first_momentum_conv_biases);
-		multiply(filterBiases, (1 - beta1), filterBiases);
+		multiply(filterBiases, (1.0 - beta1), filterBiases);
 		add(first_momentum_conv_biases, filterBiases, first_momentum_conv_biases);
 
 		multiply(second_momentum_filters, beta2, second_momentum_filters);
 		pow(filterGradients, 2, filterGradients);
-		multiply(filterGradients, (1 - beta2) / (pow((1 - beta1), 2)), filterGradients);
+		if ((1.0 - beta2) != 0.0) {
+			multiply(filterGradients, (1.0 - beta2) / (pow((1 - beta1), 2)), filterGradients);
+		} else {
+			multiply(filterGradients, 0.0, filterGradients);
+		}
 		add(second_momentum_filters, filterGradients, second_momentum_filters);
 
 		multiply(second_momentum_conv_biases, beta2, second_momentum_conv_biases);
 		pow(filterBiases, 2, filterBiases);
-		multiply(filterBiases, (1 - beta2) / (pow((1 - beta1), 2)), filterBiases);
+		if ((1.0 - beta2) != 0.0) {
+			multiply(filterBiases, (1.0 - beta2) / (pow((1 - beta1), 2)), filterBiases);
+		} else {
+			multiply(filterBiases, 0.0, filterBiases);
+		}
 		add(second_momentum_conv_biases, filterBiases, second_momentum_conv_biases);
 	}
 
@@ -732,21 +739,29 @@ public:
 
 	void updateWeightMomentum(vector<vector<float>> &weightGradient, vector<float> &weightBiases, float beta1, float beta2) {
 		multiply(first_momentum_weights, beta1, first_momentum_weights);
-		multiply(weightGradient, (1 - beta1), weightGradient);
+		multiply(weightGradient, (1.0 - beta1), weightGradient);
 		add(first_momentum_weights, weightGradient, first_momentum_weights);
 
 		multiply(first_momentum_conn_biases, beta1, first_momentum_conn_biases);
-		multiply(weightBiases, (1 - beta1), weightBiases);
+		multiply(weightBiases, (1.0 - beta1), weightBiases);
 		add(first_momentum_conn_biases, weightBiases, first_momentum_conn_biases);
 
 		multiply(second_momentum_weights, beta2, second_momentum_weights);
 		pow(weightGradient, 2, weightGradient);
-		multiply(weightGradient, (1 - beta2) / (pow((1 - beta1), 2)), weightGradient);
+		if ((1.0 - beta2) != 0.0) {
+			multiply(weightGradient, (1.0 - beta2) / (pow((1 - beta1), 2)), weightGradient);
+		} else {
+			multiply(weightGradient, 0.0, weightGradient);
+		}
 		add(second_momentum_weights, weightGradient, second_momentum_weights);
 
 		multiply(second_momentum_conn_biases, beta2, second_momentum_conn_biases);
 		pow(weightBiases, 2, weightBiases);
-		multiply(weightBiases, (1 - beta2) / (pow((1 - beta1), 2)), weightBiases);
+		if ((1.0 - beta2) != 0.0) {
+			multiply(weightBiases, (1.0 - beta2) / (pow((1 - beta1), 2)), weightBiases);
+		} else {
+			multiply(weightBiases, 0.0, weightBiases);
+		}
 		add(second_momentum_conn_biases, weightBiases, second_momentum_conn_biases);
 	}
 

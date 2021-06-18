@@ -42,51 +42,21 @@ vector<vector<vector<float>>> deflatten(vector<float> &t1, int s1, int s2, int s
 	return out;
 }
 
-vector<vector<float>> transpose(vector<float> &t1) {
-	vector<vector<float>> output(1, vector<float>(t1.size()));
-	for (unsigned i = 0; i < t1.size(); i++) {
-		output[0][i] = t1[i];
-	}
-	return output;
-}
-
-vector<vector<float>> transpose(vector<vector<float>> &t1) {
-	vector<vector<float>> output(t1[0].size(), vector<float>(t1.size()));
-	for (unsigned i = 0; i < t1.size(); i++) {
-		for (unsigned j = 0; j < t1[0].size(); j++) {
-			output[j][i] = t1[i][j];
-		}
-	}
-	return output;
-}
-
-vector<vector<float>> addDim(vector<float> &t1) {
-	vector<vector<float>> output(t1.size(), vector<float>(1));
-	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i][0] = t1[i];
-	}
-	return output;
-}
-
-vector<float> copy(vector<float> &t1) {
-	vector<float> output(t1.size());
+void copy(vector<float> &t1, vector<float> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
 		output[i] = t1[i];
 	}
-	return output;
 }
 
-vector<float> softmax(vector<float> &t1) {
+void softmax(vector<float> &t1, vector<float> &output) { //t1 and output have to have the same size
 	float sum = 0.0;
-	vector<float> res(t1.size());
 	for (unsigned i = 0; i < t1.size(); i++) {
-		res[i] = exp(t1[i]);
-		sum += res[i];
+		output[i] = exp(t1[i]);
+		sum += output[i];
 	}
 	for (unsigned i = 0; i < t1.size(); i++) {
-		res[i] = res[i] / sum;
+		output[i] = output[i] / sum;
 	}
-	return res;
 }
 
 void ReLu(vector<float> &t1) {
@@ -141,246 +111,190 @@ void ReLuPrime(vector<vector<vector<vector<float>>>> &t1, vector<vector<vector<v
 	}
 }
 
-vector<float> multiply(vector<float> t1, float t2) {
-	vector<float> output(t1.size(), 0.0);
+void multiply(vector<float> &t1, float t2, vector<float> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i] += t1[i] * t2;
+		output[i] = t1[i] * t2;
 	}
-	return output;
 }
 
-vector<vector<float>> multiply(vector<vector<float>> &t1, float t2) {
-	vector<vector<float>> output(t1.size());
+void multiply(vector<vector<float>> &t1, float t2, vector<vector<float>> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i] = multiply(t1[i], t2);
+		multiply(t1[i], t2, output[i]);
 	}
-	return output;
 }
 
-vector<vector<vector<float>>> multiply(vector<vector<vector<float>>> &t1, float t2) {
-	vector<vector<vector<float>>> output(t1.size());
+void multiply(vector<vector<vector<float>>> &t1, float t2, vector<vector<vector<float>>> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i] = multiply(t1[i], t2);
+		multiply(t1[i], t2, output[i]);
 	}
-	return output;
 }
 
-vector<vector<vector<vector<float>>>> multiply(vector<vector<vector<vector<float>>>> &t1, float t2) {
-	vector<vector<vector<vector<float>>>> output(t1.size());
+void multiply(vector<vector<vector<vector<float>>>> &t1, float t2, vector<vector<vector<vector<float>>>> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i] = multiply(t1[i], t2);
+		multiply(t1[i], t2, output[i]);
 	}
-	return output;
 }
 
-float multiply(vector<float> &t1, vector<float> &t2) { //t1 and t2 have to have the same size
-	float output = 0.0;
+void multiply(vector<float> &t1, vector<float> &t2, float &output) { //t1 and t2 have to have the same size
+	output = 0.0;
 	for (unsigned i = 0; i < t1.size(); i++) {
 		output += t1[i] * t2[i];
 	}
-	return output;
 }
 
-vector<float> multiply(vector<vector<float>> &t1, vector<float> &t2) { //t1[0] and t2 have to have the same size
-	vector<float> output(t1.size());
+void multiply(vector<vector<float>> &t1, vector<float> &t2, vector<float> &output) { //t1[0] and t2 have to have the same size, t1 and output have to have the same size
+	float tmp = 0.0;
 	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i] = multiply(t1[i], t2);
+		multiply(t1[i], t2, tmp);
+		output[i] = tmp;
 	}
-	return output;
 }
 
-vector<vector<float>> multiply(vector<vector<float>> &t1, vector<vector<float>> &t2) { //t1[0] and t2 have to have the same size
-	vector<vector<float>> output(t1.size(), vector<float>(t2[0].size()));
-	vector<vector<float>> t2_t = transpose(t2);
+void multiply(vector<vector<float>> &t1, vector<vector<float>> &t2, vector<vector<float>> &output) { //t1[0] and t2 have to have the same size, t1 and output have to have the same size, t2[0] and output[0] have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
 		for (unsigned j = 0; j < t2[0].size(); j++) {
-			output[i][j] = multiply(t1[i], t2_t[j]);
+			output[i][j] = 0.0;
+			for (unsigned k = 0; k < t1[0].size(); k++) {
+				output[i][j] += t1[i][k] * t2[k][j];
+			}
 		}
 	}
-	return output;
 }
 
-vector<float> add(vector<float> &t1, vector<float> &t2) {
-	vector<float> output(t1.size());
+void multiply_t2_t(vector<float> &t1, vector<float> &t2, vector<vector<float>> &output) { //t1 and output have to have the same size, t2 and output[0] have to have the same size
+	for (unsigned i = 0; i < t1.size(); i++) {
+		for (unsigned j = 0; j < t2.size(); j++) {
+			output[i][j] = t1[i] * t2[j];
+		}
+	}
+}
+
+void multiply_t1_t(vector<vector<float>> &t1, vector<float> &t2, vector<float> &output) { //t1 and t2 have to have the same size, t1[0] and output have to have the same size
+	for (unsigned i = 0; i < t1[0].size(); i++) {
+		output[i] = 0.0;
+		for (unsigned j = 0; j < t1.size(); j++) {
+			output[i] += t1[j][i] * t2[j];
+		}
+	}
+}
+
+void add(vector<float> &t1, vector<float> &t2, vector<float> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
 		output[i] = t1[i] + t2[i];
 	}
-	return output;
 }
 
-vector<vector<float>> add(vector<vector<float>> &t1, vector<vector<float>> &t2) {
-	vector<vector<float>> output(t1.size());
+void add(vector<vector<float>> &t1, vector<vector<float>> &t2, vector<vector<float>> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i] = add(t1[i], t2[i]);
+		add(t1[i], t2[i], output[i]);
 	}
-	return output;
 }
 
-vector<vector<vector<float>>> add(vector<vector<vector<float>>> &t1, vector<vector<vector<float>>> &t2) {
-	vector<vector<vector<float>>> output(t1.size());
+void add(vector<vector<vector<float>>> &t1, vector<vector<vector<float>>> &t2, vector<vector<vector<float>>> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i] = add(t1[i], t2[i]);
+		add(t1[i], t2[i], output[i]);
 	}
-	return output;
 }
 
-vector<vector<vector<vector<float>>>> add(vector<vector<vector<vector<float>>>> &t1, vector<vector<vector<vector<float>>>> &t2) {
-	vector<vector<vector<vector<float>>>> output(t1.size());
+void add(vector<vector<vector<vector<float>>>> &t1, vector<vector<vector<vector<float>>>> &t2, vector<vector<vector<vector<float>>>> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i] = add(t1[i], t2[i]);
+		add(t1[i], t2[i], output[i]);
 	}
-	return output;
 }
 
-vector<float> add(vector<float> &t1, float t2) {
-	vector<float> output(t1.size());
+void add(vector<float> &t1, float t2, vector<float> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
 		output[i] = t1[i] + t2;
 	}
-	return output;
 }
 
-vector<vector<float>> add(vector<vector<float>> &t1, float t2) {
-	vector<vector<float>> output(t1.size());
+void add(vector<vector<float>> &t1, float t2, vector<vector<float>> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i] = add(t1[i], t2);
+		add(t1[i], t2, output[i]);
 	}
-	return output;
 }
 
-vector<vector<vector<float>>> add(vector<vector<vector<float>>> &t1, float t2) {
-	vector<vector<vector<float>>> output(t1.size());
+void add(vector<vector<vector<float>>> &t1, float t2, vector<vector<vector<float>>> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i] = add(t1[i], t2);
+		add(t1[i], t2, output[i]);
 	}
-	return output;
 }
 
-vector<vector<vector<vector<float>>>> add(vector<vector<vector<vector<float>>>> &t1, float t2) {
-	vector<vector<vector<vector<float>>>> output(t1.size());
+void add(vector<vector<vector<vector<float>>>> &t1, float t2, vector<vector<vector<vector<float>>>> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i] = add(t1[i], t2);
+		add(t1[i], t2, output[i]);
 	}
-	return output;
 }
 
-vector<float> root(vector<float> &t1) {
-	vector<float> output(t1.size());
+void root(vector<float> &t1, vector<float> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
 		output[i] = sqrt(t1[i]);
 	}
-	return output;
 }
 
-vector<vector<float>> root(vector<vector<float>> &t1) {
-	vector<vector<float>> output(t1.size());
+void root(vector<vector<float>> &t1, vector<vector<float>> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i] = root(t1[i]);
+		root(t1[i], output[i]);
 	}
-	return output;
 }
 
-vector<vector<vector<float>>> root(vector<vector<vector<float>>> &t1) {
-	vector<vector<vector<float>>> output(t1.size());
+void root(vector<vector<vector<float>>> &t1, vector<vector<vector<float>>> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i] = root(t1[i]);
+		root(t1[i], output[i]);
 	}
-	return output;
 }
 
-vector<vector<vector<vector<float>>>> root(vector<vector<vector<vector<float>>>> &t1) {
-	vector<vector<vector<vector<float>>>> output(t1.size());
+void root(vector<vector<vector<vector<float>>>> &t1, vector<vector<vector<vector<float>>>> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i] = root(t1[i]);
+		root(t1[i], output[i]);
 	}
-	return output;
 }
 
-vector<float> divide(vector<float> &t1, vector<float> &t2) {
-	vector<float> output(t1.size());
+void divide(vector<float> &t1, vector<float> &t2, vector<float> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
 		output[i] = t1[i] / t2[i];
 	}
-	return output;
 }
 
-vector<vector<float>> divide(vector<vector<float>> &t1, vector<vector<float>> &t2) {
-	vector<vector<float>> output(t1.size());
+void divide(vector<vector<float>> &t1, vector<vector<float>> &t2, vector<vector<float>> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i] = divide(t1[i], t2[i]);
+		divide(t1[i], t2[i], output[i]);
 	}
-	return output;
 }
 
-vector<vector<vector<float>>> divide(vector<vector<vector<float>>> &t1, vector<vector<vector<float>>> &t2) {
-	vector<vector<vector<float>>> output(t1.size());
+void divide(vector<vector<vector<float>>> &t1, vector<vector<vector<float>> > &t2, vector<vector<vector<float>>> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i] = divide(t1[i], t2[i]);
+		divide(t1[i], t2[i], output[i]);
 	}
-	return output;
 }
 
-vector<vector<vector<vector<float>>>> divide(vector<vector<vector<vector<float>>>> &t1, vector<vector<vector<vector<float>>>> &t2) {
-	vector<vector<vector<vector<float>>>> output(t1.size());
+void divide(vector<vector<vector<vector<float>>>> &t1, vector<vector<vector<vector<float>> >> &t2, vector<vector<vector<vector<float>>>> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i] = divide(t1[i], t2[i]);
+		divide(t1[i], t2[i], output[i]);
 	}
-	return output;
 }
 
-vector<float> pow(vector<float> &t1, float t2) {
-	vector<float> output(t1.size());
+void pow(vector<float> &t1, float t2, vector<float> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
 		output[i] = pow(t1[i], t2);
 	}
-	return output;
 }
 
-vector<vector<float>> pow(vector<vector<float>> &t1, float t2) {
-	vector<vector<float>> output(t1.size());
+void pow(vector<vector<float>> &t1, float t2, vector<vector<float>> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i] = pow(t1[i], t2);
-	}
-	return output;
-}
-
-vector<vector<vector<float>>> pow(vector<vector<vector<float>>> &t1, float t2) {
-	vector<vector<vector<float>>> output(t1.size());
-	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i] = pow(t1[i], t2);
-	}
-	return output;
-}
-
-vector<vector<vector<vector<float>>>> pow(vector<vector<vector<vector<float>>>> &t1, float t2) {
-	vector<vector<vector<vector<float>>>> output(t1.size());
-	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i] = pow(t1[i], t2);
-	}
-	return output;
-}
-
-void addInPlace(vector<float> &t1, vector<float> &t2) {
-	for (unsigned i = 0; i < t1.size(); i++) {
-		t1[i] += t2[i];
+		pow(t1[i], t2, output[i]);
 	}
 }
 
-void addInPlace(vector<vector<float>> &t1, vector<vector<float>> &t2) {
+void pow(vector<vector<vector<float>>> &t1, float t2, vector<vector<vector<float>>> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
-		addInPlace(t1[i], t2[i]);
+		pow(t1[i], t2, output[i]);
 	}
 }
 
-void addInPlace(vector<vector<vector<float>>> &t1, vector<vector<vector<float>>> &t2) {
+void pow(vector<vector<vector<vector<float>>>> &t1, float t2, vector<vector<vector<vector<float>>>> &output) { //t1 and output have to have the same size
 	for (unsigned i = 0; i < t1.size(); i++) {
-		addInPlace(t1[i], t2[i]);
-	}
-}
-
-void addInPlace(vector<vector<vector<vector<float>>>> &t1, vector<vector<vector<vector<float>>>> &t2) {
-	for (unsigned i = 0; i < t1.size(); i++) {
-		addInPlace(t1[i], t2[i]);
+		pow(t1[i], t2, output[i]);
 	}
 }
 
@@ -576,20 +490,21 @@ public:
 	}
 
 	vector<float> forward(vector<float> &input) {
-		vector<float> output = multiply(weights, input);
-		output = add(output, biases);
+		vector<float> output(num_weights, 0.0);
+		multiply(weights, input, output);
+		add(output, biases, output);
 		return output;
 	}
 
 	tuple<vector<vector<float>>, vector<float>, vector<float>> backprop(vector<float> &loss_gradient, vector<float> &last_input) {
-		vector<vector<float>> loss_gradient_2D = addDim(loss_gradient);
-		vector<vector<float>> last_input_t = transpose(last_input);
-		vector<vector<float>> weight_gradient = multiply(loss_gradient_2D, last_input_t);
+		vector<vector<float>> weight_gradient(loss_gradient.size(), vector<float>(last_input.size(), 0.0));
+		multiply_t2_t(loss_gradient, last_input, weight_gradient);
 
-		vector<float> bias_gradient = copy(loss_gradient);
+		vector<float> bias_gradient(loss_gradient.size(), 0.0);
+		copy(loss_gradient, bias_gradient);
 
-		vector<vector<float>> weights_t = transpose(weights);
-		vector<float> loss_input = multiply(weights_t, loss_gradient);
+		vector<float> loss_input(total_size, 0.0);
+		multiply_t1_t(weights, loss_gradient, loss_input);
 
 		return {weight_gradient, bias_gradient, loss_input};
 	}
@@ -665,27 +580,29 @@ public:
 		vector<float> h = flatten(z.back());
 		vector<float> res = (*connected_layer).forward(h);
 
-		vector<float> probs = softmax(res);
+		softmax(res, res);
 
-		float loss = -log(probs[label]);
+		float loss = -log(res[label]);
 		int correct = 0;
 
 		int argmax = 0;
-		for (int i = 0; i < num_weights; i++)
-			if (probs[i] >= probs[argmax])
+		for (int i = 0; i < num_weights; i++) {
+			if (res[i] >= res[argmax]) {
 				argmax = i;
+			}
+		}
 
 		if (argmax == label)
 			correct = 1;
 
-		probs[label] -= 1;
+		res[label] -= 1;
 
 		vector<vector<vector<vector<float>>>> filter_gradients;
 		vector<vector<float>> conv_bias_gradients;
 		vector<vector<float>> weight_gradient;
 		vector<float> conn_bias_gradient;
 
-		tuple<vector<vector<float>>, vector<float>, vector<float>> helpconn = (*connected_layer).backprop(probs, h);
+		tuple<vector<vector<float>>, vector<float>, vector<float>> helpconn = (*connected_layer).backprop(res, h);
 		weight_gradient = get<0>(helpconn);
 		conn_bias_gradient = get<1>(helpconn);
 		vector<vector<vector<float>>> helpback = deflatten(get<2>(helpconn), (*connected_layer).num_of_inputs, (*connected_layer).input_size1,
@@ -723,125 +640,144 @@ public:
 			loss += get<0>(t);
 			correct += get<1>(t);
 			thelp = get<2>(t);
-			filterGradients = add(filterGradients, get<0>(thelp));
-			filterBiases = add(filterBiases, get<1>(thelp));
-			weightGradient = add(weightGradient, get<2>(thelp));
-			weightBiases = add(weightBiases, get<3>(thelp));
+			add(filterGradients, get<0>(thelp), filterGradients);
+			add(filterBiases, get<1>(thelp), filterBiases);
+			add(weightGradient, get<2>(thelp), weightGradient);
+			add(weightBiases, get<3>(thelp), weightBiases);
 		}
 
-		/*
-		//ADAM learning
-		updateFilterMomentum(filterGradients, filterBiases, beta1, beta2, batchSize); 
-		updateFilters(alpha);
-		updateWeightMomentum(weightGradient, weightBiases, beta1, beta2, batchSize);
-		updateWeights(alpha);
-		*/
+		//normalize
+		multiply(filterGradients, 1.0 / batchSize, filterGradients);
+		multiply(filterBiases, 1.0 / batchSize, filterBiases);
+		multiply(weightGradient, 1.0 / batchSize, weightGradient);
+		multiply(weightBiases, 1.0 / batchSize, weightBiases);
 
-		
+		/*
+		 //ADAM learning
+		 updateFilterMomentum(filterGradients, filterBiases, beta1, beta2, batchSize);
+		 updateFilters(alpha);
+		 updateWeightMomentum(weightGradient, weightBiases, beta1, beta2, batchSize);
+		 updateWeights(alpha);
+		 */
+
 		//SGD learning
-		updateFilters2(alpha, filterGradients, filterBiases, batchSize);
-		updateWeights2(alpha, weightGradient, weightBiases, batchSize);
-		
+		updateFilters2(alpha, filterGradients, filterBiases);
+		updateWeights2(alpha, weightGradient, weightBiases);
 
 		return {loss, correct};
 	}
 
-	void updateFilterMomentum(vector<vector<vector<vector<float>>>> &filterGradients, vector<vector<float>> &filterBiases, float beta1, float beta2,
-			int batchSize) {
-		vector<vector<vector<vector<float>>>> first_momentum_filters_adj = multiply(first_momentum_filters, beta1);
-		vector<vector<vector<vector<float>>>> filterGradients_adj1 = multiply(filterGradients, (1 - beta1) / batchSize);
-		first_momentum_filters = add(first_momentum_filters_adj, filterGradients_adj1);
+	void updateFilterMomentum(vector<vector<vector<vector<float>>>> &filterGradients, vector<vector<float>> &filterBiases, float beta1, float beta2) {
+		multiply(first_momentum_filters, beta1, first_momentum_filters);
+		multiply(filterGradients, (1 - beta1), filterGradients);
+		add(first_momentum_filters, filterGradients, first_momentum_filters);
 
-		vector<vector<float>> first_momentum_conv_biases_adj = multiply(first_momentum_conv_biases, beta1);
-		vector<vector<float>> filterBiases_adj1 = multiply(filterBiases, (1 - beta1) / batchSize);
-		first_momentum_conv_biases = add(first_momentum_conv_biases_adj, filterBiases_adj1);
+		multiply(first_momentum_conv_biases, beta1, first_momentum_conv_biases);
+		multiply(filterBiases, (1 - beta1), filterBiases);
+		add(first_momentum_conv_biases, filterBiases, first_momentum_conv_biases);
 
-		vector<vector<vector<vector<float>>>> second_momentum_filters_adj = multiply(second_momentum_filters, beta2);
-		vector<vector<vector<vector<float>>>> filterGradients_adj2_temp1 = multiply(filterGradients, 1.0 / batchSize);
-		vector<vector<vector<vector<float>>>> filterGradients_adj2_temp2 = pow(filterGradients_adj2_temp1, 2);
-		vector<vector<vector<vector<float>>>> filterGradients_adj2 = multiply(filterGradients_adj2_temp2, (1 - beta2));
-		second_momentum_filters = add(filterGradients_adj2, filterGradients_adj2);
+		multiply(second_momentum_filters, beta2, second_momentum_filters);
+		pow(filterGradients, 2, filterGradients);
+		multiply(filterGradients, (1 - beta2) / (pow((1 - beta1), 2)), filterGradients);
+		add(second_momentum_filters, filterGradients, second_momentum_filters);
 
-		vector<vector<float>> second_momentum_conv_biases_adj = multiply(second_momentum_conv_biases, beta2);
-		vector<vector<float>> filterBiases_adj2_temp1 = multiply(filterBiases, 1.0 / batchSize);
-		vector<vector<float>> filterBiases_adj2_temp2 = pow(filterBiases_adj2_temp1, 2);
-		vector<vector<float>> filterBiases_adj2 = multiply(filterBiases_adj2_temp2, (1 - beta2));
-		second_momentum_conv_biases = add(second_momentum_conv_biases_adj, filterBiases_adj2);
+		multiply(second_momentum_conv_biases, beta2, second_momentum_conv_biases);
+		pow(filterBiases, 2, filterBiases);
+		multiply(filterBiases, (1 - beta2) / (pow((1 - beta1), 2)), filterBiases);
+		add(second_momentum_conv_biases, filterBiases, second_momentum_conv_biases);
 	}
 
 	void updateFilters(float alpha) {
-		vector<vector<vector<vector<float>>>> first_momentum_filters_adj = multiply(first_momentum_filters, alpha);
-		vector<vector<vector<vector<float>>>> second_momentum_filters_adj = root(second_momentum_filters);
-		second_momentum_filters_adj = add(second_momentum_filters_adj, EPSILON);
-		vector<vector<vector<vector<float>>>> filter_change = divide(first_momentum_filters_adj, second_momentum_filters_adj);
-		for (unsigned i = 0; i < first_momentum_filters.size(); i++) {
-		 conv_layers[i].filters = add(conv_layers[i].filters, filter_change[i]);
-		 }
+		vector<vector<vector<vector<float>>>> first_momentum_filters_adj(first_momentum_filters.size(),
+				vector<vector<vector<float>>>(first_momentum_filters[0].size(),
+						vector<vector<float>>(first_momentum_filters[0][0].size(), vector<float>(first_momentum_filters[0][0][0].size(), 0.0))));
+		vector<vector<vector<vector<float>>>> second_momentum_filters_adj(second_momentum_filters.size(),
+				vector<vector<vector<float>>>(second_momentum_filters[0].size(),
+						vector<vector<float>>(second_momentum_filters[0][0].size(), vector<float>(second_momentum_filters[0][0][0].size(), 0.0))));
 
-		vector<vector<float>> first_momentum_conv_biases_adj = multiply(first_momentum_conv_biases, alpha);
-		vector<vector<float>> second_momentum_conv_biases_adj = root(second_momentum_conv_biases);
-		second_momentum_conv_biases_adj = add(second_momentum_conv_biases_adj, EPSILON);
-		vector<vector<float>> conv_biases_change = divide(first_momentum_conv_biases_adj, second_momentum_conv_biases_adj);
+		multiply(first_momentum_filters, -alpha, first_momentum_filters_adj);
+		root(second_momentum_filters, second_momentum_filters_adj);
+		add(second_momentum_filters_adj, EPSILON, second_momentum_filters_adj);
 
-		for (unsigned i = 0; i < first_momentum_conv_biases.size(); i++) {
-		 conv_layers[i].biases = add(conv_layers[i].biases, conv_biases_change[i]);
-		 }
+		divide(first_momentum_filters_adj, second_momentum_filters_adj, first_momentum_filters_adj);
+		for (unsigned i = 0; i < first_momentum_filters_adj.size(); i++) {
+			add(conv_layers[i].filters, first_momentum_filters_adj[i], conv_layers[i].filters);
+		}
+
+		vector<vector<float>> first_momentum_conv_biases_adj(first_momentum_conv_biases.size(), vector<float>(first_momentum_conv_biases[0].size(), 0.0));
+		vector<vector<float>> second_momentum_conv_biases_adj(second_momentum_conv_biases.size(), vector<float>(second_momentum_conv_biases[0].size(), 0.0));
+
+		multiply(first_momentum_conv_biases, -alpha, first_momentum_conv_biases_adj);
+		root(second_momentum_conv_biases, second_momentum_conv_biases_adj);
+		add(second_momentum_conv_biases_adj, EPSILON, second_momentum_conv_biases_adj);
+		divide(first_momentum_conv_biases_adj, second_momentum_conv_biases_adj, first_momentum_conv_biases_adj);
+
+		for (unsigned i = 0; i < first_momentum_conv_biases_adj.size(); i++) {
+			add(conv_layers[i].biases, first_momentum_conv_biases_adj[i], conv_layers[i].biases);
+		}
 	}
 
-	void updateFilters2(float alpha, vector<vector<vector<vector<float>>>> &filterGradients, vector<vector<float>> &filterBiases, int batchSize) {
-		vector<vector<vector<vector<float>>>> filterGradients_adj = multiply(filterGradients, -alpha / batchSize);
+	void updateFilters2(float alpha, vector<vector<vector<vector<float>>>> &filterGradients, vector<vector<float>> &filterBiases) {
+		multiply(filterGradients, -alpha, filterGradients);
+
 		for (unsigned i = 0; i < filterGradients.size(); i++) {
-			conv_layers[i].filters = add(conv_layers[i].filters, filterGradients_adj[i]);
+			add(conv_layers[i].filters, filterGradients[i], conv_layers[i].filters);
 		}
 
-		vector<vector<float>> filterBiases_adj = multiply(filterBiases, -alpha / batchSize);
+		multiply(filterBiases, -alpha, filterBiases);
 		for (unsigned i = 0; i < filterBiases.size(); i++) {
-			conv_layers[i].biases = add(conv_layers[i].biases, filterBiases_adj[i]);
+			add(conv_layers[i].biases, filterBiases[i], conv_layers[i].biases);
 		}
 	}
 
-	void updateWeightMomentum(vector<vector<float>> &weightGradient, vector<float> &weightBiases, float beta1, float beta2, int batchSize) {
-		vector<vector<float>> first_momentum_weights_adj = multiply(first_momentum_weights, beta1);
-		vector<vector<float>> weightGradient_adj1 = multiply(weightGradient, (1 - beta1) / batchSize);
-		first_momentum_weights = add(first_momentum_weights_adj, weightGradient_adj1);
+	void updateWeightMomentum(vector<vector<float>> &weightGradient, vector<float> &weightBiases, float beta1, float beta2) {
+		multiply(first_momentum_weights, beta1, first_momentum_weights);
+		multiply(weightGradient, (1 - beta1), weightGradient);
+		add(first_momentum_weights, weightGradient, first_momentum_weights);
 
-		vector<float> first_momentum_conn_biases_adj = multiply(first_momentum_conn_biases, beta1);
-		vector<float> weightBiases_adj1 = multiply(weightBiases, (1 - beta1) / batchSize);
-		first_momentum_conn_biases = add(first_momentum_conn_biases_adj, weightBiases_adj1);
+		multiply(first_momentum_conn_biases, beta1, first_momentum_conn_biases);
+		multiply(weightBiases, (1 - beta1), weightBiases);
+		add(first_momentum_conn_biases, weightBiases, first_momentum_conn_biases);
 
-		vector<vector<float>> second_momentum_weights_adj = multiply(second_momentum_weights, beta2);
-		vector<vector<float>> weightGradient_adj2_temp1 = multiply(weightGradient, 1.0 / batchSize);
-		vector<vector<float>> weightGradient_adj2_temp2 = pow(weightGradient_adj2_temp1, 2);
-		vector<vector<float>> weightGradient_adj2 = multiply(weightGradient_adj2_temp2, (1 - beta2));
-		second_momentum_weights= add(second_momentum_weights_adj, weightGradient_adj2);
+		multiply(second_momentum_weights, beta2, second_momentum_weights);
+		pow(weightGradient, 2, weightGradient);
+		multiply(weightGradient, (1 - beta2) / (pow((1 - beta1), 2)), weightGradient);
+		add(second_momentum_weights, weightGradient, second_momentum_weights);
 
-		vector<float> second_momentum_conn_biases_adj = multiply(second_momentum_conn_biases, beta2);
-		vector<float> weightBiases_adj2_temp1 = multiply(weightBiases, 1.0 / batchSize);
-		vector<float> weightBiases_adj2_temp2 = pow(weightBiases_adj2_temp1, 2);
-		vector<float> weightBiases_adj2 = multiply(weightBiases_adj2_temp2, (1 - beta2));
-		second_momentum_conn_biases = add(second_momentum_conn_biases_adj, weightBiases_adj2);
+		multiply(second_momentum_conn_biases, beta2, second_momentum_conn_biases);
+		pow(weightBiases, 2, weightBiases);
+		multiply(weightBiases, (1 - beta2) / (pow((1 - beta1), 2)), weightBiases);
+		add(second_momentum_conn_biases, weightBiases, second_momentum_conn_biases);
 	}
 
 	void updateWeights(float alpha) {
-		vector<vector<float>> first_momentum_weights_adj = multiply(first_momentum_weights, alpha);
-		vector<vector<float>> second_momentum_weights_adj = root(second_momentum_weights);
-		second_momentum_weights_adj = add(second_momentum_weights_adj, EPSILON);
-		vector<vector<float>> weights_change = divide(first_momentum_weights_adj, second_momentum_weights_adj);
-		(*connected_layer).weights = add((*connected_layer).weights, weights_change);
+		vector<vector<float>> first_momentum_weights_adj(first_momentum_weights.size(), vector<float>(first_momentum_weights[0].size(), 0.0));
+		vector<vector<float>> second_momentum_weights_adj(second_momentum_weights.size(), vector<float>(second_momentum_weights[0].size(), 0.0));
 
-		vector<float> first_momentum_conn_biases_adj = multiply(first_momentum_conn_biases, alpha);
-		vector<float> second_momentum_conn_biases_adj = root(second_momentum_conn_biases);
-		second_momentum_conn_biases_adj = add(second_momentum_conn_biases_adj, EPSILON);
-		vector<float> conn_biases_change = divide(first_momentum_conn_biases_adj, second_momentum_conn_biases_adj);
-		(*connected_layer).biases = add((*connected_layer).biases, conn_biases_change);
+		multiply(first_momentum_weights, -alpha, first_momentum_weights_adj);
+		root(second_momentum_weights, second_momentum_weights_adj);
+		add(second_momentum_weights_adj, EPSILON, second_momentum_weights_adj);
+		divide(first_momentum_weights_adj, second_momentum_weights_adj, first_momentum_weights_adj);
+
+		add((*connected_layer).weights, first_momentum_weights_adj, (*connected_layer).weights);
+
+		vector<float> first_momentum_conn_biases_adj(first_momentum_conn_biases.size(), 0.0);
+		vector<float> second_momentum_conn_biases_adj(second_momentum_conn_biases.size(), 0.0);
+
+		multiply(first_momentum_conn_biases, -alpha, first_momentum_conn_biases_adj);
+		root(second_momentum_conn_biases, second_momentum_conn_biases_adj);
+		add(second_momentum_conn_biases_adj, EPSILON, second_momentum_conn_biases_adj);
+		divide(first_momentum_conn_biases_adj, second_momentum_conn_biases_adj, first_momentum_conn_biases_adj);
+
+		add((*connected_layer).biases, first_momentum_conn_biases_adj, (*connected_layer).biases);
 	}
 
-	void updateWeights2(float alpha, vector<vector<float>> &weigthGradient, vector<float> &weightBiases, int batchSize) {
-		vector<vector<float>> weigthGradient_adj = multiply(weigthGradient, -alpha / batchSize);
-		(*connected_layer).weights = add((*connected_layer).weights, weigthGradient_adj);
+	void updateWeights2(float alpha, vector<vector<float>> &weightGradient, vector<float> &weightBiases) {
+		multiply(weightGradient, -alpha, weightGradient);
+		add((*connected_layer).weights, weightGradient, (*connected_layer).weights);
 
-		vector<float> weightBiases_adj = multiply(weightBiases, -alpha / batchSize);
-		(*connected_layer).biases = add((*connected_layer).biases, weightBiases_adj);
+		multiply(weightBiases, -alpha, weightBiases);
+		add((*connected_layer).biases, weightBiases, (*connected_layer).biases);
 	}
 
 };
@@ -857,7 +793,7 @@ int main() {
 		read_trainingData("train.txt", training_images, correct_lables);
 
 		/*Vorbereiten des Netzwerks für das Training*/
-		const int batchSize = 32; 
+		const int batchSize = 420;
 		const int imageSize = 28;
 		const int num_steps = 10000;
 
@@ -867,9 +803,9 @@ int main() {
 		vector<vector<vector<float>>> batch_images(batchSize, vector<vector<float>>(imageSize, vector<float>(imageSize)));
 		vector<int> batch_lables(batchSize);
 		CNN cnn; //Das benutzte Netzwerk. Topologieänderungen bitte in der Klasse CNN
-		const float alpha = 0.01;		//Lernrate
-		const float beta1 = 0.95;		//Erstes Moment
-		const float beta2 = 0.99;		//Zweites Moment
+		const float alpha = 0.01; //Lernrate
+		const float beta1 = 0.95; //Erstes Moment
+		const float beta2 = 0.99; //Zweites Moment
 		cout << "Beginn des Trainings\n";
 		auto training_startTime = chrono::system_clock::now(); // Interner Timer um die Laufzeit zu messen
 
@@ -889,9 +825,9 @@ int main() {
 			float loss = get<0>(res);
 			float correct = get<1>(res) * 1.0;
 
-			//cout << "Batch " << i + 1 << " \t Average Loss " << loss / batchSize << "\t Accuracy " << correct / batchSize << "\n";
+			cout << "Batch " << i + 1 << " \t Average Loss " << loss / batchSize << "\t Accuracy " << correct / batchSize << "\n";
 
-			if(num_steps-i <= 10){
+			if (num_steps - i <= 10) {
 				endLoss += loss;
 				endCorr += correct;
 			}
@@ -900,9 +836,9 @@ int main() {
 		auto training_endTime = chrono::system_clock::now();
 		chrono::duration<double> totalTime = training_endTime - training_startTime;
 		cout << "Total time: " << (int) (totalTime.count() / 60) << " minutes " << (int) (totalTime.count()) % 60 << " seconds\n";
-		cout << "Average loss in last " << batchSize*10 << " tries:" << endLoss / (10 * batchSize) 
-				<< "\t Average accuracy in last 10 batches: " << endCorr / (10 * batchSize)<< "\n";
-		
+		cout << "Average loss in last " << batchSize * 10 << " tries:" << endLoss / (10 * batchSize) << "\t Average accuracy in last 10 batches: "
+				<< endCorr / (10 * batchSize) << "\n";
+
 		return 0;
 	} catch (const exception&) {
 		return -1;

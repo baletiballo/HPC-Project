@@ -313,7 +313,7 @@ public:
 	const int conv_size1 = 3;
 	const int conv_size2 = 3;
 	const int num_weights = 10;
-	const float EPSILON = 1.0 * pow(10.0, -8);
+	const float EPSILON = 1.0f * pow(10.0f, -8);
 
 	vector<Conv> conv_layers;
 	vector<MaxPool> pooling_layers;
@@ -569,7 +569,7 @@ int main() {
 		/*Vorbereiten des Netzwerks für das Training*/
 		const int batchSize = 32;
 		const int imageSize = 28;
-		const int num_steps = 10000;
+		const int num_steps = 3000;
 
 		float endLoss;
 		float endCorr;
@@ -599,7 +599,9 @@ int main() {
 			float loss = get<0>(res);
 			float correct = get<1>(res) * 1.0;
 
-			cout << "Batch " << i + 1 << " \t Average Loss " << loss / batchSize << "\t Accuracy " << correct / batchSize << "\n";
+			if(i % 500 == 0){//Zwischenupdates. Nur alle paar hundert Baches, um Konsole übersichtlich zu halten
+				cout << "Batch " << i + 1 << " \t Average Loss " << loss / batchSize << "\t Accuracy " << correct / batchSize << "\n";
+			}
 
 			if (num_steps - i <= 10) {
 				endLoss += loss;
@@ -622,6 +624,7 @@ int main() {
 void read_trainingData(string filename, vector<vector<float>> &training_images, vector<int> &correct_lables) {
 	ifstream myFile(filename);
 	if (myFile.is_open()) {
+		cout << "Lese Trainingsdaten ein";
 		int lineNum = 0;
 		string line;
 		while (getline(myFile, line)) {

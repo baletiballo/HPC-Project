@@ -15,7 +15,117 @@
 #include <chrono>
 #include <ctime> 
 
+#include <thread>
+#include <queue>
+#include <mutex>
+#include <condition_variable>
+#include <functional>
+#include <future>
+
 using namespace std;
+
+class JobQueue {
+public:
+	mutex jobQueueMutex;
+	queue<packaged_task<void()>> jobQueue;
+	condition_variable cv;
+	bool abort = false;
+
+	void push(packaged_task<void()> job) {
+		unique_lock<mutex> l(jobQueueMutex);
+		jobQueue.push(move(job));
+		cv.notify_one();
+	}
+
+	packaged_task<void()> pop() {
+		unique_lock<mutex> l(jobQueueMutex);
+		cv.wait(l, [this] {
+			return abort || !jobQueue.empty();
+		});
+		if (abort)
+			return {};
+		auto r = move(jobQueue.front());
+		jobQueue.pop();
+		return move(r);
+	}
+
+	void terminate() {
+		unique_lock<mutex> l(jobQueueMutex);
+		abort = true;
+		queue<packaged_task<void()>> emptyQueue;
+		emptyQueue.swap(jobQueue);
+		cv.notify_all();
+	}
+};
+
+class ThreadPool {
+public:
+	int threads;
+	vector<thread> pool;
+	JobQueue queue;
+
+	ThreadPool(int numThreads) {
+		threads = numThreads;
+
+		for (int i = 0; i < threads; i++) {
+			pool.push_back(thread(&threadsDoWork, this));
+		}
+	}
+
+	void threadsDoWork() {
+		while (true) {
+			packaged_task<void()> job = queue.pop();
+			if (queue.abort == true) {
+				break;
+			}
+			job();
+		}
+	}
+};
+
+ThreadPool pool(8);
+
+void endThreads() {
+	pool.queue.terminate();
+}
+
+void pushJob(packaged_task<void()> job) {
+	pool.queue.push(move(job));
+}
+
+class Sem {
+public:
+	mutex mtx;
+	condition_variable cv;
+	int count;
+
+	Sem(int countInit) {
+		count = countInit;
+	}
+
+	void V(int n) {
+		unique_lock<mutex> lck(mtx);
+		count += n;
+		cv.notify_all();
+	}
+
+	void P(int n) {
+		unique_lock<mutex> lck(mtx);
+		while (count < n) {
+			cv.wait(lck);
+		}
+
+		count = -n;
+	}
+
+	void set(int n) {
+		unique_lock<mutex> lck(mtx);
+		count = n;
+		cv.notify_all();
+	}
+};
+
+Sem sem(0);
 
 vector<float> flatten(vector<vector<vector<float>>> &t1) {
 	vector<float> out(t1.size() * t1[0].size() * t1[0][0].size());
@@ -52,7 +162,100 @@ void softmax(vector<float> &t1, vector<float> &output) { //t1 and output have to
 	}
 }
 
+int reluPackets = 64;
+int reluPacketSize;
+int reluSize1;
+int reluSize2;
+int reluSize3;
+vector<vector<vector<float>>> *relu_input = nullptr;
+vector<vector<vector<float>>> *relu_input_2 = nullptr;
+
+void ReLuJob(int packet) {
+	for (int i = packet * reluPacketSize; i < (packet + 1) * reluPacketSize; i++) {
+		int index1 = i / (reluSize2 * reluSize3);
+		int index2 = (i / reluSize3) % reluSize2;
+		int index3 = i % reluSize3;
+		if ((*relu_input)[index1][index2][index3] <= 0) {
+			(*relu_input)[index1][index2][index3] = 0;
+		}
+	}
+	sem.V(1);
+}
+
+void ReLuJobCleanup(int packet) {
+	for (int i = packet * reluPacketSize; i < (reluSize1 * reluSize2 * reluSize3); i++) {
+		int index1 = i / (reluSize2 * reluSize3);
+		int index2 = (i / reluSize3) % reluSize2;
+		int index3 = i % reluSize3;
+		if ((*relu_input)[index1][index2][index3] <= 0) {
+			(*relu_input)[index1][index2][index3] = 0;
+		}
+	}
+	sem.V(1);
+}
+
 void ReLu(vector<vector<vector<float>>> &t1) {
+	reluSize1 = t1.size();
+	reluSize2 = t1[0].size();
+	reluSize3 = t1[0][0].size();
+	reluPacketSize = (reluSize1 * reluSize2 * reluSize3) / reluPackets;
+	relu_input = &t1;
+
+	sem.set(0);
+	for (int i = 0; i < reluPackets; i++) {
+		packaged_task<void()> job(bind(&ReLuJob, i));
+		pushJob(move(job));
+	}
+	if ((reluSize1 * reluSize2 * reluSize3) % reluPackets != 0) {
+		ReLuJobCleanup(reluPackets + 1);
+	}
+	sem.P(reluPackets);
+}
+
+void ReLuPrimeJob(int packet) {
+	for (int i = packet * reluPacketSize; i < (packet + 1) * reluPacketSize; i++) {
+		int index1 = i / (reluSize2 * reluSize3);
+		int index2 = (i / reluSize3) % reluSize2;
+		int index3 = i % reluSize3;
+		if ((*relu_input_2)[index1][index2][index3] <= 0) {
+			(*relu_input)[index1][index2][index3] = 0;
+		}
+	}
+	sem.V(1);
+}
+
+void ReLuJobPrimeCleanup(int packet) {
+	for (int i = packet * reluPacketSize; i < (reluSize1 * reluSize2 * reluSize3); i++) {
+		int index1 = i / (reluSize2 * reluSize3);
+		int index2 = (i / reluSize3) % reluSize2;
+		int index3 = i % reluSize3;
+		if ((*relu_input_2)[index1][index2][index3] <= 0) {
+			(*relu_input)[index1][index2][index3] = 0;
+		}
+	}
+	sem.V(1);
+}
+
+void ReLuPrime(vector<vector<vector<float>>> &t1, vector<vector<vector<float>>> &t2) {
+	reluSize1 = t1.size();
+	reluSize2 = t1[0].size();
+	reluSize3 = t1[0][0].size();
+	reluPacketSize = (reluSize1 * reluSize2 * reluSize3) / reluPackets;
+	relu_input = &t1;
+	relu_input_2 = &t2;
+
+	sem.set(0);
+	for (int i = 0; i < reluPackets; i++) {
+		packaged_task<void()> job(bind(&ReLuPrimeJob, i));
+		pushJob(move(job));
+	}
+	if ((reluSize1 * reluSize2 * reluSize3) % reluPackets != 0) {
+		ReLuJobPrimeCleanup(reluPackets + 1);
+	}
+	sem.P(reluPackets);
+}
+
+/*void ReLu(vector<vector<vector<float>>> &t1) {
 	for (unsigned i = 0; i < t1.size(); i++) {
 		for (unsigned j = 0; j < t1[i].size(); j++) {
 			for (unsigned k = 0; k < t1[i][j].size(); k++) {
@@ -74,7 +277,7 @@ void ReLuPrime(vector<vector<vector<float>>> &t1, vector<vector<vector<float>>> 
 			}
 		}
 	}
-}
+}*/
 
 class Conv {
 public:
@@ -84,6 +287,14 @@ public:
 	int num_windows1, num_windows2;
 	vector<vector<vector<float>>> filters;
 	vector<float> biases;
+	vector<vector<vector<float>>> *curr_input = nullptr;
+	vector<vector<vector<float>>> *curr_output = nullptr;
+	vector<vector<vector<float>>> *curr_loss_gradient = nullptr;
+	vector<vector<vector<float>>> *curr_filter_gradient = nullptr;
+	vector<float> *curr_bias_gradient = nullptr;
+	vector<vector<vector<float>>> *curr_loss_input = nullptr;
+	int packets = 64;
+	int packetSize;
 
 	Conv(int f, int c1, int c2, int n, int s1, int s2) {
 		num_filters = f;
@@ -94,6 +305,7 @@ public:
 		input_size2 = s2;
 		num_windows1 = input_size1 - conv_size1 + 1;
 		num_windows2 = input_size2 - conv_size2 + 1;
+		packetSize = (num_filters * num_of_inputs * num_windows1 * num_windows2) / packets;
 
 		filters.resize(num_filters, vector<vector<float>>(conv_size1, vector<float>(conv_size2)));
 		biases.resize(num_filters, 0.0);
@@ -110,30 +322,104 @@ public:
 		}
 	}
 
-	vector<vector<vector<float>>> forward(vector<vector<vector<float>>> &input) {
-		vector<vector<vector<float>>> output(num_of_inputs * num_filters, vector<vector<float>>(num_windows1, vector<float>(num_windows2)));
-		for (int cur_filter = 0; cur_filter < num_filters; cur_filter++) { //per filter
-			for (int cur_featureMap = 0; cur_featureMap < num_of_inputs; cur_featureMap++) { //per input
-				for (int i = 0; i < num_windows1; i++) {
-					//per region
-					for (int j = 0; j < num_windows2; j++) {
-						// per region
+	void forwardJob(int packet) {
+		for (int i = packet * packetSize; i < (packet + 1) * packetSize; i++) {
+			int index1 = i / (num_windows1 * num_windows2);
+			int index2 = (i / num_windows2) % num_windows1;
+			int index3 = i % num_windows2;
+			(*curr_output)[index1][index2][index3] = biases[index1 / num_of_inputs];
 
-						output[cur_featureMap + num_of_inputs * cur_filter][i][j] = biases[cur_filter];
-
-						//set output at i j for the input representation cur_featureMap when filter cur_filter is applied
-						//matrix multiplication and summation
-						for (int m = 0; m < conv_size1; m++) {
-							for (int n = 0; n < conv_size2; n++) {
-								output[cur_featureMap + num_of_inputs * cur_filter][i][j] += input[cur_featureMap][i + m][j + n] * filters[cur_filter][m][n];
-							}
-						}
-					}
+			//set output at i j for the input representation cur_featureMap when filter cur_filter is applied
+			//matrix multiplication and summation
+			for (int m = 0; m < conv_size1; m++) {
+				for (int n = 0; n < conv_size2; n++) {
+					(*curr_output)[index1][index2][index3] += (*curr_input)[index1 % num_of_inputs][index2 + m][index3 + n]
+							* filters[index1 / num_of_inputs][m][n];
 				}
 			}
 		}
+		sem.V(1);
+	}
+
+	void forwardJobCleanup(int packet) {
+		for (int i = packet * packetSize; i < num_filters * num_of_inputs * num_windows1 * num_windows2; i++) {
+			int index1 = i / (num_windows1 * num_windows2);
+			int index2 = (i / num_windows2) % num_windows1;
+			int index3 = i % num_windows2;
+			int filter = index1 / num_of_inputs;
+			int featureMap = index1 % num_of_inputs;
+
+			(*curr_output)[index1][index2][index3] = biases[filter];
+
+			//set output at i j for the input representation cur_featureMap when filter cur_filter is applied
+			//matrix multiplication and summation
+			for (int m = 0; m < conv_size1; m++) {
+				for (int n = 0; n < conv_size2; n++) {
+					(*curr_output)[index1][index2][index3] += (*curr_input)[featureMap][index2 + m][index3 + n] * filters[filter][m][n];
+				}
+			}
+		}
+	}
+
+	vector<vector<vector<float>>> forward(vector<vector<vector<float>>> &input) {
+		vector<vector<vector<float>>> output(num_of_inputs * num_filters, vector<vector<float>>(num_windows1, vector<float>(num_windows2)));
+		curr_output = &output;
+		curr_input = &input;
+
+		sem.set(0);
+		for (int i = 0; i < packets; i++) {
+			packaged_task<void()> job(bind(&forwardJob, this, i));
+			pushJob(move(job));
+		}
+		if ((num_filters * num_of_inputs * num_windows1 * num_windows2) % packets != 0) {
+			forwardJobCleanup(packets + 1);
+		}
+		sem.P(packets);
 
 		return output;
+	}
+
+	void backpropJob(int packet) {
+		for (int i = packet * packetSize; i < (packet + 1) * packetSize; i++) {
+			int index1 = i / (num_windows1 * num_windows2);
+			int index2 = (i / num_windows2) % num_windows1;
+			int index3 = i % num_windows2;
+			int filter = index1 / num_of_inputs;
+			int featureMap = index1 % num_of_inputs;
+
+			// per region
+			//matrix multiplication and summation
+			for (int m = 0; m < conv_size1; m++) {
+				for (int n = 0; n < conv_size2; n++) {
+					(*curr_filter_gradient)[filter][m][n] += (*curr_loss_gradient)[index1][index2][index3] * (*curr_input)[featureMap][index2 + m][index3 + n];
+					(*curr_loss_input)[featureMap][index2 + m][index3 + n] += (*curr_loss_gradient)[index1][index2][index3] * filters[filter][m][n];
+				}
+			}
+
+			(*curr_bias_gradient)[filter] += (*curr_loss_gradient)[index1][index2][index3];
+		}
+		sem.V(1);
+	}
+
+	void backpropJobCleanup(int packet) {
+		for (int i = packet * packetSize; i < num_filters * num_of_inputs * num_windows1 * num_windows2; i++) {
+			int index1 = i / (num_windows1 * num_windows2);
+			int index2 = (i / num_windows2) % num_windows1;
+			int index3 = i % num_windows2;
+			int filter = index1 / num_of_inputs;
+			int featureMap = index1 % num_of_inputs;
+
+			// per region
+			//matrix multiplication and summation
+			for (int m = 0; m < conv_size1; m++) {
+				for (int n = 0; n < conv_size2; n++) {
+					(*curr_filter_gradient)[filter][m][n] += (*curr_loss_gradient)[index1][index2][index3] * (*curr_input)[featureMap][index2 + m][index3 + n];
+					(*curr_loss_input)[featureMap][index2 + m][index3 + n] += (*curr_loss_gradient)[index1][index2][index3] * filters[filter][m][n];
+				}
+			}
+
+			(*curr_bias_gradient)[filter] += (*curr_loss_gradient)[index1][index2][index3];
+		}
 	}
 
 	tuple<vector<vector<vector<float>>>, vector<float>, vector<vector<vector<float>>>> backprop(vector<vector<vector<float>>> &loss_gradient,
@@ -142,27 +428,21 @@ public:
 		vector<float> bias_gradient(num_filters, 0.0);
 		vector<vector<vector<float>>> loss_input(num_of_inputs, vector<vector<float>>(input_size1, vector<float>(input_size2, 0.0)));
 
-		for (int cur_filter = 0; cur_filter < num_filters; cur_filter++) { //per filter
-			for (int cur_featureMap = 0; cur_featureMap < num_of_inputs; cur_featureMap++) { //per input
-				for (int i = 0; i < num_windows1; i++) {
-					//per region
-					for (int j = 0; j < num_windows2; j++) {
-						// per region
-						//matrix multiplication and summation
-						for (int m = 0; m < conv_size1; m++) {
-							for (int n = 0; n < conv_size2; n++) {
-								filter_gradient[cur_filter][m][n] += loss_gradient[cur_featureMap + num_of_inputs * cur_filter][i][j]
-										* last_input[cur_featureMap][i + m][j + n];
-								loss_input[cur_featureMap][i + m][j + n] += loss_gradient[cur_featureMap + num_of_inputs * cur_filter][i][j]
-										* filters[cur_filter][m][n];
-							}
-						}
+		curr_filter_gradient = &filter_gradient;
+		curr_bias_gradient = &bias_gradient;
+		curr_loss_input = &loss_input;
+		curr_loss_gradient = &loss_gradient;
+		curr_input = &last_input;
 
-						bias_gradient[cur_filter] += loss_gradient[cur_featureMap * num_filters + cur_filter][i][j];
-					}
-				}
-			}
+		sem.set(0);
+		for (int i = 0; i < packets; i++) {
+			packaged_task<void()> job(bind(&backpropJob, this, i));
+			pushJob(move(job));
 		}
+		if ((num_filters * num_of_inputs * num_windows1 * num_windows2) % packets != 0) {
+			backpropJobCleanup(packets + 1);
+		}
+		sem.P(packets);
 
 		return {filter_gradient, bias_gradient, loss_input};
 	}
@@ -173,6 +453,12 @@ public:
 	int num_of_inputs, input_size1, input_size2;
 	int window, stride;
 	int output_size1, output_size2;
+	vector<vector<vector<float>>> *curr_input = nullptr;
+	vector<vector<vector<float>>> *curr_output = nullptr;
+	vector<vector<vector<float>>> *curr_loss_gradient = nullptr;
+	vector<vector<vector<float>>> *curr_loss_input = nullptr;
+	int packets = 64;
+	int packetSize;
 
 	MaxPool(int w, int s, int n, int s1, int s2) {
 		window = w;
@@ -182,59 +468,130 @@ public:
 		input_size2 = s2;
 		output_size1 = (input_size1 - window) / stride + 1;
 		output_size2 = (input_size2 - window) / stride + 1;
+		packetSize = (num_of_inputs * output_size1 * output_size2) / packets;
+	}
+
+	void forwardJob(int packet) {
+		for (int i = packet * packetSize; i < (packet + 1) * packetSize; i++) {
+			int index1 = i / (output_size1 * output_size2);
+			int index2 = (i / output_size2) % output_size1 * stride;
+			int index3 = i % output_size2 * stride;
+
+			//matrix max pooling
+			float max = (*curr_input)[index1][index2][index3];
+			for (int m = 0; m < window; m++) {
+				for (int n = 0; n < window; n++)
+					if (max < (*curr_input)[index1][index2 + m][index3 + n])
+						max = (*curr_input)[index1][index2 + m][index3 + n];
+
+				(*curr_output)[index1][index2 / stride][index3 / stride] = max;
+			}
+		}
+		sem.V(1);
+	}
+
+	void forwardJobCleanup(int packet) {
+		for (int i = packet * packetSize; i < num_of_inputs * output_size1 * output_size2; i++) {
+			int index1 = i / (output_size1 * output_size2);
+			int index2 = (i / output_size2) % output_size1 * stride;
+			int index3 = i % output_size2 * stride;
+
+			//matrix max pooling
+			float max = (*curr_input)[index1][index2][index3];
+			for (int m = 0; m < window; m++) {
+				for (int n = 0; n < window; n++)
+					if (max < (*curr_input)[index1][index2 + m][index3 + n])
+						max = (*curr_input)[index1][index2 + m][index3 + n];
+
+				(*curr_output)[index1][index2 / stride][index3 / stride] = max;
+			}
+		}
 	}
 
 	vector<vector<vector<float>>> forward(vector<vector<vector<float>>> &input) {
 		vector<vector<vector<float>>> output(num_of_inputs, vector<vector<float>>(output_size1, vector<float>(output_size2, 0.0)));
-		for (int cur_featureMap = 0; cur_featureMap < num_of_inputs; cur_featureMap++) { //per input
-			for (int i = 0; i < input_size1 - window; i += stride) {
-				//per region
-				for (int j = 0; j < input_size2 - window; j += stride) {
-					// per region
+		curr_output = &output;
+		curr_input = &input;
 
-					//matrix max pooling
-					float max = input[cur_featureMap][i][j];
-					for (int m = 0; m < window; m++) {
-						for (int n = 0; n < window; n++)
-							if (max < input[cur_featureMap][i + m][j + n])
-								max = input[cur_featureMap][i + m][j + n];
-
-						output[cur_featureMap][i / stride][j / stride] = max;
-					}
-				}
-			}
+		sem.set(0);
+		for (int i = 0; i < packets; i++) {
+			packaged_task<void()> job(bind(&forwardJob, this, i));
+			pushJob(move(job));
 		}
+		if ((num_of_inputs * output_size1 * output_size2) % packets != 0) {
+			forwardJobCleanup(packets + 1);
+		}
+		sem.P(packets);
 
 		return output;
 	}
 
-	vector<vector<vector<float>>> backprop(vector<vector<vector<float>>> &loss_gradient, vector<vector<vector<float>>> &last_input) {
-		vector<vector<vector<float>>> loss_input(num_of_inputs, vector<vector<float>>(input_size1, vector<float>(input_size2, 0.0)));
-		for (int cur_featureMap = 0; cur_featureMap < num_of_inputs; cur_featureMap++) { //per input
-			for (int i = 0; i < input_size1 - window; i += stride) {
-				//per region
-				for (int j = 0; j < input_size2 - window; j += stride) {
-					// per region
+	void backpropJob(int packet) {
+		for (int i = packet * packetSize; i < (packet + 1) * packetSize; i++) {
+			int index1 = i / (output_size1 * output_size2);
+			int index2 = (i / output_size2) % output_size1 * stride;
+			int index3 = i % output_size2 * stride;
 
-					//matrix max pooling
-					float max = last_input[cur_featureMap][i][j];
-					int indexX = 0;
-					int indexY = 0;
-					for (int m = 0; m < window; m++) {
-						for (int n = 0; n < window; n++) {
-							if (max < last_input[cur_featureMap][i + m][j + n]) {
-								max = last_input[cur_featureMap][i + m][j + n];
-								indexX = m;
-								indexY = n;
-							}
-						}
+			//matrix max pooling
+			float max = (*curr_input)[index1][index2][index3];
+			int indexX = 0;
+			int indexY = 0;
+			for (int m = 0; m < window; m++) {
+				for (int n = 0; n < window; n++) {
+					if (max < (*curr_input)[index1][index2 + m][index3 + n]) {
+						max = (*curr_input)[index1][index2 + m][index3 + n];
+						indexX = m;
+						indexY = n;
 					}
-
-					//set only the lossInput of the "pixel" max pool kept
-					loss_input[cur_featureMap][i + indexX][j + indexY] = loss_gradient[cur_featureMap][i / stride][j / stride];
 				}
 			}
+
+			//set only the lossInput of the "pixel" max pool kept
+			(*curr_loss_input)[index1][index2 + indexX][index3 + indexY] = (*curr_loss_gradient)[index1][index2 / stride][index3 / stride];
 		}
+		sem.V(1);
+	}
+
+	void backpropJobCleanup(int packet) {
+		for (int i = packet * packetSize; i < num_of_inputs * output_size1 * output_size2; i++) {
+			int index1 = i / (output_size1 * output_size2);
+			int index2 = (i / output_size2) % output_size1 * stride;
+			int index3 = i % output_size2 * stride;
+
+			//matrix max pooling
+			float max = (*curr_input)[index1][index2][index3];
+			int indexX = 0;
+			int indexY = 0;
+			for (int m = 0; m < window; m++) {
+				for (int n = 0; n < window; n++) {
+					if (max < (*curr_input)[index1][index2 + m][index3 + n]) {
+						max = (*curr_input)[index1][index2 + m][index3 + n];
+						indexX = m;
+						indexY = n;
+					}
+				}
+			}
+
+			//set only the lossInput of the "pixel" max pool kept
+			(*curr_loss_input)[index1][index2 + indexX][index3 + indexY] = (*curr_loss_gradient)[index1][index2 / stride][index3 / stride];
+		}
+	}
+
+	vector<vector<vector<float>>> backprop(vector<vector<vector<float>>> &loss_gradient, vector<vector<vector<float>>> &last_input) {
+		vector<vector<vector<float>>> loss_input(num_of_inputs, vector<vector<float>>(input_size1, vector<float>(input_size2, 0.0)));
+		curr_loss_input = &loss_input;
+		curr_loss_gradient = &loss_gradient;
+		curr_input = &last_input;
+
+		sem.set(0);
+		for (int i = 0; i < packets; i++) {
+			packaged_task<void()> job(bind(&backpropJob, this, i));
+			pushJob(move(job));
+		}
+		if ((num_of_inputs * output_size1 * output_size2) % packets != 0) {
+			backpropJobCleanup(packets + 1);
+		}
+		sem.P(packets);
 
 		return loss_input;
 	}
@@ -247,6 +604,16 @@ public:
 	unsigned total_size;
 	vector<vector<float>> weights;
 	vector<float> biases;
+	vector<float> *curr_input = nullptr;
+	vector<float> *curr_output = nullptr;
+	vector<float> *curr_loss_gradient = nullptr;
+	vector<vector<float>> *curr_weight_gradient = nullptr;
+	vector<float> *curr_bias_gradient = nullptr;
+	vector<float> *curr_loss_input = nullptr;
+	int packets = 64;
+	int packetSize;
+	deque<mutex> mtx;
+	deque<mutex> mtx_big;
 
 	FullyConnectedLayer(unsigned w, unsigned n, unsigned s1, unsigned s2) {
 		num_weights = w;
@@ -256,9 +623,13 @@ public:
 		total_size = num_of_inputs * input_size1 * input_size2;
 		weights.resize(num_weights, vector<float>(total_size));
 		biases.resize(num_weights, 0.0);
+		packetSize = (num_weights * total_size) / packets;
+		mtx.resize(num_weights);
+		mtx_big.resize(total_size);
 
 		normal_distribution<float> distribution(0.0, 1.0);
 		for (unsigned i = 0; i < num_weights; i++) {
+
 			for (unsigned j = 0; j < total_size; j++) {
 				random_device dev;
 				default_random_engine generator(dev());
@@ -267,36 +638,126 @@ public:
 		}
 	}
 
+	void forwardJob(int packet) {
+		float tmp = 0.0;
+		for (int i = packet * packetSize; i < (packet + 1) * packetSize; i++) {
+			int index1 = i / (total_size);
+			int index2 = i % total_size;
+
+			tmp += (*curr_input)[index2] * weights[index1][index2];
+
+			if ((unsigned) index2 + 1 == total_size) {
+				mtx[index1].lock();
+				(*curr_output)[index1] += tmp;
+				mtx[index1].unlock();
+
+				tmp = 0.0;
+			}
+		}
+		if (tmp != 0.0) {
+			int index1 = (((packet + 1) * packetSize) - 1) / (total_size);
+			mtx[index1].lock();
+			(*curr_output)[index1] += tmp;
+			mtx[index1].unlock();
+		}
+		sem.V(1);
+	}
+
+	void forwardJobCleanup(int packet) {
+		float tmp = 0.0;
+		for (int i = packet * packetSize; (unsigned) i < num_weights * total_size; i++) {
+			int index1 = i / (total_size);
+			int index2 = i % total_size;
+
+			tmp += (*curr_input)[index2] * weights[index1][index2];
+
+			if ((unsigned) index2 + 1 == total_size) {
+				mtx[index1].lock();
+				(*curr_output)[index1] += tmp;
+				mtx[index1].unlock();
+
+				tmp = 0.0;
+			}
+		}
+		if (tmp != 0.0) {
+			int index1 = (((packet + 1) * packetSize) - 1) / (total_size);
+			mtx[index1].lock();
+			(*curr_output)[index1] += tmp;
+			mtx[index1].unlock();
+		}
+	}
+
 	vector<float> forward(vector<float> &input) {
 		vector<float> output(num_weights);
+		curr_input = &input;
+		curr_output = &output;
+
+		sem.set(0);
+		for (int i = 0; i < packets; i++) {
+			packaged_task<void()> job(bind(&forwardJob, this, i));
+			pushJob(move(job));
+		}
+		if ((num_weights * total_size) % packets != 0) {
+			forwardJobCleanup(packets + 1);
+		}
+		sem.P(packets);
+
 		for (unsigned i = 0; i < num_weights; i++) {
-			output[i] = biases[i];
-			for (unsigned j = 0; j < total_size; j++) {
-				output[i] += input[j] * weights[i][j];
-			}
+			output[i] += biases[i];
 		}
 		return output;
 	}
 
+	void backpropJob(int packet) {
+		for (int i = packet * packetSize; i < (packet + 1) * packetSize; i++) {
+			int index1 = i / (total_size);
+			int index2 = i % total_size;
+
+			(*curr_weight_gradient)[index1][index2] = (*curr_loss_gradient)[index1] * (*curr_input)[index2];
+
+			mtx_big[index2].lock();
+			(*curr_loss_input)[index2] += weights[index1][index2] * (*curr_loss_gradient)[index1];
+			mtx_big[index2].unlock();
+		}
+		sem.V(1);
+	}
+
+	void backpropJobCleanup(int packet) {
+		for (int i = packet * packetSize; (unsigned) i < num_weights * total_size; i++) {
+			int index1 = i / (total_size);
+			int index2 = i % total_size;
+
+			(*curr_weight_gradient)[index1][index2] = (*curr_loss_gradient)[index1] * (*curr_input)[index2];
+
+			mtx_big[index2].lock();
+			(*curr_loss_input)[index2] += weights[index1][index2] * (*curr_loss_gradient)[index1];
+			mtx_big[index2].unlock();
+		}
+	}
+
 	tuple<vector<vector<float>>, vector<float>, vector<float>> backprop(vector<float> &loss_gradient, vector<float> &last_input) {
-		vector<vector<float>> weight_gradient(loss_gradient.size(), vector<float>(last_input.size()));
-		for (unsigned i = 0; i < loss_gradient.size(); i++) {
-			for (unsigned j = 0; j < last_input.size(); j++) {
-				weight_gradient[i][j] = loss_gradient[i] * last_input[j];
-			}
-		}
-
-		vector<float> bias_gradient(loss_gradient.size());
-		for (unsigned i = 0; i < loss_gradient.size(); i++) {
-			bias_gradient[i] = loss_gradient[i];
-		}
-
+		vector<vector<float>> weight_gradient(num_weights, vector<float>(total_size));
+		vector<float> bias_gradient(num_weights);
 		vector<float> loss_input(total_size, 0.0);
-		for (unsigned i = 0; i < total_size; i++) {
-			for (unsigned j = 0; j < num_weights; j++) {
-				loss_input[i] += weights[j][i] * loss_gradient[j];
-			}
+
+		curr_weight_gradient = &weight_gradient;
+		curr_bias_gradient = &bias_gradient;
+		curr_loss_input = &loss_input;
+		curr_loss_gradient = &loss_gradient;
+		curr_input = &last_input;
+
+		sem.set(0);
+		for (int i = 0; i < packets; i++) {
+			packaged_task<void()> job(bind(&backpropJob, this, i));
+			pushJob(move(job));
 		}
+		if ((num_weights * total_size) % packets != 0) {
+			backpropJobCleanup(packets + 1);
+		}
+		for (unsigned i = 0; i < num_weights; i++) { //fast enough as is
+			(*curr_bias_gradient)[i] = (*curr_loss_gradient)[i];
+		}
+		sem.P(packets);
 
 		return {weight_gradient, bias_gradient, loss_input};
 	}
@@ -440,16 +901,16 @@ public:
 					weightBiases);
 		}
 
-		//normalize
+//normalize
 		/*multiply(filterGradients, 1.0 / batchSize, filterGradients);
 		 multiply(filterBiases, 1.0 / batchSize, filterBiases);
 		 multiply(weightGradient, 1.0 / batchSize, weightGradient);
 		 multiply(weightBiases, 1.0 / batchSize, weightBiases);*///now done in updateFilters and updateWeights
-		//ADAM learning
+//ADAM learning
 		updateFilters(filterGradients, filterBiases, beta1, beta2, alpha, -1, batchSize);
 		updateWeights(weightGradient, weightBiases, beta1, beta2, alpha, -1, batchSize);
 
-		//SGD learning
+//SGD learning
 		/*updateFilters2(alpha, filterGradients, filterBiases, batchSize);
 		 updateWeights2(alpha, weightGradient, weightBiases, batchSize);*/
 
@@ -532,7 +993,7 @@ public:
 		}
 	}
 
-	void updateWeights2(float alpha, vector<vector<float>> &weightGradient, vector<float> &weightBiases, int batchSize) {
+	/*void updateWeights2(float alpha, vector<vector<float>> &weightGradient, vector<float> &weightBiases, int batchSize) {
 		for (unsigned i = 0; i < weightGradient.size(); i++) {
 			for (unsigned j = 0; j < weightGradient[i].size(); j++) {
 				(*connected_layer).weights[i][j] -= alpha * weightGradient[i][j] / batchSize;
@@ -552,7 +1013,7 @@ public:
 				conv_layers[i].biases[j] -= alpha * filterBiases[i][j] / batchSize;
 			}
 		}
-	}
+	}*/
 
 };
 
@@ -612,9 +1073,11 @@ int main() {
 		cout << "Total time: " << (int) (totalTime.count() / 60) << " minutes " << (int) (totalTime.count()) % 60 << " seconds\n";
 		cout << "Average loss in last " << batchSize * 10 << " tries:" << endLoss / (10 * batchSize) << "\t Average accuracy in last 10 batches: "
 				<< endCorr / (10 * batchSize) << "\n";
+		endThreads();
 
 		return 0;
 	} catch (const exception&) {
+		endThreads();
 		return -1;
 	}
 }

@@ -1,5 +1,9 @@
 #pragma once
 
+#include <vector>
+
+using namespace std;
+
 vector<float> flatten(vector<vector<vector<float>>> &t1) {
 	vector<float> out(t1.size() * t1[0].size() * t1[0][0].size());
 	for (unsigned i = 0; i < t1.size(); i++) {

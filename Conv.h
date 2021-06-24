@@ -45,5 +45,4 @@ public:
 			vector<vector<vector<float>>> &last_input);
 };
 
-
 #endif /* CONV_H_ */

@@ -1,5 +1,3 @@
-#pragma once
-
 #include <vector>
 #include <random>
 #include "ParallelStuff.h"
@@ -44,7 +42,7 @@ class CNN {
 
 public:
 
-	CNN(float alpha, float beta1,float beta2, int batchSize):alpha(alpha), beta1(beta1), beta2(beta2), batchSize(batchSize)  {
+	CNN(float alpha, float beta1,float beta2, int batchSize) : alpha(alpha), beta1(beta1), beta2(beta2), batchSize(batchSize)  {
 		step = 1;
 		
 		int currX = sizeX;

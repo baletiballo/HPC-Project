@@ -15,7 +15,7 @@
 #include <chrono>
 #include <ctime> 
 
-#include "CNN.cpp"
+#include "cnn.cpp"
 
 
 using namespace std;

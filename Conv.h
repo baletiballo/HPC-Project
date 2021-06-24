@@ -26,7 +26,7 @@ public:
 	vector<vector<vector<float>>> *curr_filter_gradient = nullptr;
 	vector<float> *curr_bias_gradient = nullptr;
 	vector<vector<vector<float>>> *curr_loss_input = nullptr;
-	int packets = 64;
+	int packets = 12;
 	int packetSize;
 
 	Conv(int f, int c1, int c2, int n, int s1, int s2);
@@ -44,6 +44,5 @@ public:
 	tuple<vector<vector<vector<float>>>, vector<float>, vector<vector<vector<float>>>> backprop(vector<vector<vector<float>>> &loss_gradient,
 			vector<vector<vector<float>>> &last_input);
 };
-
 
 #endif /* CONV_H_ */

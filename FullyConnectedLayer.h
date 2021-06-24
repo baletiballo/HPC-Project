@@ -27,7 +27,7 @@ public:
 	vector<vector<float>> *curr_weight_gradient = nullptr;
 	vector<float> *curr_bias_gradient = nullptr;
 	vector<float> *curr_loss_input = nullptr;
-	int packets = 64;
+	int packets = 12;
 	int packetSize;
 	deque<mutex> mtx;
 	deque<mutex> mtx_big;

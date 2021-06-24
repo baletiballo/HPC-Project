@@ -67,14 +67,16 @@ void Conv::forwardJobCleanup(int packet) {
 }
 
 vector<vector<vector<float>>> Conv::forward(vector<vector<vector<float>>> &input) {
-	vector<vector<vector<float>>> output(num_of_inputs *num_filters, vector<vector<float>>(num_windows1, vector<float> (num_windows2)));
+	vector<vector<vector<float>>> output(num_of_inputs * num_filters, vector<vector<float>>(num_windows1, vector<float>(num_windows2)));
 	curr_output = &output;
 	curr_input = &input;
 
 	sem.set(0);
+	pool.setConv(*this);
+		pool.setTask(1);
 	for (int i = 0; i < packets; i++) {
-		packaged_task < void() > job(bind(&Conv::forwardJob, this, i));
-		pushJob (move(job));}
+		pushJob(i);
+	}
 	if ((num_filters * num_of_inputs * num_windows1 * num_windows2) % packets != 0) {
 		forwardJobCleanup(packets + 1);
 	}
@@ -128,9 +130,9 @@ void Conv::backpropJobCleanup(int packet) {
 
 tuple<vector<vector<vector<float>>>, vector<float>, vector<vector<vector<float>>>> Conv::backprop(vector<vector<vector<float>>> &loss_gradient,
 		vector<vector<vector<float>>> &last_input) {
-	vector < vector<vector<float>> > filter_gradient(num_filters, vector<vector<float>>(conv_size1, vector<float>(conv_size2, 0.0)));
+	vector<vector<vector<float>> > filter_gradient(num_filters, vector<vector<float>>(conv_size1, vector<float>(conv_size2, 0.0)));
 	vector<float> bias_gradient(num_filters, 0.0);
-	vector < vector<vector<float>> > loss_input(num_of_inputs, vector<vector<float>>(input_size1, vector<float>(input_size2, 0.0)));
+	vector<vector<vector<float>> > loss_input(num_of_inputs, vector<vector<float>>(input_size1, vector<float>(input_size2, 0.0)));
 
 	curr_filter_gradient = &filter_gradient;
 	curr_bias_gradient = &bias_gradient;
@@ -139,9 +141,11 @@ tuple<vector<vector<vector<float>>>, vector<float>, vector<vector<vector<float>>
 	curr_input = &last_input;
 
 	sem.set(0);
+	pool.setConv(*this);
+	pool.setTask(2);
 	for (int i = 0; i < packets; i++) {
-		packaged_task < void() > job(bind(&Conv::backpropJob, this, i));
-		pushJob (move(job));}
+		pushJob(i);
+	}
 	if ((num_filters * num_of_inputs * num_windows1 * num_windows2) % packets != 0) {
 		backpropJobCleanup(packets + 1);
 	}

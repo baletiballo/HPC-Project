@@ -57,9 +57,10 @@ vector<vector<vector<float>>> MaxPool::forward(vector<vector<vector<float>>> &in
 	curr_input = &input;
 
 	sem.set(0);
+	pool.setMaxPool(*this);
+				pool.setTask(3);
 	for (int i = 0; i < packets; i++) {
-		packaged_task<void()> job(bind(&MaxPool::forwardJob, this, i));
-		pushJob(move(job));
+		pushJob(i);
 	}
 	if ((num_of_inputs * output_size1 * output_size2) % packets != 0) {
 		forwardJobCleanup(packets + 1);
@@ -127,9 +128,10 @@ vector<vector<vector<float>>> MaxPool::backprop(vector<vector<vector<float>>> &l
 	curr_input = &last_input;
 
 	sem.set(0);
+	pool.setMaxPool(*this);
+			pool.setTask(4);
 	for (int i = 0; i < packets; i++) {
-		packaged_task<void()> job(bind(&MaxPool::backpropJob, this, i));
-		pushJob(move(job));
+		pushJob(i);
 	}
 	if ((num_of_inputs * output_size1 * output_size2) % packets != 0) {
 		backpropJobCleanup(packets + 1);

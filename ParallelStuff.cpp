@@ -4,34 +4,38 @@ JobQueue::JobQueue() {
 	abort = false;
 }
 
-void JobQueue::push(packaged_task<void()> job) {
+void JobQueue::push(int job) {
 	unique_lock<mutex> l(jobQueueMutex);
-	jobQueue.push(move(job));
+	jobQueue.push(job);
 	cv.notify_one();
 }
 
-packaged_task<void()> JobQueue::pop() {
+int JobQueue::pop() {
 	unique_lock<mutex> l(jobQueueMutex);
 	cv.wait(l, [this] {
 		return abort || !jobQueue.empty();
 	});
 	if (abort)
 		return {};
-	auto r = move(jobQueue.front());
+	int res=jobQueue.front();
 	jobQueue.pop();
-	return move(r);
+	return res;
 }
 
 void JobQueue::terminate() {
 	unique_lock<mutex> l(jobQueueMutex);
 	abort = true;
-	queue<packaged_task<void()>> emptyQueue;
+	queue<int> emptyQueue;
 	emptyQueue.swap(jobQueue);
 	cv.notify_all();
 }
 
 ThreadPool::ThreadPool(int numThreads) {
 	threads = numThreads;
+	currTask = -1;
+	c = nullptr;
+	m = nullptr;
+	f = nullptr;
 
 	for (int i = 0; i < threads; i++) {
 		pool.push_back(thread(&ThreadPool::threadsDoWork, this));
@@ -40,12 +44,55 @@ ThreadPool::ThreadPool(int numThreads) {
 
 void ThreadPool::threadsDoWork() {
 	while (true) {
-		packaged_task<void()> job = queue.pop();
+		int job = queue.pop();
 		if (queue.abort == true) {
-			break;
+			return;
 		}
-		job();
+		switch (currTask) {
+		case 1:
+			(*c).forwardJob(job);
+			break;
+		case 2:
+			(*c).backpropJob(job);
+			break;
+		case 3:
+			(*m).forwardJob(job);
+			break;
+		case 4:
+			(*m).backpropJob(job);
+			break;
+		case 5:
+			(*f).forwardJob(job);
+			break;
+		case 6:
+			(*f).backpropJob(job);
+			break;
+		case 7:
+			ReLuJob(job);
+			break;
+		case 8:
+			ReLuPrimeJob(job);
+			break;
+		default:
+			return;
+		}
 	}
+}
+
+void ThreadPool::setTask(int task) {
+	currTask = task;
+}
+
+void ThreadPool::setConv(Conv &cnew) {
+	c = &cnew;
+}
+
+void ThreadPool::setMaxPool(MaxPool &mnew) {
+	m = &mnew;
+}
+
+void ThreadPool::setFullyConnectedLayer(FullyConnectedLayer &fnew) {
+	f = &fnew;
 }
 
 Sem::Sem(int countInit) {
@@ -81,8 +128,8 @@ void endThreads() {
 	pool.queue.terminate();
 }
 
-void pushJob(packaged_task<void()> job) {
-	pool.queue.push(move(job));
+void pushJob(int job) {
+	pool.queue.push(job);
 }
 
 Sem sem(0);

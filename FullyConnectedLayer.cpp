@@ -80,9 +80,10 @@ vector<float> FullyConnectedLayer::forward(vector<float> &input) {
 	curr_output = &output;
 
 	sem.set(0);
+	pool.setFullyConnectedLayer(*this);
+			pool.setTask(5);
 	for (int i = 0; i < packets; i++) {
-		packaged_task<void()> job(bind(&FullyConnectedLayer::forwardJob, this, i));
-		pushJob(move(job));
+		pushJob(i);
 	}
 	if ((num_weights * total_size) % packets != 0) {
 		forwardJobCleanup(packets + 1);
@@ -134,9 +135,10 @@ tuple<vector<vector<float>>, vector<float>, vector<float>> FullyConnectedLayer::
 	curr_input = &last_input;
 
 	sem.set(0);
+	pool.setFullyConnectedLayer(*this);
+		pool.setTask(6);
 	for (int i = 0; i < packets; i++) {
-		packaged_task<void()> job(bind(&FullyConnectedLayer::backpropJob, this, i));
-		pushJob(move(job));
+		pushJob(i);
 	}
 	if ((num_weights * total_size) % packets != 0) {
 		backpropJobCleanup(packets + 1);

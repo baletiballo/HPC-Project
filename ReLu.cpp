@@ -40,9 +40,9 @@ void ReLu(vector<vector<vector<float>>> &t1) {
 	relu_input = &t1;
 
 	sem.set(0);
+	pool.setTask(7);
 	for (int i = 0; i < reluPackets; i++) {
-		packaged_task<void()> job(bind(&ReLuJob, i));
-		pushJob(move(job));
+		pushJob(i);
 	}
 	if ((reluSize1 * reluSize2 * reluSize3) % reluPackets != 0) {
 		ReLuJobCleanup(reluPackets + 1);
@@ -82,9 +82,9 @@ void ReLuPrime(vector<vector<vector<float>>> &t1, vector<vector<vector<float>>> 
 	relu_input_2 = &t2;
 
 	sem.set(0);
+	pool.setTask(8);
 	for (int i = 0; i < reluPackets; i++) {
-		packaged_task<void()> job(bind(&ReLuPrimeJob, i));
-		pushJob(move(job));
+		pushJob(i);
 	}
 	if ((reluSize1 * reluSize2 * reluSize3) % reluPackets != 0) {
 		ReLuJobPrimeCleanup(reluPackets + 1);

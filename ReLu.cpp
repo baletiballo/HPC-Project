@@ -1,14 +1,11 @@
-#pragma once
-#include <vector>
-#include "ParallelStuff.cpp"
-
-using namespace std;
+#include "ReLu.h"
+#include "ParallelStuff.h"
 
 int reluPackets = 64;
-int reluPacketSize;
-int reluSize1;
-int reluSize2;
-int reluSize3;
+int reluPacketSize=0;
+int reluSize1=0;
+int reluSize2=0;
+int reluSize3=0;
 vector<vector<vector<float>>> *relu_input = nullptr;
 vector<vector<vector<float>>> *relu_input_2 = nullptr;
 
@@ -33,7 +30,6 @@ void ReLuJobCleanup(int packet) {
 			(*relu_input)[index1][index2][index3] = 0;
 		}
 	}
-	sem.V(1);
 }
 
 void ReLu(vector<vector<vector<float>>> &t1) {
@@ -75,7 +71,6 @@ void ReLuJobPrimeCleanup(int packet) {
 			(*relu_input)[index1][index2][index3] = 0;
 		}
 	}
-	sem.V(1);
 }
 
 void ReLuPrime(vector<vector<vector<float>>> &t1, vector<vector<vector<float>>> &t2) {

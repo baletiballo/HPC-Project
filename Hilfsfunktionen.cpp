@@ -1,9 +1,5 @@
-#pragma once
-
-#include <vector>
+#include <Hilfsfunktionen.h>
 #include <tgmath.h>
-
-using namespace std;
 
 vector<float> flatten(vector<vector<vector<float>>> &t1) {
 	vector<float> out(t1.size() * t1[0].size() * t1[0][0].size());

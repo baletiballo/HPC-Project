@@ -2,12 +2,12 @@
 
 #include <vector>
 #include <random>
-#include "ParallelStuff.cpp"
-#include "Conv.cpp"
-#include "FullyConnectedLayer.cpp"
-#include "MaxPool.cpp"
-#include "Hilfsfunktionen.cpp"
-#include "ReLu.cpp"
+#include "ParallelStuff.h"
+#include "Conv.h"
+#include "FullyConnectedLayer.h"
+#include "MaxPool.h"
+#include "Hilfsfunktionen.h"
+#include "ReLu.h"
 
 using namespace std;
 

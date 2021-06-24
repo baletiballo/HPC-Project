@@ -66,7 +66,7 @@ int main() {
 			float loss = get<0>(res);
 			int_fast8_t correct = get<1>(res);
 
-			if(i % 100 == 0){//Zwischenupdates. Nur alle paar hundert Baches, um Konsole übersichtlich zu halten
+			if(i % 500 == 0){//Zwischenupdates. Nur alle paar hundert Baches, um Konsole übersichtlich zu halten
 				cout << "Batch " << i << " \t Average Loss " << loss / batchSize << "\t Accuracy " << (int)correct <<"/"<< batchSize << "\n";
 			}
 
@@ -79,7 +79,7 @@ int main() {
 		auto training_endTime = chrono::system_clock::now();
 		chrono::duration<double> totalTime = training_endTime - training_startTime;
 		cout << "Total time: " << (int) (totalTime.count() / 60) << " minutes " << (int) (totalTime.count()) % 60 << " seconds\n";
-		cout << "Average loss in last " << batchSize * 10 << " tries:" << endLoss / (10 * batchSize) << "\t Average accuracy in last 10 batches: "
+		cout << "Average loss in last " << batchSize * 10 << " tries:" << endLoss / (float)(10 * batchSize) << "\t Average accuracy in last 10 batches: "
 				<< (float)endCorr / (10 * batchSize) << "\n";
 		endThreads();
 

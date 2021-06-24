@@ -1,7 +1,7 @@
 #include "ReLu.h"
 #include "ParallelStuff.h"
 
-int reluPackets = 64;
+int reluPackets = 12;
 int reluPacketSize=0;
 int reluSize1=0;
 int reluSize2=0;

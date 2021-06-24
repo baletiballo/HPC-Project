@@ -21,7 +21,7 @@ public:
 	vector<vector<vector<float>>> *curr_output = nullptr;
 	vector<vector<vector<float>>> *curr_loss_gradient = nullptr;
 	vector<vector<vector<float>>> *curr_loss_input = nullptr;
-	int packets = 64;
+	int packets = 12;
 	int packetSize;
 
 	MaxPool(int w, int s, int n, int s1, int s2);

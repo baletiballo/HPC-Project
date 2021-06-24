@@ -75,7 +75,7 @@ void Sem::set(int n) {
 
 ///////////
 
-ThreadPool pool(8);
+ThreadPool pool(12);
 
 void endThreads() {
 	pool.queue.terminate();

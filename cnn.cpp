@@ -10,7 +10,6 @@
 using namespace std;
 
 class CNN {
-public:
 	static const int sizeX = 28; //Anzahl Pixel in x-Richtung
 	static const int sizeY = 28; //Anzahl Pixel in y-Richtung
 	static const int num_conv_layers = 1; //Anzahl der Convolutional Layer
@@ -25,10 +24,12 @@ public:
 	float alpha; //Lernrate
 	float beta1; //Erstes Moment
 	float beta2; //Zweites Moment
+	int batchSize; //Größe der Batches
+	int step; //Anzahl der bisher gelernten Batches
 
-	vector<Conv> conv_layers;
-	vector<MaxPool> pooling_layers;
-	FullyConnectedLayer *connected_layer;
+	vector<Conv> conv_layers; //Vektor aller Convolutional Layers
+	vector<MaxPool> pooling_layers; //Vektor aller Pooling Layers
+	FullyConnectedLayer *connected_layer; //Das eine Fully Connected layer
 
 	vector<vector<vector<vector<float>>>> first_momentum_filters;
 	vector<vector<vector<vector<float>>>> second_momentum_filters;
@@ -39,7 +40,11 @@ public:
 	vector<float> first_momentum_conn_biases;
 	vector<float> second_momentum_conn_biases;
 
-	CNN() {
+public:
+
+	CNN(float alpha, float beta1,float beta2, int batchSize):alpha(alpha), beta1(beta1), beta2(beta2), batchSize(batchSize)  {
+		step = 1;
+		
 		int currX = sizeX;
 		int currY = sizeY;
 		int images = 1;
@@ -130,8 +135,8 @@ public:
 		return {loss, correct, filter_gradients, conv_bias_gradients, weight_gradient, conn_bias_gradient};
 	}
 
-	tuple<float, float> learn
-			(float alpha, float beta1, float beta2, vector<vector<vector<float>> > &x_batch, vector<int_fast8_t> &y_batch, int batchSize, int step) {
+	tuple<float, int_fast8_t> learn
+			(vector<vector<vector<float>> > &x_batch, vector<int_fast8_t> &y_batch) {
 		
 		//Das Aktuell zu verarbeitende Bild. Als einelementiger Vektor, da Conv-Layer Vektoren von Bildern nehmen
 		vector<vector<vector<float>>> image(1, vector<vector<float>>(sizeX, vector<float>(sizeY)));
@@ -146,7 +151,7 @@ public:
 		vector<float> weightBiases = get<5>(Result);
 
 		float loss = get<0>(Result);
-		float correct = get<1>(Result);
+		int_fast8_t correct = get<1>(Result);
 
 		for (int i = 1; i < batchSize; i++) {
 			image[0] = x_batch[i];
@@ -161,8 +166,9 @@ public:
 		}
 		
 		//ADAM learning
-		updateFilters(filterGradients, filterBiases, beta1, beta2, alpha, -1, batchSize);
-		updateWeights(weightGradient, weightBiases, beta1, beta2, alpha, -1, batchSize);
+		updateFilters(filterGradients, filterBiases);
+		updateWeights(weightGradient, weightBiases);
+		step++;
 
 		return {loss, correct};
 	}
@@ -188,14 +194,9 @@ public:
 		}
 	}
 
-	void updateFilters(vector<vector<vector<vector<float>>>> &filterGradients, vector<vector<float>> &filterBiases, float beta1, float beta2, float alpha,
-			int step, int batchSize) {
-		float corr1 = 1;
-		float corr2 = 1;
-		if (step != -1) { //if we dont want to enable this correction
-			corr1 = 1 - pow(beta1, step);
-			corr2 = 1 - pow(beta2, step);
-		}
+	void updateFilters(vector<vector<vector<vector<float>>>> &filterGradients, vector<vector<float>> &filterBiases) {
+		float corr1 = 1.0f;// - pow(beta1, step); //Korrekturterm des erstes Moments
+		float corr2 = 1.0f;// - pow(beta2, step); //Korrekturterm des zweiten Moments
 
 		for (unsigned i = 0; i < first_momentum_filters.size(); i++) {
 			for (unsigned j = 0; j < first_momentum_filters[i].size(); j++) {
@@ -219,13 +220,9 @@ public:
 		}
 	}
 
-	void updateWeights(vector<vector<float>> &weightGradient, vector<float> &weightBiases, float beta1, float beta2, float alpha, int step, int batchSize) {
-		float corr1 = 1;
-		float corr2 = 1;
-		if (step != -1) { //if we dont want to enable this correction
-			corr1 = 1 - pow(beta1, step);
-			corr2 = 1 - pow(beta2, step);
-		}
+	void updateWeights(vector<vector<float>> &weightGradient, vector<float> &weightBiases) {
+		float corr1 = 1.0f;// - pow(beta1, step); //Korrekturterm des erstes Moments
+		float corr2 = 1.0f;// - pow(beta2, step); //Korrekturterm des zweiten Moments
 
 		for (unsigned i = 0; i < first_momentum_weights.size(); i++) {
 			for (unsigned j = 0; j < first_momentum_weights[i].size(); j++) {

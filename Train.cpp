@@ -5,22 +5,15 @@
  *      Author: Stefan, Hannah, Silas
  */
 
-#include <vector>
+//Werden in CNN.cpp eingebunden, hier aber auch genutzt
+//#include <tuple>
+//#include <vector>
+
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <string>
-#include <random>
-#include <tuple>
 #include <chrono>
 #include <ctime> 
-
-#include <thread>
-#include <queue>
-#include <mutex>
-#include <condition_variable>
-#include <functional>
-#include <future>
 
 #include "CNN.cpp"
 
@@ -35,23 +28,24 @@ vector<int> correct_lables(42000);
 
 const int batchSize = 32;
 const int imageSize = 28;
-const int num_steps = 3000; //Anzahl an Batches
+const int num_steps = 3001; //Anzahl an Batches
 const float alpha = 0.001; //Lernrate
 const float beta1 = 0.9; //Erstes Moment
 const float beta2 = 0.999; //Zweites Moment
 float endLoss; //Gesamter Loss der letzten 10 Batches
-float endCorr; //Gesamtanzahl korrekt geratener Labels 
+int_fast16_t endCorr; //Gesamtanzahl korrekt geratener Labels der letzten 10 Batches
 
 //Alle Bilder eines Batches, als Vektor von Graustufen Matrizen
 vector<vector<vector<float>>> batch_images(batchSize, vector<vector<float>>(imageSize, vector<float>(imageSize))); 
 //Alle Lables eines Batches, als Vektor von Ganzzahlen
 vector<int_fast8_t> batch_lables(batchSize);
-CNN cnn; //Das benutzte Netzwerk. Topologieänderungen bitte in der Klasse CNN		
 
 int main() {
 	try {
 		/* Einlesen der Trainingsdaten*/
 		read_trainingData("train.txt", training_images, correct_lables);
+
+		CNN cnn(alpha, beta1, beta2, batchSize);//Das benutzte Netzwerk. Topologieänderungen bitte in der Klasse CNN		
 
 		cout << "Beginn des Trainings\n";
 		auto training_startTime = chrono::system_clock::now(); // Interner Timer um die Laufzeit zu messen
@@ -67,13 +61,13 @@ int main() {
 				batch_lables[j] = correct_lables[j + randIndex];
 			}
 
-			tuple<float, float> res = cnn.learn(alpha, beta1, beta2, batch_images, batch_lables, batchSize, i + 1);
+			tuple<float, int_fast8_t> res = cnn.learn(batch_images, batch_lables);
 
 			float loss = get<0>(res);
-			float correct = get<1>(res) * 1.0;
+			int_fast8_t correct = get<1>(res);
 
-			if(i % 500 == 0){//Zwischenupdates. Nur alle paar hundert Baches, um Konsole übersichtlich zu halten
-				cout << "Batch " << i + 1 << " \t Average Loss " << loss / batchSize << "\t Accuracy " << correct / batchSize << "\n";
+			if(i % 100 == 0){//Zwischenupdates. Nur alle paar hundert Baches, um Konsole übersichtlich zu halten
+				cout << "Batch " << i << " \t Average Loss " << loss / batchSize << "\t Accuracy " << (int)correct <<"/"<< batchSize << "\n";
 			}
 
 			if (num_steps - i <= 10) {
@@ -86,12 +80,13 @@ int main() {
 		chrono::duration<double> totalTime = training_endTime - training_startTime;
 		cout << "Total time: " << (int) (totalTime.count() / 60) << " minutes " << (int) (totalTime.count()) % 60 << " seconds\n";
 		cout << "Average loss in last " << batchSize * 10 << " tries:" << endLoss / (10 * batchSize) << "\t Average accuracy in last 10 batches: "
-				<< endCorr / (10 * batchSize) << "\n";
+				<< (float)endCorr / (10 * batchSize) << "\n";
 		endThreads();
 
 		return 0;
 	} catch (const exception&) {
 		endThreads();
+		cout <<"Fehler => Abbruch\n";
 		return -1;
 	}
 }

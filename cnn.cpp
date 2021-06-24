@@ -580,7 +580,8 @@ int main() {
 		const float alpha = 0.001; //Lernrate
 		const float beta1 = 0.9; //Erstes Moment
 		const float beta2 = 0.999; //Zweites Moment
-		cout << "Beginn des Trainings\n";
+		cout << "Nichtoptimierte Vergleichsversion\n";
+		cout << num_steps << " Batches mit je " << batchSize << " Bildern\n";
 		auto training_startTime = chrono::system_clock::now(); // Interner Timer um die Laufzeit zu messen
 
 		for (int i = 0; i < num_steps; i++) {
@@ -598,10 +599,6 @@ int main() {
 
 			float loss = get<0>(res);
 			float correct = get<1>(res) * 1.0;
-
-			if(i % 500 == 0){//Zwischenupdates. Nur alle paar hundert Baches, um Konsole übersichtlich zu halten
-				cout << "Batch " << i + 1 << " \t Average Loss " << loss / batchSize << "\t Accuracy " << correct / batchSize << "\n";
-			}
 
 			if (num_steps - i <= 10) {
 				endLoss += loss;
@@ -624,7 +621,7 @@ int main() {
 void read_trainingData(string filename, vector<vector<float>> &training_images, vector<int> &correct_lables) {
 	ifstream myFile(filename);
 	if (myFile.is_open()) {
-		cout << "Lese Trainingsdaten ein";
+		//cout << "Lese Trainingsdaten ein\n";
 		int lineNum = 0;
 		string line;
 		while (getline(myFile, line)) {

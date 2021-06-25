@@ -81,11 +81,11 @@ int main() {
 		cout << "Total time: " << (int) (totalTime.count() / 60) << " minutes " << (int) (totalTime.count()) % 60 << " seconds\n";
 		cout << "Average loss in last " << batchSize * 10 << " tries:" << endLoss / (float)(10 * batchSize) << "\t Average accuracy in last 10 batches: "
 				<< (float)endCorr / (10 * batchSize) << "\n";
-		endThreads();
+		//endThreads();
 
 		return 0;
 	} catch (const exception&) {
-		endThreads();
+		//endThreads();
 		cout <<"Fehler => Abbruch\n";
 		return -1;
 	}

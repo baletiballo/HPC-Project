@@ -1,5 +1,22 @@
 #include "ParallelStuff.h"
 
+////////////////////////
+/*
+ThreadPool pool(12);
+
+void endThreads() {
+	pool.queue.terminate();
+}
+
+void pushJob(int job) {
+	pool.queue.push(job);
+}
+
+Sem sem(0);
+*/
+/////////////////////
+
+
 JobQueue::JobQueue() {
 	abort = false;
 }
@@ -119,17 +136,3 @@ void Sem::set(int n) {
 	count = n;
 	cv.notify_all();
 }
-
-///////////
-
-ThreadPool pool(12);
-
-void endThreads() {
-	pool.queue.terminate();
-}
-
-void pushJob(int job) {
-	pool.queue.push(job);
-}
-
-Sem sem(0);

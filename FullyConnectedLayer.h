@@ -17,8 +17,8 @@ using namespace std;
 class FullyConnectedLayer {
 public:
 	unsigned num_of_inputs, input_size1, input_size2;
-	unsigned num_weights;
-	unsigned total_size;
+	unsigned num_weights; //Anzahl der Klassifikationklassen
+	unsigned total_size;  //Anzahl der Eingabe "Neuronen"
 	vector<vector<float>> weights;
 	vector<float> biases;
 	vector<float> *curr_input = nullptr;

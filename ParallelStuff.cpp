@@ -65,7 +65,7 @@ void ThreadPool::threadsDoWork() {
 		if (queue.abort == true) {
 			return;
 		}
-		switch (currTask) {
+		/*switch (currTask) {
 		case 1:
 			(*c).forwardJob(job);
 			break;
@@ -92,7 +92,7 @@ void ThreadPool::threadsDoWork() {
 			break;
 		default:
 			return;
-		}
+		}*/
 	}
 }
 

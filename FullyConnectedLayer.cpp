@@ -14,6 +14,12 @@ FullyConnectedLayer::FullyConnectedLayer(unsigned w, unsigned n, unsigned s1, un
 	mtx.resize(num_weights);
 	mtx_big.resize(total_size);
 
+	output.resize(num_weights);
+
+	weight_gradient.resize(num_weights, vector<float>(total_size));
+	bias_gradient.resize(num_weights);
+	loss_input.resize(num_of_inputs, vector<vector<float>>(input_size1, vector<float>(input_size2, 0.0)));
+
 	normal_distribution<float> distribution(0.0, 1.0);
 	for (unsigned i = 0; i < num_weights; i++) {
 
@@ -26,50 +32,77 @@ FullyConnectedLayer::FullyConnectedLayer(unsigned w, unsigned n, unsigned s1, un
 }
 
 /**
- * Description
+ * Forward
  *
- * @param input
- * @return
-*/
-vector<float> FullyConnectedLayer::forward(vector<float>& input) {
-	vector<float> output(num_weights);
+ * @param inputP
+ */
+void FullyConnectedLayer::forward(vector<vector<vector<float>>> &inputP) {
+	input = &inputP;
 	for (unsigned i = 0; i < num_weights; i++) {
 		output[i] = biases[i];
-		for (unsigned j = 0; j < total_size; j++) {
-			output[i] += input[j] * weights[i][j];
+		for (unsigned j = 0; j < num_of_inputs; j++) {
+			for (unsigned k = 0; k < input_size1; k++) {
+				for (unsigned l = 0; l < input_size2; l++) {
+					output[i] += (*input)[j][k][l] * weights[i][j * input_size1 * input_size2 + k * input_size2 + l];
+				}
+			}
 		}
 	}
-	return output;
 }
 
 /**
- * Description
+ * Call this after every Batch, addition of the gradients throughout a Batch is now done directly in backprop
  *
- * @param loss_gradient
- * @param last_input
- * @return
-*/
-tuple<vector<vector<float>>, vector<float>, vector<float>> FullyConnectedLayer::backprop(vector<float>& loss_gradient, vector<float>& last_input) {
-	vector<vector<float>> weight_gradient(loss_gradient.size(), vector<float>(last_input.size()));
-	for (unsigned i = 0; i < loss_gradient.size(); i++) {
-		for (unsigned j = 0; j < last_input.size(); j++) {
-			weight_gradient[i][j] = loss_gradient[i] * last_input[j];
+ */
+void FullyConnectedLayer::cleanup() {
+	for (unsigned cur_weight = 0; cur_weight < num_weights; cur_weight++) {
+		bias_gradient[cur_weight] = 0;
+		for (unsigned i = 0; i < total_size; i++) {
+			weight_gradient[cur_weight][i] = 0;
+		}
+	}
+}
+
+/**
+ * Backprop (notice: gradients are getting already added here, since weight_gradient and bias_gradient only get reset to zero after a cleanup() call and are only needed after a batch)
+ *
+ * @param loss_gradientP
+ */
+void FullyConnectedLayer::backprop(vector<float> &loss_gradientP) {
+	loss_gradient = &loss_gradientP;
+
+	for (unsigned i = 0; i < num_weights; i++) { //zero the loss Input, since the same method to just add them all together cannot be applied here
+		for (unsigned j = 0; j < num_of_inputs; j++) {
+			for (unsigned k = 0; k < input_size1; k++) {
+				for (unsigned l = 0; l < input_size2; l++) {
+					weight_gradient[i][j * input_size1 * input_size2 + k * input_size2 + l] += (*loss_gradient)[i] * (*input)[j][k][l];
+				}
+			}
 		}
 	}
 
-	vector<float> bias_gradient(loss_gradient.size());
-	for (unsigned i = 0; i < loss_gradient.size(); i++) {
-		bias_gradient[i] = loss_gradient[i];
+	for (unsigned i = 0; i < num_weights; i++) {
+		bias_gradient[i] += (*loss_gradient)[i];
 	}
 
-	vector<float> loss_input(total_size, 0.0);
-	for (unsigned i = 0; i < total_size; i++) {
-		for (unsigned j = 0; j < num_weights; j++) {
-			loss_input[i] += weights[j][i] * loss_gradient[j];
+	for (unsigned i = 0; i < num_of_inputs; i++) {
+		for (unsigned j = 0; j < input_size1; j++) {
+			for (unsigned k = 0; k < input_size2; k++) {
+				loss_input[i][j][k] = 0;
+			}
 		}
 	}
 
-	return { weight_gradient, bias_gradient, loss_input };
+	for (unsigned i = 0; i < num_of_inputs; i++) {
+		for (unsigned j = 0; j < input_size1; j++) {
+			for (unsigned k = 0; k < input_size2; k++) {
+				for (unsigned l = 0; l < num_weights; l++) {
+					loss_input[i][j][k] += weights[l][i * input_size1 * input_size2 + j * input_size2 + k] * (*loss_gradient)[l];
+				}
+			}
+		}
+	}
+
 }
 
 ///**

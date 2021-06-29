@@ -1,7 +1,7 @@
 #include "Hilfsfunktionen.h"
 #include <tgmath.h>
 
-vector<float> flatten(vector<vector<vector<float>>> &t1) {
+/*vector<float> flatten(vector<vector<vector<float>>> &t1) {
 	vector<float> out(t1.size() * t1[0].size() * t1[0][0].size());
 	for (unsigned i = 0; i < t1.size(); i++) {
 		for (unsigned j = 0; j < t1[0].size(); j++) {
@@ -23,15 +23,15 @@ vector<vector<vector<float>>> deflatten(vector<float> &t1, int s1, int s2, int s
 		}
 	}
 	return out;
-}
+}*/
 
-void softmax(vector<float> &t1, vector<float> &output) { //t1 and output have to have the same size
+void softmax(vector<float> &t1) {
 	float sum = 0.0;
 	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i] = exp(t1[i]);
-		sum += output[i];
+		t1[i] = exp(t1[i]);
+		sum += t1[i];
 	}
 	for (unsigned i = 0; i < t1.size(); i++) {
-		output[i] = output[i] / sum;
+		t1[i] = t1[i] / sum;
 	}
 }

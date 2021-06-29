@@ -16,6 +16,12 @@ Conv::Conv(int f, int c1, int c2, int n, int s1, int s2) {
 	filters.resize(num_filters, vector<vector<float>>(conv_size1, vector<float>(conv_size2)));
 	biases.resize(num_filters, 0.0);
 
+	output.resize(num_of_inputs * num_filters, vector<vector<float>>(num_windows1, vector<float>(num_windows2)));
+
+	filter_gradient.resize(num_filters, vector<vector<float>>(conv_size1, vector<float>(conv_size2, 0.0)));
+	bias_gradient.resize(num_filters, 0.0);
+	loss_input.resize(num_of_inputs, vector<vector<float>>(input_size1, vector<float>(input_size2, 0.0)));
+
 	normal_distribution<float> distribution(0.0, 1.0);
 	random_device dev;
 	default_random_engine generator(dev());
@@ -29,13 +35,13 @@ Conv::Conv(int f, int c1, int c2, int n, int s1, int s2) {
 }
 
 /**
- * Description
+ * Forward
  *
- * @param input
+ * @param inputP
  * @return
-*/
-vector<vector<vector<float>>> Conv::forward(vector<vector<vector<float>>>& input) {
-	vector<vector<vector<float>>> output(num_of_inputs * num_filters, vector<vector<float>>(num_windows1, vector<float>(num_windows2)));
+ */
+void Conv::forward(vector<vector<vector<float>>> &inputP) {
+	input = &inputP;
 	for (int cur_filter = 0; cur_filter < num_filters; cur_filter++) { //per filter
 		for (int cur_featureMap = 0; cur_featureMap < num_of_inputs; cur_featureMap++) { //per input
 			for (int i = 0; i < num_windows1; i++) {
@@ -49,31 +55,50 @@ vector<vector<vector<float>>> Conv::forward(vector<vector<vector<float>>>& input
 					//matrix multiplication and summation
 					for (int m = 0; m < conv_size1; m++) {
 						for (int n = 0; n < conv_size2; n++) {
-							output[cur_featureMap + num_of_inputs * cur_filter][i][j] += input[cur_featureMap][i + m][j + n] * filters[cur_filter][m][n];
+							output[cur_featureMap + num_of_inputs * cur_filter][i][j] += (*input)[cur_featureMap][i + m][j + n] * filters[cur_filter][m][n];
 						}
 					}
 				}
 			}
 		}
 	}
-
-	return output;
 }
 
 /**
- * Description
+ * Call this after every Batch, addition of the gradients throughout a Batch is now done directly in backprop
  *
- * @param loss_gradient
- * @param last_input
+ */
+void Conv::cleanup() {
+	for (int cur_filter = 0; cur_filter < num_filters; cur_filter++) {
+		bias_gradient[cur_filter] = 0;
+		for (int i = 0; i < conv_size1; i++) {
+			for (int j = 0; j < conv_size2; j++) {
+				filter_gradient[cur_filter][i][j] = 0;
+			}
+		}
+	}
+}
+
+/**
+ * Backprop (notice: gradients are getting already added here, since filter_gradient and bias_gradient only get reset to zero after a cleanup() call and are only needed after a batch)
+ *
+ * @param loss_gradientP
  * @return
-*/
-tuple<vector<vector<vector<float>>>, vector<float>, vector<vector<vector<float>>>> Conv::backprop(vector<vector<vector<float>>>& loss_gradient, vector<vector<vector<float>>>& last_input) {
-	vector<vector<vector<float>>> filter_gradient(num_filters, vector<vector<float>>(conv_size1, vector<float>(conv_size2, 0.0)));
-	vector<float> bias_gradient(num_filters, 0.0);
-	vector<vector<vector<float>>> loss_input(num_of_inputs, vector<vector<float>>(input_size1, vector<float>(input_size2, 0.0)));
+ */
+void Conv::backprop(vector<vector<vector<float>>> &loss_gradientP) {
+	loss_gradient = &loss_gradientP;
+
+	for (int cur_featureMap = 0; cur_featureMap < num_of_inputs; cur_featureMap++) { //zero the loss Input, since the same method to just add them all together cannot be applied here
+		for (int i = 0; i < input_size1; i++) {
+			for (int j = 0; j < input_size2; j++) {
+				loss_input[cur_featureMap][i][j]=0;
+			}
+		}
+	}
 
 	for (int cur_filter = 0; cur_filter < num_filters; cur_filter++) { //per filter
 		for (int cur_featureMap = 0; cur_featureMap < num_of_inputs; cur_featureMap++) { //per input
+
 			for (int i = 0; i < num_windows1; i++) {
 				//per region
 				for (int j = 0; j < num_windows2; j++) {
@@ -81,18 +106,18 @@ tuple<vector<vector<vector<float>>>, vector<float>, vector<vector<vector<float>>
 					//matrix multiplication and summation
 					for (int m = 0; m < conv_size1; m++) {
 						for (int n = 0; n < conv_size2; n++) {
-							filter_gradient[cur_filter][m][n] += loss_gradient[cur_featureMap + num_of_inputs * cur_filter][i][j] * last_input[cur_featureMap][i + m][j + n];
-							loss_input[cur_featureMap][i + m][j + n] += loss_gradient[cur_featureMap + num_of_inputs * cur_filter][i][j] * filters[cur_filter][m][n];
+							filter_gradient[cur_filter][m][n] += (*loss_gradient)[cur_featureMap + num_of_inputs * cur_filter][i][j]
+									* (*input)[cur_featureMap][i + m][j + n];
+							loss_input[cur_featureMap][i + m][j + n] += (*loss_gradient)[cur_featureMap + num_of_inputs * cur_filter][i][j]
+									* filters[cur_filter][m][n];
 						}
 					}
 
-					bias_gradient[cur_filter] += loss_gradient[cur_featureMap * num_filters + cur_filter][i][j];
+					bias_gradient[cur_filter] += (*loss_gradient)[cur_featureMap * num_filters + cur_filter][i][j];
 				}
 			}
 		}
 	}
-
-	return { filter_gradient, bias_gradient, loss_input };
 }
 
 ///**

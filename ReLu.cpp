@@ -9,7 +9,7 @@ int reluSize3=0;
 vector<vector<vector<float>>> *relu_input = nullptr;
 vector<vector<vector<float>>> *relu_input_2 = nullptr;
 
-void ReLuJob(int packet) {
+/*void ReLuJob(int packet) {
 	for (int i = packet * reluPacketSize; i < (packet + 1) * reluPacketSize; i++) {
 		int index1 = i / (reluSize2 * reluSize3);
 		int index2 = (i / reluSize3) % reluSize2;
@@ -30,9 +30,9 @@ void ReLuJobCleanup(int packet) {
 			(*relu_input)[index1][index2][index3] = 0;
 		}
 	}
-}
+}*/
 
-void ReLu(vector<vector<vector<float>>> &t1) {
+/*void ReLu(vector<vector<vector<float>>> &t1) {
 	reluSize1 = t1.size();
 	reluSize2 = t1[0].size();
 	reluSize3 = t1[0][0].size();
@@ -48,9 +48,9 @@ void ReLu(vector<vector<vector<float>>> &t1) {
 		ReLuJobCleanup(reluPackets + 1);
 	}
 	sem.P(reluPackets);
-}
+}*/
 
-void ReLuPrimeJob(int packet) {
+/*void ReLuPrimeJob(int packet) {
 	for (int i = packet * reluPacketSize; i < (packet + 1) * reluPacketSize; i++) {
 		int index1 = i / (reluSize2 * reluSize3);
 		int index2 = (i / reluSize3) % reluSize2;
@@ -71,9 +71,9 @@ void ReLuJobPrimeCleanup(int packet) {
 			(*relu_input)[index1][index2][index3] = 0;
 		}
 	}
-}
+}*/
 
-void ReLuPrime(vector<vector<vector<float>>> &t1, vector<vector<vector<float>>> &t2) {
+/*void ReLuPrime(vector<vector<vector<float>>> &t1, vector<vector<vector<float>>> &t2) {
 	reluSize1 = t1.size();
 	reluSize2 = t1[0].size();
 	reluSize3 = t1[0][0].size();
@@ -90,9 +90,9 @@ void ReLuPrime(vector<vector<vector<float>>> &t1, vector<vector<vector<float>>> 
 		ReLuJobPrimeCleanup(reluPackets + 1);
 	}
 	sem.P(reluPackets);
-}
+}*/
 
-/*void ReLu(vector<vector<vector<float>>> &t1) {
+void ReLu(vector<vector<vector<float>>> &t1) {
 	for (unsigned i = 0; i < t1.size(); i++) {
 		for (unsigned j = 0; j < t1[i].size(); j++) {
 			for (unsigned k = 0; k < t1[i][j].size(); k++) {
@@ -114,4 +114,4 @@ void ReLuPrime(vector<vector<vector<float>>> &t1, vector<vector<vector<float>>> 
 			}
 		}
 	}
-}*/
+}

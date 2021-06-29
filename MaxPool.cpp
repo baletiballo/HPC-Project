@@ -12,16 +12,21 @@ MaxPool::MaxPool(int w, int s, int n, int s1, int s2) {
 	output_size1 = (input_size1 - window) / stride + 1;
 	output_size2 = (input_size2 - window) / stride + 1;
 	packetSize = (num_of_inputs * output_size1 * output_size2) / packets;
+
+	output.resize(num_of_inputs, vector<vector<float>>(output_size1, vector<float>(output_size2, 0.0)));
+
+	loss_input.resize(num_of_inputs, vector<vector<float>>(input_size1, vector<float>(input_size2, 0.0)));
 }
 
 /**
- * Description
+ * Forward
  *
- * @param input
+ * @param inputP
  * @return
-*/
-vector<vector<vector<float>>> MaxPool::forward(vector<vector<vector<float>>>& input) {
-	vector<vector<vector<float>>> output(num_of_inputs, vector<vector<float>>(output_size1, vector<float>(output_size2, 0.0)));
+ */
+void MaxPool::forward(vector<vector<vector<float>>> &inputP) {
+	input = &inputP;
+
 	for (int cur_featureMap = 0; cur_featureMap < num_of_inputs; cur_featureMap++) { //per input
 		for (int i = 0; i < input_size1 - window; i += stride) {
 			//per region
@@ -29,30 +34,36 @@ vector<vector<vector<float>>> MaxPool::forward(vector<vector<vector<float>>>& in
 				// per region
 
 				//matrix max pooling
-				float max = input[cur_featureMap][i][j];
+				float max = (*input)[cur_featureMap][i][j];
 				for (int m = 0; m < window; m++) {
 					for (int n = 0; n < window; n++)
-						if (max < input[cur_featureMap][i + m][j + n])
-							max = input[cur_featureMap][i + m][j + n];
+						if (max < (*input)[cur_featureMap][i + m][j + n])
+							max = (*input)[cur_featureMap][i + m][j + n];
 
 					output[cur_featureMap][i / stride][j / stride] = max;
 				}
 			}
 		}
 	}
-
-	return output;
 }
 
 /**
- * Description
+ * Backprop
  *
- * @param loss_gradient
- * @param last_input
+ * @param loss_gradientP
  * @return
-*/
-vector<vector<vector<float>>> MaxPool::backprop(vector<vector<vector<float>>>& loss_gradient, vector<vector<vector<float>>>& last_input) {
-	vector<vector<vector<float>>> loss_input(num_of_inputs, vector<vector<float>>(input_size1, vector<float>(input_size2, 0.0)));
+ */
+void MaxPool::backprop(vector<vector<vector<float>>> &loss_gradientP) {
+	loss_gradient = &loss_gradientP;
+
+	for (int cur_featureMap = 0; cur_featureMap < num_of_inputs; cur_featureMap++) { //zero the loss Input
+		for (int i = 0; i < input_size1; i++) {
+			for (int j = 0; j < input_size2; j++) {
+				loss_input[cur_featureMap][i][j] = 0;
+			}
+		}
+	}
+
 	for (int cur_featureMap = 0; cur_featureMap < num_of_inputs; cur_featureMap++) { //per input
 		for (int i = 0; i < input_size1 - window; i += stride) {
 			//per region
@@ -60,13 +71,13 @@ vector<vector<vector<float>>> MaxPool::backprop(vector<vector<vector<float>>>& l
 				// per region
 
 				//matrix max pooling
-				float max = last_input[cur_featureMap][i][j];
+				float max = (*input)[cur_featureMap][i][j];
 				int indexX = 0;
 				int indexY = 0;
 				for (int m = 0; m < window; m++) {
 					for (int n = 0; n < window; n++) {
-						if (max < last_input[cur_featureMap][i + m][j + n]) {
-							max = last_input[cur_featureMap][i + m][j + n];
+						if (max < (*input)[cur_featureMap][i + m][j + n]) {
+							max = (*input)[cur_featureMap][i + m][j + n];
 							indexX = m;
 							indexY = n;
 						}
@@ -74,12 +85,10 @@ vector<vector<vector<float>>> MaxPool::backprop(vector<vector<vector<float>>>& l
 				}
 
 				//set only the lossInput of the "pixel" max pool kept
-				loss_input[cur_featureMap][i + indexX][j + indexY] = loss_gradient[cur_featureMap][i / stride][j / stride];
+				loss_input[cur_featureMap][i + indexX][j + indexY] = (*loss_gradient)[cur_featureMap][i / stride][j / stride];
 			}
 		}
 	}
-
-	return loss_input;
 }
 
 ///**

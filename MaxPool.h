@@ -17,12 +17,14 @@ public:
 	int num_of_inputs, input_size1, input_size2;
 	int window, stride;
 	int output_size1, output_size2;
-	vector<vector<vector<float>>> *curr_input = nullptr;
-	vector<vector<vector<float>>> *curr_output = nullptr;
-	vector<vector<vector<float>>> *curr_loss_gradient = nullptr;
-	vector<vector<vector<float>>> *curr_loss_input = nullptr;
-	int packets = 12;
-	int packetSize;
+	vector<vector<vector<float>>> *input = nullptr; //pointer auf den input (forward param) (kann theoretisch auch nur einmal gesetzt werden, da pointer danach immer gleich bleibt)
+	//index1->featureMap, index2&3-> x und y der FeatureMap
+	vector<vector<vector<float>>> output; //index1->(generierte) featureMap (num_of_inputs viele), index2&3-> x und y der FeatureMap
+	vector<vector<vector<float>>> *loss_gradient = nullptr; //pointer auf den loss gradienten (backprop param) (kann theoretisch auch nur einmal gesetzt werden, da pointer danach immer gleich bleibt)
+	//index1->featureMap (num_of_inputs viele), index2&3-> x und y der FeatureMap
+	vector<vector<vector<float>>> loss_input; //index1->featureMap (num_of_inputs viele), index2&3-> x und y der FeatureMap
+	int packets = 12; //in wie viele arbeitspakete sollen forward/backprop aufgeteilt werden (falls parallel)
+	int packetSize; //groesse der arbeitspakete
 
 	MaxPool(int w, int s, int n, int s1, int s2);
 
@@ -30,13 +32,13 @@ public:
 
 	void forwardJobCleanup(int packet);
 
-	vector<vector<vector<float>>> forward(vector<vector<vector<float>>> &input);
+	void forward(vector<vector<vector<float>>> &inputP);
 
 	void backpropJob(int packet);
 
 	void backpropJobCleanup(int packet);
 
-	vector<vector<vector<float>>> backprop(vector<vector<vector<float>>> &loss_gradient, vector<vector<vector<float>>> &last_input);
+	void backprop(vector<vector<vector<float>>> &loss_gradientP);
 };
 
 #endif /* MAXPOOL_H_ */

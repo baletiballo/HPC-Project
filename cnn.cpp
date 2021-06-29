@@ -7,6 +7,10 @@
 #include "Hilfsfunktionen.h"
 #include "ReLu.h"
 
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
 using namespace std;
 
 class CNN {
@@ -31,19 +35,20 @@ class CNN {
 	vector<MaxPool> pooling_layers; //Vektor aller Pooling Layers
 	FullyConnectedLayer *connected_layer; //Das eine Fully Connected layer
 
-	vector<vector<vector<vector<float>>>> first_momentum_filters;
-	vector<vector<vector<vector<float>>>> second_momentum_filters;
-	vector<vector<float>> first_momentum_conv_biases;
-	vector<vector<float>> second_momentum_conv_biases;
-	vector<vector<float>> first_momentum_weights;
-	vector<vector<float>> second_momentum_weights;
-	vector<float> first_momentum_conn_biases;
-	vector<float> second_momentum_conn_biases;
+	vector<vector<vector<vector<float>>>> first_momentum_filters; //Erstes Moment der Filter: index1->Layer, index2->Filter des Layers index1, index3&4-> x bzw y Richtung des Filters
+	vector<vector<vector<vector<float>>>> second_momentum_filters; //Zweites Moment der Filter: index1->Layer, index2->Filter des Layers index1, index3&4-> x bzw y Richtung des Filters
+	vector<vector<float>> first_momentum_conv_biases; //Erstes Moment der Filterbiasse: index1->Layer, index2->Filter des Layers index1
+	vector<vector<float>> second_momentum_conv_biases; //Zweites Moment der Filterbiasse: index1->Layer, index2->Filter des Layers index1
+	vector<vector<float>> first_momentum_weights; //Erstes Moment der Gewichte: index1->Klassifikationklasse, index2->Gewichte der Pixel für Klassifikationklasse index1
+	vector<vector<float>> second_momentum_weights; //Zweites Moment der Gewichte: index1->Klassifikationklasse, index2->Gewichte der Pixel für Klassifikationklasse index1
+	vector<float> first_momentum_conn_biases; //Erstes Moment der Gewichtbiasse: index1->Klassifikationklasse
+	vector<float> second_momentum_conn_biases; //Zweites Moment der Gewichtbiasse: index1->Klassifikationklasse
 
 public:
-	CNN(float alpha, float beta1,float beta2, int batchSize) : alpha(alpha), beta1(beta1), beta2(beta2), batchSize(batchSize)  {
+	CNN(float alpha, float beta1, float beta2, int batchSize) :
+			alpha(alpha), beta1(beta1), beta2(beta2), batchSize(batchSize) {
 		step = 1;
-		
+
 		int currX = sizeX;
 		int currY = sizeY;
 		int images = 1;
@@ -78,74 +83,63 @@ public:
 	 *
 	 * @param image
 	 * @param label
-	 * @return Das Tupel (loss, correct, filter_gradients, conv_bias_gradients, weight_gradient, conn_bias_gradient) 
-	*/
-	tuple<float, bool, vector<vector<vector<vector<float>>>>, vector<vector<float>>, vector<vector<float>>, vector<float>> forward (vector<vector<vector<float>>> &image, int_fast8_t label) {
+	 * @return Das Tupel (loss, correct)
+	 */
+	tuple<float, bool> forward(vector<vector<vector<float>>> &image, int_fast8_t label) {
 
-		vector<vector<vector<vector<float>>>> z;
-		z.push_back(image);
-		for (int i = 0; i < num_conv_layers; i++) {
-			vector<vector<vector<float>>> help = conv_layers[i].forward(z.back());
-			ReLu(help);
-			z.push_back(help);
-			help = pooling_layers[i].forward(z.back());
-			z.push_back(help);
+		conv_layers[0].forward(image); //bild in ersten conv layer
+		ReLu(conv_layers[0].output);
+		pooling_layers[0].forward(conv_layers[0].output);
+
+		for (int i = 1; i < num_conv_layers; i++) { //alle weiteren conv+pooling layers
+			conv_layers[i].forward(pooling_layers[i - 1].output); //nutzt immer den output des letzten pooling layers als input
+			ReLu(conv_layers[i].output);
+			pooling_layers[i].forward(conv_layers[i].output);
 		}
 
-		vector<float> h = flatten(z.back());
-		vector<float> res = (*connected_layer).forward(h);
+		(*connected_layer).forward(pooling_layers[num_conv_layers - 1].output); //nutzt immer den output des letzten pooling layers als input
 
-		softmax(res, res);
-		float loss = -log(res[label]);
-		
+		softmax((*connected_layer).output); //achtung alles folgende findet in place statt, es aendert sich als (*connected_layer).output
+		float loss = -log((*connected_layer).output[label]);
+
 		int argmax = 0;
-		for (int i = 0; i < num_weights; i++) 
-			if (res[i] >= res[argmax]) 
+		for (int i = 0; i < num_weights; i++)
+			if ((*connected_layer).output[i] >= (*connected_layer).output[argmax])
 				argmax = i;
-		
+
 		bool correct = label == argmax;
-		res[label] -= 1;
+		(*connected_layer).output[label] -= 1;
 
-		vector<vector<vector<vector<float>>>> filter_gradients;
-		vector<vector<float>> conv_bias_gradients;
-		vector<vector<float>> weight_gradient;
-		vector<float> conn_bias_gradient;
+		(*connected_layer).backprop((*connected_layer).output); //transformierter (*connected_layer).output wird als input fuer backprop genutzt
 
-		tuple<vector<vector<float>>, vector<float>, vector<float>> helpconn = (*connected_layer).backprop(res, h);
-		weight_gradient = get<0>(helpconn);
-		conn_bias_gradient = get<1>(helpconn);
-		vector<vector<vector<float>>> helpback = deflatten(get<2>(helpconn), (*connected_layer).num_of_inputs, (*connected_layer).input_size1, (*connected_layer).input_size2);
-		for (int i = num_conv_layers - 1; i > -1; i--) {
-			helpback = pooling_layers[i].backprop(helpback, z[2 * i + 1]);
-			ReLuPrime(helpback, z[2 * i + 1]);
-			tuple<vector<vector<vector<float>>>, vector<float>, vector<vector<vector<float>>>> helpconv = conv_layers[i].backprop(helpback, z[2 * i]);
-			filter_gradients.push_back(get<0>(helpconv));
-			conv_bias_gradients.push_back(get<1>(helpconv));
-			helpback = get<2>(helpconv);
+		pooling_layers[num_conv_layers - 1].backprop((*connected_layer).loss_input); //zurueckgehen in umgekehrter Reihenfolge
+		ReLuPrime(pooling_layers[num_conv_layers - 1].loss_input, *pooling_layers[num_conv_layers - 1].input);
+		conv_layers[num_conv_layers - 1].backprop(pooling_layers[num_conv_layers - 1].loss_input);
+
+		for (int i = num_conv_layers - 2; i > -1; i--) { //zurueckgehen in umgekehrter Reihenfolge
+			pooling_layers[i].backprop(conv_layers[i + 1].loss_input); //nutzt immer den output des darauf folgenden conv layers als input
+			ReLuPrime(pooling_layers[i].loss_input, *pooling_layers[i].input);
+			conv_layers[i].backprop(pooling_layers[i].loss_input);
 		}
 
-		return {loss, correct, filter_gradients, conv_bias_gradients, weight_gradient, conn_bias_gradient};
+		return {loss, correct};
 	}
 
 	/**
-	 * Description
+	 * Lernzyklus fuer ein batch
 	 *
 	 * @param x_batch
 	 * @param y_batch
 	 * @return 
-	*/
-	tuple<float, int_fast8_t> learn	(vector<vector<vector<float>> > &x_batch, vector<int_fast8_t> &y_batch) {
-		
+	 */
+	tuple<float, int_fast8_t> learn(vector<vector<vector<float>> > &x_batch, vector<int_fast8_t> &y_batch) {
+
 		//Das Aktuell zu verarbeitende Bild. Als einelementiger Vektor, da Conv-Layer Vektoren von Bildern nehmen
 		vector<vector<vector<float>>> image(1, vector<vector<float>>(sizeX, vector<float>(sizeY)));
 		image[0] = x_batch[0];
 		int label = y_batch[0]; //Das Lable des aktuellen Bildes
 		//Ergebnis des Netzwerks nach dem Forward von image
-		tuple<float, bool, vector<vector<vector<vector<float>>>>, vector<vector<float>>, vector<vector<float>>, vector<float>> Result = forward(image,	label);
-		vector<vector<vector<vector<float>>>> filterGradients = get<2>(Result);
-		vector<vector<float>> filterBiases = get<3>(Result);
-		vector<vector<float>> weightGradient = get<4>(Result);
-		vector<float> weightBiases = get<5>(Result);
+		tuple<float, bool> Result = forward(image, label);
 
 		float loss = get<0>(Result);
 		int_fast8_t correct = get<1>(Result);
@@ -157,127 +151,87 @@ public:
 			Result = forward(image, label);
 			loss += get<0>(Result);
 			correct += get<1>(Result);
-
-			addGradients(get<2>(Result), get<3>(Result), get<4>(Result), get<5>(Result), filterGradients, filterBiases, weightGradient,	weightBiases);
 		}
-		
+
 		//ADAM learning
-		updateFilters(filterGradients, filterBiases);
-		updateWeights(weightGradient, weightBiases);
+		update();
 		step++;
 
 		return {loss, correct};
 	}
 
 	/**
-	 * Description
+	 * Update der Momente und Gewichte und Filter
 	 *
-	 * @param t1
-	 * @param t2
-	 * @param t3
-	 * @param t4
-	 * @param o1
-	 * @param o2
-	 * @param o3
-	 * @param o4
-	 * @return
-	*/
-	void addGradients(vector<vector<vector<vector<float>>>> &t1, vector<vector<float>> &t2, vector<vector<float>> &t3, vector<float> &t4, vector<vector<vector<vector<float>>>> &o1, vector<vector<float>> &o2, vector<vector<float>> &o3, vector<float> &o4) {
-		for (unsigned i = 0; i < t1.size(); i++) {
-			for (unsigned j = 0; j < t1[i].size(); j++) {
-				for (unsigned k = 0; k < t1[i][j].size(); k++) 
-					for (unsigned l = 0; l < t1[i][j][k].size(); l++) 
-						o1[i][j][k][l] += t1[i][j][k][l];
+	 */
+	void update() {
+		float corr1 = 1.0f;		// - pow(beta1, step); //Korrekturterm des erstes Moments
+		float corr2 = 1.0f;		// - pow(beta2, step); //Korrekturterm des zweiten Moments
 
-				o2[i][j] += t2[i][j];
-			}
-		}
+		for (unsigned i = 0; i < first_momentum_filters.size(); i++) { //conv layers
+			for (unsigned j = 0; j < first_momentum_filters[i].size(); j++) { //filters des conv layer
+				for (unsigned k = 0; k < first_momentum_filters[i][j].size(); k++) { //filter x
+					for (unsigned l = 0; l < first_momentum_filters[i][j][k].size(); l++) { //filter y
+						first_momentum_filters[i][j][k][l] = beta1 * first_momentum_filters[i][j][k][l]
+								+ (1.0 - beta1) * (conv_layers[i].filter_gradient)[j][k][l] / batchSize; //erstes moment der filter updaten
+						second_momentum_filters[i][j][k][l] = beta1 * second_momentum_filters[i][j][k][l]
+								+ (1.0 - beta1) * pow((conv_layers[i].filter_gradient)[j][k][l] / batchSize, 2); //zweites moment der filter updaten
 
-		for (unsigned i = 0; i < t3.size(); i++) {
-			for (unsigned j = 0; j < t3[i].size(); j++) 
-				o3[i][j] += t3[i][j];
-
-			o4[i] += t4[i];
-		}
-	}
-
-	/**
-	 * Description
-	 *
-	 * @param filterGradients
-	 * @param filterBiases
-	 * @return
-	*/
-	void updateFilters(vector<vector<vector<vector<float>>>> &filterGradients, vector<vector<float>> &filterBiases) {
-		float corr1 = 1.0f;// - pow(beta1, step); //Korrekturterm des erstes Moments
-		float corr2 = 1.0f;// - pow(beta2, step); //Korrekturterm des zweiten Moments
-
-		for (unsigned i = 0; i < first_momentum_filters.size(); i++) {
-			for (unsigned j = 0; j < first_momentum_filters[i].size(); j++) {
-				for (unsigned k = 0; k < first_momentum_filters[i][j].size(); k++) {
-					for (unsigned l = 0; l < first_momentum_filters[i][j][k].size(); l++) {
-						first_momentum_filters[i][j][k][l] = beta1 * first_momentum_filters[i][j][k][l] + (1.0 - beta1) * filterGradients[i][j][k][l] / batchSize;
-						second_momentum_filters[i][j][k][l] = beta1 * second_momentum_filters[i][j][k][l] + (1.0 - beta1) * pow(filterGradients[i][j][k][l] / batchSize, 2);
-
-						conv_layers[i].filters[j][k][l] = conv_layers[i].filters[j][k][l] - alpha * ((first_momentum_filters[i][j][k][l] / corr1) / (sqrt(second_momentum_filters[i][j][k][l] / corr2) + EPSILON));
+						conv_layers[i].filters[j][k][l] = conv_layers[i].filters[j][k][l]
+								- alpha * ((first_momentum_filters[i][j][k][l] / corr1) / (sqrt(second_momentum_filters[i][j][k][l] / corr2) + EPSILON)); //filter des conv layers updaten
 					}
 				}
-				first_momentum_conv_biases[i][j] = beta1 * first_momentum_conv_biases[i][j] + (1.0 - beta1) * filterBiases[i][j] / batchSize;
-				second_momentum_conv_biases[i][j] = beta1 * second_momentum_conv_biases[i][j] + (1.0 - beta1) * pow(filterBiases[i][j] / batchSize, 2);
+				first_momentum_conv_biases[i][j] = beta1 * first_momentum_conv_biases[i][j] + (1.0 - beta1) * (conv_layers[i].bias_gradient)[j] / batchSize; //erstes moment der filterbiasse updaten
+				second_momentum_conv_biases[i][j] = beta1 * second_momentum_conv_biases[i][j]
+						+ (1.0 - beta1) * pow((conv_layers[i].bias_gradient)[j] / batchSize, 2); //zweites moment der filterbiasse updaten
 
-				conv_layers[i].biases[j] = conv_layers[i].biases[j]	- alpha * ((first_momentum_conv_biases[i][j] / corr1) / (sqrt(second_momentum_conv_biases[i][j] / corr2) + EPSILON));
+				conv_layers[i].biases[j] = conv_layers[i].biases[j]
+						- alpha * ((first_momentum_conv_biases[i][j] / corr1) / (sqrt(second_momentum_conv_biases[i][j] / corr2) + EPSILON)); //filterbiasse des conv layers updaten
 			}
+			conv_layers[i].cleanup(); //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
 		}
-	}
 
-	/**
-	 * Description
-	 *
-	 * @param weightGradient
-	 * @param weightBiases
-	 * @return
-	*/
-	void updateWeights(vector<vector<float>> &weightGradient, vector<float> &weightBiases) {
-		float corr1 = 1.0f;// - pow(beta1, step); //Korrekturterm des erstes Moments
-		float corr2 = 1.0f;// - pow(beta2, step); //Korrekturterm des zweiten Moments
+		for (unsigned i = 0; i < first_momentum_weights.size(); i++) { //outputzahlen
+			for (unsigned j = 0; j < first_momentum_weights[i].size(); j++) { //gesamtgroesse des inputs für den fully connected layer (fcl)
+				first_momentum_weights[i][j] = beta1 * first_momentum_weights[i][j] + (1.0 - beta1) * ((*connected_layer).weight_gradient)[i][j] / batchSize; //erstes moment der fcl gewichte updaten
+				second_momentum_weights[i][j] = beta1 * second_momentum_weights[i][j]
+						+ (1.0 - beta1) * pow(((*connected_layer).weight_gradient)[i][j] / batchSize, 2); //zweites moment der fcl gewichte updaten
 
-		for (unsigned i = 0; i < first_momentum_weights.size(); i++) {
-			for (unsigned j = 0; j < first_momentum_weights[i].size(); j++) {
-				first_momentum_weights[i][j] = beta1 * first_momentum_weights[i][j] + (1.0 - beta1) * weightGradient[i][j] / batchSize;
-				second_momentum_weights[i][j] = beta1 * second_momentum_weights[i][j] + (1.0 - beta1) * pow(weightGradient[i][j] / batchSize, 2);
-
-				(*connected_layer).weights[i][j] = (*connected_layer).weights[i][j]	- alpha * ((first_momentum_weights[i][j] / corr1) / (sqrt(second_momentum_weights[i][j] / corr2) + EPSILON));
+				(*connected_layer).weights[i][j] = (*connected_layer).weights[i][j]
+						- alpha * ((first_momentum_weights[i][j] / corr1) / (sqrt(second_momentum_weights[i][j] / corr2) + EPSILON)); //gewichte des fcl updaten
 			}
-			first_momentum_conn_biases[i] = beta1 * first_momentum_conn_biases[i] + (1.0 - beta1) * weightBiases[i] / batchSize;
-			second_momentum_conn_biases[i] = beta1 * second_momentum_conn_biases[i] + (1.0 - beta1) * pow(weightBiases[i] / batchSize, 2);
+			first_momentum_conn_biases[i] = beta1 * first_momentum_conn_biases[i] + (1.0 - beta1) * ((*connected_layer).bias_gradient)[i] / batchSize; //erstes moment der fcl biasse updaten
+			second_momentum_conn_biases[i] = beta1 * second_momentum_conn_biases[i] + (1.0 - beta1) * pow(((*connected_layer).bias_gradient)[i] / batchSize, 2); //zweites moment der fcl biasse updaten
 
-			(*connected_layer).biases[i] = (*connected_layer).biases[i]	- alpha * ((first_momentum_conn_biases[i] / corr1) / (sqrt(second_momentum_conn_biases[i] / corr2) + EPSILON));
+			(*connected_layer).biases[i] = (*connected_layer).biases[i]
+					- alpha * ((first_momentum_conn_biases[i] / corr1) / (sqrt(second_momentum_conn_biases[i] / corr2) + EPSILON)); //biasse des fcl updaten
 		}
+
+		(*connected_layer).cleanup(); //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
 	}
 };
-
 
 ////////
 // UnnÃ¶tige Methoden von SGD
 ///////
 /*void updateWeights2(float alpha, vector<vector<float>> &weightGradient, vector<float> &weightBiases, int batchSize) {
-		for (unsigned i = 0; i < weightGradient.size(); i++) {
-			for (unsigned j = 0; j < weightGradient[i].size(); j++) {
-				(*connected_layer).weights[i][j] -= alpha * weightGradient[i][j] / batchSize;
-			}
-			(*connected_layer).biases[i] -= alpha * weightBiases[i] / batchSize;
-		}
-	}
+ for (unsigned i = 0; i < weightGradient.size(); i++) {
+ for (unsigned j = 0; j < weightGradient[i].size(); j++) {
+ (*connected_layer).weights[i][j] -= alpha * weightGradient[i][j] / batchSize;
+ }
+ (*connected_layer).biases[i] -= alpha * weightBiases[i] / batchSize;
+ }
+ }
 
-	void updateFilters2(float alpha, vector<vector<vector<vector<float>>>> &filterGradients, vector<vector<float>> &filterBiases, int batchSize) {
-		for (unsigned i = 0; i < first_momentum_filters.size(); i++) {
-			for (unsigned j = 0; j < first_momentum_filters[i].size(); j++) {
-				for (unsigned k = 0; k < first_momentum_filters[i][j].size(); k++) {
-					for (unsigned l = 0; l < first_momentum_filters[i][j][k].size(); l++) {
-						conv_layers[i].filters[j][k][l] -= alpha * filterGradients[i][j][k][l] / batchSize;
-					}
-				}
-				conv_layers[i].biases[j] -= alpha * filterBiases[i][j] / batchSize;
-			}
-		}
-	}*/
+ void updateFilters2(float alpha, vector<vector<vector<vector<float>>>> &filterGradients, vector<vector<float>> &filterBiases, int batchSize) {
+ for (unsigned i = 0; i < first_momentum_filters.size(); i++) {
+ for (unsigned j = 0; j < first_momentum_filters[i].size(); j++) {
+ for (unsigned k = 0; k < first_momentum_filters[i][j].size(); k++) {
+ for (unsigned l = 0; l < first_momentum_filters[i][j][k].size(); l++) {
+ conv_layers[i].filters[j][k][l] -= alpha * filterGradients[i][j][k][l] / batchSize;
+ }
+ }
+ conv_layers[i].biases[j] -= alpha * filterBiases[i][j] / batchSize;
+ }
+ }
+ }*/

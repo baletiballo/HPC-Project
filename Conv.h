@@ -14,20 +14,22 @@ using namespace std;
 
 class Conv {
 public:
-	int num_filters;
-	int num_of_inputs, input_size1, input_size2;
-	int conv_size1, conv_size2;
-	int num_windows1, num_windows2;
-	vector<vector<vector<float>>> filters;
-	vector<float> biases;
-	vector<vector<vector<float>>> *curr_input = nullptr;
-	vector<vector<vector<float>>> *curr_output = nullptr;
-	vector<vector<vector<float>>> *curr_loss_gradient = nullptr;
-	vector<vector<vector<float>>> *curr_filter_gradient = nullptr;
-	vector<float> *curr_bias_gradient = nullptr;
-	vector<vector<vector<float>>> *curr_loss_input = nullptr;
-	int packets = 12;
-	int packetSize;
+	int num_filters; //wie viele filter?
+	int num_of_inputs, input_size1, input_size2; //wie viele feature maps besitzt input, und wie gross sind diese?
+	int conv_size1, conv_size2; //groesse der filter
+	int num_windows1, num_windows2; //anzahl der fenster die von jedem filter abgedeckt werden
+	vector<vector<vector<float>>> filters; //index1->filter, index2&3-> x und y des Filters index1
+	vector<float> biases; //index1->filter
+	vector<vector<vector<float>>> *input = nullptr; //pointer auf den input (forward param) (kann theoretisch auch nur einmal gesetzt werden, da pointer danach immer gleich bleibt)
+	//index1->featureMap, index2&3-> x und y der FeatureMap
+	vector<vector<vector<float>>> output; //index1->(generierte) featureMap (num_of_inputs*num_filters viele), index2&3-> x und y der FeatureMap
+	vector<vector<vector<float>>> *loss_gradient = nullptr; //pointer auf den loss gradienten (backprop param) (kann theoretisch auch nur einmal gesetzt werden, da pointer danach immer gleich bleibt)
+	//index1->featureMap (num_of_inputs*num_filters viele, da wir ja die losses der generierten featureMaps betrachten), index2&3-> x und y der FeatureMap
+	vector<vector<vector<float>>> filter_gradient; //index1->filter, index2&3-> x und y des Filters index1
+	vector<float> bias_gradient; //index1->filter
+	vector<vector<vector<float>>> loss_input; //index1->featureMap (num_of_inputs viele), index2&3-> x und y der FeatureMap
+	int packets = 12; //in wie viele arbeitspakete sollen forward/backprop aufgeteilt werden (falls parallel)
+	int packetSize; //groesse der arbeitspakete
 
 	Conv(int f, int c1, int c2, int n, int s1, int s2);
 
@@ -35,14 +37,15 @@ public:
 
 	void forwardJobCleanup(int packet);
 
-	vector<vector<vector<float>>> forward(vector<vector<vector<float>>> &input);
+	void forward(vector<vector<vector<float>>> &inputP);
 
 	void backpropJob(int packet);
 
 	void backpropJobCleanup(int packet);
 
-	tuple<vector<vector<vector<float>>>, vector<float>, vector<vector<vector<float>>>> backprop(vector<vector<vector<float>>> &loss_gradient,
-			vector<vector<vector<float>>> &last_input);
+	void backprop(vector<vector<vector<float>>> &loss_gradientP);
+
+	void cleanup();
 };
 
 #endif /* CONV_H_ */

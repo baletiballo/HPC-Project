@@ -88,7 +88,8 @@ void Conv::cleanup() {
 void Conv::backprop(vector<vector<vector<float>>> &loss_gradientP) {
 	loss_gradient = &loss_gradientP;
 
-	for (int cur_featureMap = 0; cur_featureMap < num_of_inputs; cur_featureMap++) { //zero the loss Input, since the same method to just add them all together cannot be applied here
+	//zero the loss Input, since the same method to just add them all together cannot be applied here
+	for (int cur_featureMap = 0; cur_featureMap < num_of_inputs; cur_featureMap++) { 
 		for (int i = 0; i < input_size1; i++) {
 			for (int j = 0; j < input_size2; j++) {
 				loss_input[cur_featureMap][i][j]=0;

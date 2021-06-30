@@ -38,12 +38,12 @@ FullyConnectedLayer::FullyConnectedLayer(unsigned w, unsigned n, unsigned s1, un
  */
 void FullyConnectedLayer::forward(vector<vector<vector<float>>> &inputP) {
 	input = &inputP;
-	for (unsigned i = 0; i < num_weights; i++) {
-		output[i] = biases[i];
-		for (unsigned j = 0; j < num_of_inputs; j++) {
+	for (unsigned currClass = 0; currClass < num_weights; currClass++) {
+		output[currClass] = biases[currClass];
+		for (unsigned currFeatureMap = 0; currFeatureMap < num_of_inputs; currFeatureMap++) {
 			for (unsigned k = 0; k < input_size1; k++) {
 				for (unsigned l = 0; l < input_size2; l++) {
-					output[i] += (*input)[j][k][l] * weights[i][j * input_size1 * input_size2 + k * input_size2 + l];
+					output[currClass] += (*input)[currFeatureMap][k][l] * weights[currClass][currFeatureMap * input_size1 * input_size2 + k * input_size2 + l];
 				}
 			}
 		}
@@ -71,11 +71,15 @@ void FullyConnectedLayer::cleanup() {
 void FullyConnectedLayer::backprop(vector<float> &loss_gradientP) {
 	loss_gradient = &loss_gradientP;
 
-	for (unsigned i = 0; i < num_weights; i++) { //zero the loss Input, since the same method to just add them all together cannot be applied here
-		for (unsigned j = 0; j < num_of_inputs; j++) {
-			for (unsigned k = 0; k < input_size1; k++) {
-				for (unsigned l = 0; l < input_size2; l++) {
-					weight_gradient[i][j * input_size1 * input_size2 + k * input_size2 + l] += (*loss_gradient)[i] * (*input)[j][k][l];
+	for (unsigned currFeatureMap = 0; currFeatureMap < num_of_inputs; currFeatureMap++) {
+		for (unsigned currX = 0; currX < input_size1; currX++) {
+			for (unsigned currY = 0; currY < input_size2; currY++) {
+				//zero the loss Input, since the same method to just add them all together cannot be applied here
+				loss_input[currFeatureMap][currX][currY] = 0;
+
+				for (unsigned currClass = 0; currClass < num_weights; currClass++) {
+					loss_input[currFeatureMap][currX][currY] += weights[currClass][currFeatureMap * input_size1 * input_size2 + currX * input_size2 + currY] * (*loss_gradient)[currClass];
+					weight_gradient[currClass][currFeatureMap * input_size1 * input_size2 + currX * input_size2 + currY] += (*loss_gradient)[currClass] * (*input)[currFeatureMap][currX][currY];
 				}
 			}
 		}
@@ -85,23 +89,7 @@ void FullyConnectedLayer::backprop(vector<float> &loss_gradientP) {
 		bias_gradient[i] += (*loss_gradient)[i];
 	}
 
-	for (unsigned i = 0; i < num_of_inputs; i++) {
-		for (unsigned j = 0; j < input_size1; j++) {
-			for (unsigned k = 0; k < input_size2; k++) {
-				loss_input[i][j][k] = 0;
-			}
-		}
-	}
-
-	for (unsigned i = 0; i < num_of_inputs; i++) {
-		for (unsigned j = 0; j < input_size1; j++) {
-			for (unsigned k = 0; k < input_size2; k++) {
-				for (unsigned l = 0; l < num_weights; l++) {
-					loss_input[i][j][k] += weights[l][i * input_size1 * input_size2 + j * input_size2 + k] * (*loss_gradient)[l];
-				}
-			}
-		}
-	}
+	
 
 }
 

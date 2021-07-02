@@ -6,6 +6,7 @@
 #include "MaxPool.h"
 #include "Hilfsfunktionen.h"
 #include "ReLu.h"
+#include "parameter.h"
 
 #include <fstream>
 #include <iostream>
@@ -14,8 +15,6 @@
 using namespace std;
 
 class CNN {
-	static const int sizeX = 28; //Anzahl Pixel in x-Richtung
-	static const int sizeY = 28; //Anzahl Pixel in y-Richtung
 	static const int num_conv_layers = 1; //Anzahl der Convolutional Layer
 	const int num_filters = 8; //Anzahl der Convolutionen pro Conv-Layer
 	const int pool_layers_window = 2;
@@ -23,12 +22,8 @@ class CNN {
 	const int conv_size1 = 3;
 	const int conv_size2 = 3;
 	const int num_weights = 10; //Anzahl an Klassifikations Klassen (10, da zehn Ziffern)
-	const float EPSILON = 1.0f * pow(10.0f, -8);
+	
 
-	float alpha; //Lernrate
-	float beta1; //Erstes Moment
-	float beta2; //Zweites Moment
-	int batchSize; //GrÃ¶ÃŸe der Batches
 	int step; //Anzahl der bisher gelernten Batches
 
 	vector<Conv> conv_layers; //Vektor aller Convolutional Layers
@@ -39,18 +34,17 @@ class CNN {
 	vector<vector<vector<vector<float>>>> second_momentum_filters; //Zweites Moment der Filter: index1->Layer, index2->Filter des Layers index1, index3&4-> x bzw y Richtung des Filters
 	vector<vector<float>> first_momentum_conv_biases; //Erstes Moment der Filterbiasse: index1->Layer, index2->Filter des Layers index1
 	vector<vector<float>> second_momentum_conv_biases; //Zweites Moment der Filterbiasse: index1->Layer, index2->Filter des Layers index1
-	vector<vector<float>> first_momentum_weights; //Erstes Moment der Gewichte: index1->Klassifikationklasse, index2->Gewichte der Pixel für Klassifikationklasse index1
-	vector<vector<float>> second_momentum_weights; //Zweites Moment der Gewichte: index1->Klassifikationklasse, index2->Gewichte der Pixel für Klassifikationklasse index1
+	vector<vector<float>> first_momentum_weights; //Erstes Moment der Gewichte: index1->Klassifikationklasse, index2->Gewichte der Pixel fï¿½r Klassifikationklasse index1
+	vector<vector<float>> second_momentum_weights; //Zweites Moment der Gewichte: index1->Klassifikationklasse, index2->Gewichte der Pixel fï¿½r Klassifikationklasse index1
 	vector<float> first_momentum_conn_biases; //Erstes Moment der Gewichtbiasse: index1->Klassifikationklasse
 	vector<float> second_momentum_conn_biases; //Zweites Moment der Gewichtbiasse: index1->Klassifikationklasse
 
 public:
-	CNN(float alpha, float beta1, float beta2, int batchSize) :
-			alpha(alpha), beta1(beta1), beta2(beta2), batchSize(batchSize) {
+	CNN(int batchSize) {
 		step = 1;
 
-		int currX = sizeX;
-		int currY = sizeY;
+		int currX = imageSize;
+		int currY = imageSize;
 		int images = 1;
 		for (unsigned i = 0; i < num_conv_layers; i++) {
 			vector<vector<vector<float>>> firstMomentum(num_filters, vector<vector<float>>(conv_size1, vector<float>(conv_size2, 0.0)));
@@ -135,7 +129,7 @@ public:
 	tuple<float, int_fast8_t> learn(vector<vector<vector<float>> > &x_batch, vector<int_fast8_t> &y_batch) {
 
 		//Das Aktuell zu verarbeitende Bild. Als einelementiger Vektor, da Conv-Layer Vektoren von Bildern nehmen
-		vector<vector<vector<float>>> image(1, vector<vector<float>>(sizeX, vector<float>(sizeY)));
+		vector<vector<vector<float>>> image(1, vector<vector<float>>(imageSize, vector<float>(imageSize)));
 		image[0] = x_batch[0];
 		int label = y_batch[0]; //Das Lable des aktuellen Bildes
 		//Ergebnis des Netzwerks nach dem Forward von image
@@ -192,7 +186,7 @@ public:
 		}
 
 		for (unsigned i = 0; i < first_momentum_weights.size(); i++) { //outputzahlen
-			for (unsigned j = 0; j < first_momentum_weights[i].size(); j++) { //gesamtgroesse des inputs für den fully connected layer (fcl)
+			for (unsigned j = 0; j < first_momentum_weights[i].size(); j++) { //gesamtgroesse des inputs fï¿½r den fully connected layer (fcl)
 				first_momentum_weights[i][j] = beta1 * first_momentum_weights[i][j] + (1.0 - beta1) * ((*connected_layer).weight_gradient)[i][j] / batchSize; //erstes moment der fcl gewichte updaten
 				second_momentum_weights[i][j] = beta1 * second_momentum_weights[i][j]
 						+ (1.0 - beta1) * pow(((*connected_layer).weight_gradient)[i][j] / batchSize, 2); //zweites moment der fcl gewichte updaten

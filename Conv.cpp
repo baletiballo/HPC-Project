@@ -105,7 +105,7 @@ void Conv::backprop(vector<vector<vector<float>>> &loss_gradientP) {
 				for (int j = 0; j < num_windows2; j++) {
 					// per region
 					//matrix multiplication and summation
-					for (int m = 0; m < conv_size1; m++) {
+					for (int m = 0; m < conv_size1; m++) { //unroll? 
 						for (int n = 0; n < conv_size2; n++) {
 							filter_gradient[cur_filter][m][n] += (*loss_gradient)[cur_featureMap + num_of_inputs * cur_filter][i][j]
 									* (*input)[cur_featureMap][i + m][j + n];

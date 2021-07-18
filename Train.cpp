@@ -23,31 +23,87 @@ using namespace std;
 
 /*
 Ließt die Trainingsdaten ein, und skaliert sie, um aussagekräftigere Inputs bieten zu können
-
 */ 
 void read_scale_trainingData(string filename,vector<vector<vector<float>>> &training_images, vector<int_fast8_t> &correct_lables, int factor);
 void scale_trainingData (vector<vector<float>> tmp_images, vector<vector<vector<float>>> &training_images,int factor);//skaliert die Tainingsdaten
+//Die ursprüngliche main(). So können mehrere ähnliche Trainingsläufe durchgeführt werden, ohne dass sie alle einzeln angestoßen werden müssen
+void train (vector<vector<vector<float>>> training_images, vector<int_fast8_t> correct_lables);
 
 float endLoss; //Gesamter Loss der letzten 10 Batches
 int_fast16_t endCorr; //Gesamtanzahl korrekt geratener Labels der letzten 10 Batches
+chrono::duration<double> totalTime;//Gesamtzeit des Trainings
 
 //Alle Trainingsdaten, als Vektor von Graustufen Matrizen
 vector<vector<vector<float>>> training_images(42000, vector<vector<float>>(imageSize, vector<float>(imageSize)));
 vector<int_fast8_t> correct_lables(42000);
 
-//Alle Bilder eines Batches, als Vektor von Graustufen Matrizen
-vector<vector<vector<float>>> batch_images(batchSize, vector<vector<float>>(imageSize, vector<float>(imageSize))); 
-//Alle Lables eines Batches, als Vektor von Ganzzahlen
-vector<int_fast8_t> batch_lables(batchSize);
+const int infaltionFactor = 2;//Faktor, um den jedes Bild hochskaliert wird. Also 1 px -> Block mit Kantenlänge infationFactor
+const int imageSize = 28 * infaltionFactor; //Kantenlänge eines Bildes (nach dem skalieren)
+
+/////////////////////////////////////////
 
 int main() {
+	double singleTime = 142.0/4; //Zeit, die ein unskalierter Traini9ngsprozess braucht (Durchschnitt von 40 Testläufen)
+	fstream log;
+	double avgTime = 0.0;
+	log.open("Testlog.txt",std::ios_base::out);
+	if (!log.is_open()) return -1;
+	read_scale_trainingData("train.txt", training_images, correct_lables, infaltionFactor);
+
+	/////////////////////////
+
+	for (int i = 1; i <= 1; i++) //Bündellauf mit leicht unterschiedlichen Parametern
+	{
+		//Parameter setzten
+
+
+		log << "--------------------------" << endl;
+		log << "| Skalierungsfaktor == "<< 2 << " |" << endl;
+		log << "--------------------------" << endl;
+
+		for (int j = 0; j < 5; j++) //Mehrere Durchläufe mit denselben Parametern, um konsistenz zu erhöhen
+		{
+			train( training_images, correct_lables);
+			/*
+			log << "Durchschnittlicher Loss in den letzten 10 Batches:" << endLoss / (float)(10 * batchSize)
+			<< "\t Durchschnittliche Praezision in den letzten 10 Batches: " << (float)endCorr / (10 * batchSize) << "\n";
+			*/
+			endLoss = 0.0;
+			endCorr = 0;
+			avgTime += totalTime.count();
+		}
+
+		avgTime /= 5;
+		//double expectedTime = (double)(i*i) * singleTime;
+
+
+		
+		log << "Durchschnittlich: " <<(int) (totalTime.count() / 60) << " Minuten " << (int) (totalTime.count()) % 60 << " Sekunden" << endl;
+		//log << "Erwartet Zeit:    " <<(int) (expectedTime / 60) << " Minuten " << (int) (expectedTime) % 60 << " Sekunden" << endl;
+		//log << "Tatsaechliche / erwartete Dauer= " << avgTime/ expectedTime <<  endl ;
+		avgTime = 0.0;
+	}
+}
+
+//Die ursprüngliche main(). So können mehrere ähnliche Trainingsläufe durchgeführt werden, ohne dass sie alle einzeln angestoßen werden müssen
+void train(vector<vector<vector<float>>> training_images, vector<int_fast8_t> correct_lables){
+
+
+	//Alle Bilder eines Batches, als Vektor von Graustufen Matrizen
+	vector<vector<vector<float>>> batch_images(batchSize, vector<vector<float>>(imageSize, vector<float>(imageSize))); 
+	//Alle Lables eines Batches, als Vektor von Ganzzahlen
+	vector<int_fast8_t> batch_lables(batchSize);
+
+	endCorr = 0;
+	endLoss = 0;
+
 	try {
 		/* Einlesen der Trainingsdaten*/
-		read_scale_trainingData("train.txt", training_images, correct_lables, infaltionFactor);
+		//read_scale_trainingData("train.txt", training_images, correct_lables, infaltionFactor);
 
-		CNN cnn(batchSize);//Das benutzte Netzwerk. Topologieänderungen bitte in der Klasse CNN		
+		CNN cnn(imageSize);//Das benutzte Netzwerk. Topologieänderungen bitte in der Klasse CNN		
 
-		cout << "Beginn des Trainings\n";
+		//std::cout << "Beginn des Trainings\n";
 		auto training_startTime = chrono::system_clock::now(); // Interner Timer um die Laufzeit zu messen
 
 		for (int i = 0; i < num_steps; i++) {
@@ -65,7 +121,7 @@ int main() {
 			int_fast8_t correct = get<1>(res);
 
 			if(i % 500 == 0){//Zwischenupdates. Nur alle paar hundert Baches, um Konsole übersichtlich zu halten
-				cout << "Batch " << i << " \t Average Loss " << loss / batchSize << "\t Accuracy " << (int)correct <<"/"<< batchSize << "\n";
+				//cout << "Batch " << i << " \t Average Loss " << loss / batchSize << "\t Accuracy " << (int)correct <<"/"<< batchSize << "\n";
 			}
 
 			if (num_steps - i <= 10) {
@@ -75,17 +131,12 @@ int main() {
 		}
 
 		auto training_endTime = chrono::system_clock::now();
-		chrono::duration<double> totalTime = training_endTime - training_startTime;
-		cout << "Total time: " << (int) (totalTime.count() / 60) << " minutes " << (int) (totalTime.count()) % 60 << " seconds\n";
-		cout << "Average loss in last " << batchSize * 10 << " tries:" << endLoss / (float)(10 * batchSize) << "\t Average accuracy in last 10 batches: "
-				<< (float)endCorr / (10 * batchSize) << "\n";
+		totalTime = training_endTime - training_startTime;
 		//endThreads();
-
-		return 0;
 	} catch (const exception&) {
 		//endThreads();
-		cout <<"Fehler => Abbruch\n";
-		return -1;
+		std::cout <<"Fehler => Abbruch\n";
+		
 	}
 }
 
@@ -93,7 +144,7 @@ void read_scale_trainingData(string filename, vector<vector<vector<float>>> &tra
 	ifstream myFile(filename);
 	if (myFile.is_open()) {
 		vector<vector<float>> tmp_images(42000, vector<float>(imagePixels)); //Die originalen (nicht skalierten) Trainingsdaten
-		cout << "Lese Trainingsdaten ein\n";
+		//cout << "Lese Trainingsdaten ein;\n";
 		int lineNum = 0;
 		string line;
 		while (getline(myFile, line)) {

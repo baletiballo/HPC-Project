@@ -1,9 +1,15 @@
 #ifndef PARAMETER_H_
 #define PARAMETER_H_
 
-const int infaltionFactor = 4;//Faktor, um den jedes Bild hochskaliert wird. Also 1 px -> Block mit Kantenlänge infationFactor
+/*
+    Hier sind alle Parameter, die für einen gesamten Trainingsprozess konstant sind.
+    Durch das Einbinden dieser Datei müssen die Daten nicht an (fast) alle Konstruktoren übergeben werden.
+    Um einen Schwung von Läufen, mit leicht verschiedenen Parametern zu machen, sollte das evtl. ein Parameter struct werden, 
+    das man übergeben kann.
+*/
+
+
 const int batchSize = 32; //Anzahl Bilder pro Batch
-const int imageSize = 28 * infaltionFactor; //Kantenlänge eines Bildes (nach dem skalieren)
 const int imagePixels = 28*28; //Anzahl der Pixel eines unskalierten Bildes == Größe eines flachen Vektors eines Bildes
 const int num_steps = 3001; //Anzahl an Batches
 const float alpha = 0.001; //Lernrate

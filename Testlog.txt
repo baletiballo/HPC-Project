@@ -1,0 +1,36 @@
+--------------------------
+| Skalierungsfaktor == 1 |
+--------------------------
+Durchschnittlich: 0 Minuten 28 Sekunden
+Erwartet Zeit:    0 Minuten 35 Sekunden
+Tatsaechliche / erwartete Dauer= 0.792927
+--------------------------
+| Skalierungsfaktor == 2 |
+--------------------------
+Durchschnittlich: 2 Minuten 22 Sekunden
+Erwartet Zeit:    2 Minuten 22 Sekunden
+Tatsaechliche / erwartete Dauer= 0.969596
+--------------------------
+| Skalierungsfaktor == 3 |
+--------------------------
+Durchschnittlich: 5 Minuten 41 Sekunden
+Erwartet Zeit:    5 Minuten 19 Sekunden
+Tatsaechliche / erwartete Dauer= 1.03088
+--------------------------
+| Skalierungsfaktor == 4 |
+--------------------------
+Durchschnittlich: 9 Minuten 45 Sekunden
+Erwartet Zeit:    9 Minuten 28 Sekunden
+Tatsaechliche / erwartete Dauer= 1.03377
+--------------------------
+| Skalierungsfaktor == 5 |
+--------------------------
+Durchschnittlich: 16 Minuten 1 Sekunden
+Erwartet Zeit:    14 Minuten 47 Sekunden
+Tatsaechliche / erwartete Dauer= 1.05812
+--------------------------
+| Skalierungsfaktor == 6 |
+--------------------------
+Durchschnittlich: 23 Minuten 15 Sekunden
+Erwartet Zeit:    21 Minuten 18 Sekunden
+Tatsaechliche / erwartete Dauer= 1.08148

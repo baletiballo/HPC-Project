@@ -15,14 +15,14 @@
 using namespace std;
 
 class CNN {
-	static const int num_conv_layers = 1; //Anzahl der Convolutional Layer
+	const int num_conv_layers = 1; //Anzahl der Convolutional Layer
 	const int num_filters = 8; //Anzahl der Convolutionen pro Conv-Layer
 	const int pool_layers_window = 2;
-	const int pool_layers_stride = 2;
+	const int pool_layers_stride = 2;  
 	const int conv_size1 = 3;
 	const int conv_size2 = 3;
 	const int num_weights = 10; //Anzahl an Klassifikations Klassen (10, da zehn Ziffern)
-	
+	const int imageSize;
 
 	int step; //Anzahl der bisher gelernten Batches
 
@@ -40,7 +40,7 @@ class CNN {
 	vector<float> second_momentum_conn_biases; //Zweites Moment der Gewichtbiasse: index1->Klassifikationklasse
 
 public:
-	CNN(int batchSize) {
+	CNN(int imageSize) : imageSize(imageSize) {
 		step = 1;
 
 		int currX = imageSize;

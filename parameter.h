@@ -10,7 +10,9 @@
 
 
 const int batchSize = 32; //Anzahl Bilder pro Batch
-const int imagePixels = 28*28; //Anzahl der Pixel eines unskalierten Bildes == Größe eines flachen Vektors eines Bildes
+const int imageSizeX = 28;
+const int imageSizeY = 28;
+const int imagePixels = imageSizeX*imageSizeY; //Anzahl der Pixel eines unskalierten Bildes == Größe eines flachen Vektors eines Bildes
 const int num_steps = 3001; //Anzahl an Batches
 const float alpha = 0.001; //Lernrate
 const float beta1 = 0.9; //Erstes Moment

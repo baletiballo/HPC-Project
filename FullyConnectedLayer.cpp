@@ -12,7 +12,6 @@ FullyConnectedLayer::FullyConnectedLayer(unsigned w, unsigned n, unsigned s1, un
 	biases.resize(num_weights, 0.0);
 	packetSize = (num_weights * total_size) / packets;
 	mtx.resize(num_weights);
-	mtx_big.resize(total_size);
 
 	output.resize(num_weights);
 
@@ -78,8 +77,10 @@ void FullyConnectedLayer::backprop(vector<float> &loss_gradientP) {
 				loss_input[currFeatureMap][currX][currY] = 0;
 
 				for (unsigned currClass = 0; currClass < num_weights; currClass++) {
-					loss_input[currFeatureMap][currX][currY] += weights[currClass][currFeatureMap * input_size1 * input_size2 + currX * input_size2 + currY] * (*loss_gradient)[currClass];
-					weight_gradient[currClass][currFeatureMap * input_size1 * input_size2 + currX * input_size2 + currY] += (*loss_gradient)[currClass] * (*input)[currFeatureMap][currX][currY];
+					loss_input[currFeatureMap][currX][currY] += weights[currClass][currFeatureMap * input_size1 * input_size2 + currX * input_size2 + currY]
+							* (*loss_gradient)[currClass];
+					weight_gradient[currClass][currFeatureMap * input_size1 * input_size2 + currX * input_size2 + currY] += (*loss_gradient)[currClass]
+							* (*input)[currFeatureMap][currX][currY];
 				}
 			}
 		}
@@ -89,163 +90,173 @@ void FullyConnectedLayer::backprop(vector<float> &loss_gradientP) {
 		bias_gradient[i] += (*loss_gradient)[i];
 	}
 
-	
-
 }
 
-///**
-// * Description
-// *
-// * @param packet
-// * @return
-//*/
-//void FullyConnectedLayer::forwardJob(int packet) {
-//	float tmp = 0.0;
-//	for (int i = packet * packetSize; i < (packet + 1) * packetSize; i++) {
-//		int index1 = i / (total_size);
-//		int index2 = i % total_size;
-//
-//		tmp += (*curr_input)[index2] * weights[index1][index2];
-//
-//		if ((unsigned) index2 + 1 == total_size) {
-//			mtx[index1].lock();
-//			(*curr_output)[index1] += tmp;
-//			mtx[index1].unlock();
-//
-//			tmp = 0.0;
-//		}
-//	}
-//	if (tmp != 0.0) {
-//		int index1 = (((packet + 1) * packetSize) - 1) / (total_size);
-//		mtx[index1].lock();
-//		(*curr_output)[index1] += tmp;
-//		mtx[index1].unlock();
-//	}
-//	sem.V(1);
-//}
-//
-// /**
-// * Description
-// *
-// * @param packet
-// * @return
-//*/
-//void FullyConnectedLayer::forwardJobCleanup(int packet) {
-//	float tmp = 0.0;
-//	for (int i = packet * packetSize; (unsigned) i < num_weights * total_size; i++) {
-//		int index1 = i / (total_size);
-//		int index2 = i % total_size;
-//
-//		tmp += (*curr_input)[index2] * weights[index1][index2];
-//
-//		if ((unsigned) index2 + 1 == total_size) {
-//			mtx[index1].lock();
-//			(*curr_output)[index1] += tmp;
-//			mtx[index1].unlock();
-//
-//			tmp = 0.0;
-//		}
-//	}
-//	if (tmp != 0.0) {
-//		int index1 = (((packet + 1) * packetSize) - 1) / (total_size);
-//		mtx[index1].lock();
-//		(*curr_output)[index1] += tmp;
-//		mtx[index1].unlock();
-//	}
-//}
-//
-// /**
-// * Description
-// *
-// * @param input
-// * @return
-//*/
-//vector<float> FullyConnectedLayer::forward(vector<float> &input) {
-//	vector<float> output(num_weights);
-//	curr_input = &input;
-//	curr_output = &output;
-//
-//	sem.set(0);
-//	pool.setFullyConnectedLayer(*this);
-//			pool.setTask(5);
-//	for (int i = 0; i < packets; i++) {
-//		pushJob(i);
-//	}
-//	if ((num_weights * total_size) % packets != 0) {
-//		forwardJobCleanup(packets + 1);
-//	}
-//	sem.P(packets);
-//
-//	for (unsigned i = 0; i < num_weights; i++) {
-//		output[i] += biases[i];
-//	}
-//	return output;
-//}
-//
-///**
-// * Description
-// *
-// * @param packet
-// * @return
-//*/
-//void FullyConnectedLayer::backpropJob(int packet) {
-//	for (int i = packet * packetSize; i < (packet + 1) * packetSize; i++) {
-//		int index1 = i / (total_size);
-//		int index2 = i % total_size;
-//
-//		(*curr_weight_gradient)[index1][index2] = (*curr_loss_gradient)[index1] * (*curr_input)[index2];
-//
-//		mtx_big[index2].lock();
-//		(*curr_loss_input)[index2] += weights[index1][index2] * (*curr_loss_gradient)[index1];
-//		mtx_big[index2].unlock();
-//	}
-//	sem.V(1);
-//}
-//
-//void FullyConnectedLayer::backpropJobCleanup(int packet) {
-//	for (int i = packet * packetSize; (unsigned) i < num_weights * total_size; i++) {
-//		int index1 = i / (total_size);
-//		int index2 = i % total_size;
-//
-//		(*curr_weight_gradient)[index1][index2] = (*curr_loss_gradient)[index1] * (*curr_input)[index2];
-//
-//		mtx_big[index2].lock();
-//		(*curr_loss_input)[index2] += weights[index1][index2] * (*curr_loss_gradient)[index1];
-//		mtx_big[index2].unlock();
-//	}
-//}
-//
-// /**
-// * Description
-// *
-// * @param loss_gradient
-// * @param last_input
-// * @return
-//*/
-//tuple<vector<vector<float>>, vector<float>, vector<float>> FullyConnectedLayer::backprop(vector<float> &loss_gradient, vector<float> &last_input) {
-//	vector<vector<float>> weight_gradient(num_weights, vector<float>(total_size));
-//	vector<float> bias_gradient(num_weights);
-//	vector<float> loss_input(total_size, 0.0);
-//
-//	curr_weight_gradient = &weight_gradient;
-//	curr_bias_gradient = &bias_gradient;
-//	curr_loss_input = &loss_input;
-//	curr_loss_gradient = &loss_gradient;
-//	curr_input = &last_input;
-//
-//	sem.set(0);
-//	pool.setFullyConnectedLayer(*this);
-//		pool.setTask(6);
-//	for (int i = 0; i < packets; i++) {
-//		pushJob(i);
-//	}
-//	if ((num_weights * total_size) % packets != 0) {
-//		backpropJobCleanup(packets + 1);
-//	}
-//	for (unsigned i = 0; i < num_weights; i++) { //fast enough as is
-//		(*curr_bias_gradient)[i] = (*curr_loss_gradient)[i];
-//	}
-//	sem.P(packets);
-//
-//	return {weight_gradient, bias_gradient, loss_input};
-//}
+/**
+ * Description
+ *
+ * @param packet
+ * @return
+ */
+void FullyConnectedLayer::forwardJob(int packet) {
+	float tmp = 0.0;
+
+	for (int index = packet * packetSize; index < (packet + 1) * packetSize; index++) {
+		int currClass = index / (total_size);
+		int weightIndex = index % total_size;
+		int currFeatureMap = weightIndex / (input_size1 * input_size2);
+		int k = (weightIndex / input_size2) % input_size1;
+		int l = weightIndex % input_size2;
+
+		tmp += (*input)[currFeatureMap][k][l] * weights[currClass][weightIndex];
+
+		if ((unsigned) weightIndex + 1 == total_size) {
+			mtx[currClass].lock();
+			output[currClass] += tmp;
+			mtx[currClass].unlock();
+
+			tmp = 0.0;
+		}
+	}
+	if (tmp != 0.0) {
+		int currClass = (((packet + 1) * packetSize) - 1) / (total_size);
+		mtx[currClass].lock();
+		output[currClass] += tmp;
+		mtx[currClass].unlock();
+	}
+	sem.V(1);
+}
+
+/**
+ * Description
+ *
+ * @param packet
+ * @return
+ */
+void FullyConnectedLayer::forwardJobCleanup(int packet) {
+	float tmp = 0.0;
+	for (int index = packet * packetSize; (unsigned) index < num_weights * total_size; index++) {
+		int currClass = index / (total_size);
+		int weightIndex = index % total_size;
+		int currFeatureMap = weightIndex / (input_size1 * input_size2);
+		int k = (weightIndex / input_size2) % input_size1;
+		int l = weightIndex % input_size2;
+
+		tmp += (*input)[currFeatureMap][k][l] * weights[currClass][weightIndex];
+
+		if ((unsigned) weightIndex + 1 == total_size) {
+			mtx[currClass].lock();
+			output[currClass] += tmp;
+			mtx[currClass].unlock();
+
+			tmp = 0.0;
+		}
+	}
+	if (tmp != 0.0) {
+		int currClass = (((packet + 1) * packetSize) - 1) / (total_size);
+		mtx[currClass].lock();
+		output[currClass] += tmp;
+		mtx[currClass].unlock();
+	}
+}
+
+/**
+ * Description
+ *
+ * @param input
+ * @return
+ */
+void FullyConnectedLayer::forward_par(vector<vector<vector<float>>> &inputP) {
+	input = &inputP;
+
+	sem.set(0);
+	pool.setFullyConnectedLayer(*this);
+	pool.setTask(5);
+	for (int i = 0; i < packets; i++) {
+		pushJob(i);
+	}
+	if ((num_weights * total_size) % packets != 0) {
+		forwardJobCleanup(packets + 1);
+	}
+	sem.P(packets);
+
+	for (unsigned i = 0; i < num_weights; i++) {
+		output[i] += biases[i];
+	}
+}
+
+/**
+ * Description
+ *
+ * @param packet
+ * @return
+ */
+void FullyConnectedLayer::backpropJob(int packet) {
+	for (int index = packet * packetSize; index < (packet + 1) * packetSize; index++) {
+		int currClass = index / (total_size);
+		int weightIndex = index % total_size;
+		int currFeatureMap = weightIndex / (input_size1 * input_size2);
+		int currX = (weightIndex / input_size2) % input_size1;
+		int currY = weightIndex % input_size2;
+
+		weight_gradient[currClass][weightIndex] = (*loss_gradient)[currClass] * (*input)[currFeatureMap][currX][currY];
+	}
+
+	for (int weightIndex = packet; weightIndex < total_size; weightIndex += packets) {
+		int currFeatureMap = weightIndex / (input_size1 * input_size2);
+		int currX = (weightIndex / input_size2) % input_size1;
+		int currY = weightIndex % input_size2;
+		loss_input[currFeatureMap][currX][currY] = 0;
+		for (int currClass = 0; currClass < num_weights; currClass++) {
+			loss_input[currFeatureMap][currX][currY] += weights[currClass][weightIndex] * (*loss_gradient)[currClass];
+		}
+	}
+	sem.V(1);
+}
+
+void FullyConnectedLayer::backpropJobCleanup(int packet) {
+	for (int index = packet * packetSize; (unsigned) index < num_weights * total_size; index++) {
+		int currClass = index / (total_size);
+		int weightIndex = index % total_size;
+		int currFeatureMap = weightIndex / (input_size1 * input_size2);
+		int currX = (weightIndex / input_size2) % input_size1;
+		int currY = weightIndex % input_size2;
+
+		weight_gradient[currClass][weightIndex] = (*loss_gradient)[currClass] * (*input)[currFeatureMap][currX][currY];
+	}
+
+	for (int weightIndex = packet; weightIndex < total_size; weightIndex += packets) {
+		int currFeatureMap = weightIndex / (input_size1 * input_size2);
+		int currX = (weightIndex / input_size2) % input_size1;
+		int currY = weightIndex % input_size2;
+		loss_input[currFeatureMap][currX][currY] = 0;
+		for (int currClass = 0; currClass < num_weights; currClass++) {
+			loss_input[currFeatureMap][currX][currY] += weights[currClass][weightIndex] * (*loss_gradient)[currClass];
+		}
+	}
+}
+
+/**
+ * Description
+ *
+ * @param loss_gradientP
+ * @return
+ */
+void FullyConnectedLayer::backprop_par(vector<float> &loss_gradientP) {
+	loss_gradient = &loss_gradientP;
+
+	sem.set(0);
+	pool.setFullyConnectedLayer(*this);
+	pool.setTask(6);
+	for (int i = 0; i < packets; i++) {
+		pushJob(i);
+	}
+	if ((num_weights * total_size) % packets != 0) {
+		backpropJobCleanup(packets + 1);
+	}
+	for (unsigned currClass = 0; currClass < num_weights; currClass++) { //fast enough as is
+		bias_gradient[currClass] = (*loss_gradient)[currClass];
+	}
+	sem.P(packets);
+
+}

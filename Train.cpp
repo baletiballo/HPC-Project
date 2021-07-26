@@ -33,7 +33,7 @@ int_fast16_t endCorr; //Gesamtanzahl korrekt geratener Labels der letzten 10 Bat
 chrono::duration<double> totalTime; //Gesamtzeit des Trainings
 
 //Alle Trainingsdaten, als Vektor von Graustufen Matrizen
-vector<vector<vector<float>>> training_images(42000, vector<vector<float>>(imageSize, vector<float>(imageSize)));
+vector<vector<vector<float>>> training_images(42000, vector<vector<float>>(imageSizeX, vector<float>(imageSizeY)));
 vector<int_fast8_t> correct_lables(42000);
 
 const int infaltionFactor = 2; //Faktor, um den jedes Bild hochskaliert wird. Also 1 px -> Block mit Kantenlänge infationFactor
@@ -198,7 +198,7 @@ void scale_trainingData_bilinear_interpolation(vector<vector<float>> tmp_images,
 		//we want a real image not a vector so we convert it
 		for (int i = 0; i < imageSizeX; i++) { //btw this should be done when reading the data...
 			for (int j = 0; j < imageSizeY; j++) {
-				tmp_image[i][j] = tmp_images[image][i + j * imageSizeX];
+				tmp_image[i][j] = tmp_images[image][i * imageSizeY + j];
 			}
 		}
 		scale_image_bilinear_interpolation(tmp_image, training_images[image], factor);

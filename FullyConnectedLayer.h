@@ -32,7 +32,6 @@ public:
 	int packets = 12; //in wie viele arbeitspakete sollen forward/backprop aufgeteilt werden (falls parallel)
 	int packetSize; //groesse der arbeitspakete
 	deque<mutex> mtx; //benoetigt fuer einige parallele aufteilungen, da ueberschneidungen von indizes der arbeitspakete passieren koennen
-	deque<mutex> mtx_big; //benoetigt fuer einige parallele aufteilungen, da ueberschneidungen von indizes der arbeitspakete passieren koennen
 
 	FullyConnectedLayer(unsigned w, unsigned n, unsigned s1, unsigned s2);
 
@@ -42,11 +41,15 @@ public:
 
 	void forward(vector<vector<vector<float>>> &inputP);
 
+	void forward_par(vector<vector<vector<float>>> &inputP);
+
 	void backpropJob(int packet);
 
 	void backpropJobCleanup(int packet);
 
 	void backprop(vector<float> &loss_gradientP);
+
+	void backprop_par(vector<float> &loss_gradientP);
 
 	void cleanup();
 };

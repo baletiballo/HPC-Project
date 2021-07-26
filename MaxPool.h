@@ -34,11 +34,15 @@ public:
 
 	void forward(vector<vector<vector<float>>> &inputP);
 
+	void forward_par(vector<vector<vector<float>>> &inputP);
+
 	void backpropJob(int packet);
 
 	void backpropJobCleanup(int packet);
 
 	void backprop(vector<vector<vector<float>>> &loss_gradientP);
+
+	void backprop_par(vector<vector<vector<float>>> &loss_gradientP);
 };
 
 #endif /* MAXPOOL_H_ */

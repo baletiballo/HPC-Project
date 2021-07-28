@@ -25,6 +25,7 @@ public:
 	vector<vector<vector<float>>> loss_input; //index1->featureMap (num_of_inputs viele), index2&3-> x und y der FeatureMap
 	int packets = 12; //in wie viele arbeitspakete sollen forward/backprop aufgeteilt werden (falls parallel)
 	int packetSize; //groesse der arbeitspakete
+	bool needCleanup; //soll JobCleanup aufgerufen werden?
 
 	MaxPool(int w, int s, int n, int s1, int s2);
 

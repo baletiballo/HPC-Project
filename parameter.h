@@ -8,6 +8,7 @@
     das man übergeben kann.
 */
 
+#include <cmath>
 
 const int batchSize = 32; //Anzahl Bilder pro Batch
 const int imageSizeX = 28;

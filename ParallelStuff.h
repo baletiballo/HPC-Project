@@ -21,6 +21,7 @@
 #include "Conv.h"
 #include "MaxPool.h"
 #include "FullyConnectedLayer.h"
+#include "cnn.h"
 
 using namespace std;
 
@@ -46,6 +47,7 @@ public:
 	Conv *c;
 	MaxPool *m;
 	FullyConnectedLayer *f;
+	CNN *cnn;
 
 	ThreadPool(int numThreads);
 	void threadsDoWork(); //thread method, making them get and complete jobs in an infinite loop
@@ -53,6 +55,7 @@ public:
 	void setConv(Conv &cnew);
 	void setMaxPool(MaxPool &mnew);
 	void setFullyConnectedLayer(FullyConnectedLayer &fnew);
+	void setCNN(CNN &cnnnew);
 };
 
 class Sem { //standard semaphore

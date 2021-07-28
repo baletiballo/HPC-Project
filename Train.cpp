@@ -15,7 +15,7 @@
 #include <ctime> 
 #include <vector>
 
-#include "cnn.cpp"
+#include "cnn.h"
 #include "parameter.h"
 
 using namespace std;
@@ -168,8 +168,8 @@ void read_scale_trainingData(string filename, vector<vector<vector<float>>> &tra
 //this is because we want to add factor-1 new pixels between each two original pixels. This gives us image.size()-1 blocks with factor pixels each and one single lone pixel at the end.
 //sooo make sure newImage has those sizes
 void scale_image_bilinear_interpolation(vector<vector<float>> &image, vector<vector<float>> &newImage, int factor) {
-	for (int pixelX = 0; pixelX < newImage.size(); pixelX++) {
-		for (int pixelY = 0; pixelY < newImage[0].size(); pixelY++) {
+	for (unsigned pixelX = 0; pixelX < newImage.size(); pixelX++) {
+		for (unsigned pixelY = 0; pixelY < newImage[0].size(); pixelY++) {
 			if (pixelX % factor == 0) {
 				if (pixelY % factor == 0) {
 					newImage[pixelX][pixelY] = image[pixelX / factor][pixelY / factor];

@@ -11,6 +11,7 @@ FullyConnectedLayer::FullyConnectedLayer(unsigned w, unsigned n, unsigned s1, un
 	weights.resize(num_weights, vector<float>(total_size));
 	biases.resize(num_weights, 0.0);
 	packetSize = (num_weights * total_size) / packets;
+	needCleanup=(num_weights * total_size) % packets != 0;
 	mtx.resize(num_weights);
 
 	output.resize(num_weights);
@@ -175,7 +176,7 @@ void FullyConnectedLayer::forward_par(vector<vector<vector<float>>> &inputP) {
 	for (int i = 0; i < packets; i++) {
 		pushJob(i);
 	}
-	if ((num_weights * total_size) % packets != 0) {
+	if (needCleanup) {
 		forwardJobCleanup(packets + 1);
 	}
 	sem.P(packets);
@@ -202,12 +203,12 @@ void FullyConnectedLayer::backpropJob(int packet) {
 		weight_gradient[currClass][weightIndex] = (*loss_gradient)[currClass] * (*input)[currFeatureMap][currX][currY];
 	}
 
-	for (int weightIndex = packet; weightIndex < total_size; weightIndex += packets) {
+	for (unsigned weightIndex = packet; weightIndex < total_size; weightIndex += packets) {
 		int currFeatureMap = weightIndex / (input_size1 * input_size2);
 		int currX = (weightIndex / input_size2) % input_size1;
 		int currY = weightIndex % input_size2;
 		loss_input[currFeatureMap][currX][currY] = 0;
-		for (int currClass = 0; currClass < num_weights; currClass++) {
+		for (unsigned currClass = 0; currClass < num_weights; currClass++) {
 			loss_input[currFeatureMap][currX][currY] += weights[currClass][weightIndex] * (*loss_gradient)[currClass];
 		}
 	}
@@ -225,12 +226,12 @@ void FullyConnectedLayer::backpropJobCleanup(int packet) {
 		weight_gradient[currClass][weightIndex] = (*loss_gradient)[currClass] * (*input)[currFeatureMap][currX][currY];
 	}
 
-	for (int weightIndex = packet; weightIndex < total_size; weightIndex += packets) {
+	for (unsigned weightIndex = packet; weightIndex < total_size; weightIndex += packets) {
 		int currFeatureMap = weightIndex / (input_size1 * input_size2);
 		int currX = (weightIndex / input_size2) % input_size1;
 		int currY = weightIndex % input_size2;
 		loss_input[currFeatureMap][currX][currY] = 0;
-		for (int currClass = 0; currClass < num_weights; currClass++) {
+		for (unsigned currClass = 0; currClass < num_weights; currClass++) {
 			loss_input[currFeatureMap][currX][currY] += weights[currClass][weightIndex] * (*loss_gradient)[currClass];
 		}
 	}
@@ -251,7 +252,7 @@ void FullyConnectedLayer::backprop_par(vector<float> &loss_gradientP) {
 	for (int i = 0; i < packets; i++) {
 		pushJob(i);
 	}
-	if ((num_weights * total_size) % packets != 0) {
+	if (needCleanup) {
 		backpropJobCleanup(packets + 1);
 	}
 	for (unsigned currClass = 0; currClass < num_weights; currClass++) { //fast enough as is

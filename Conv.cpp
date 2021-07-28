@@ -13,6 +13,8 @@ Conv::Conv(int f, int c1, int c2, int n, int s1, int s2) {
 	num_windows2 = input_size2 - conv_size2 + 1;
 	packetSizeForw = (num_filters * num_of_inputs * num_windows1 * num_windows2) / packets;
 	packetSizeBack = (num_of_inputs * num_windows1 * num_windows2) / packets;
+	needForwCleanup = (num_filters * num_of_inputs * num_windows1 * num_windows2) % packets != 0;
+	needBackCleanup=(num_of_inputs * num_windows1 * num_windows2) % packets != 0;
 
 	filters.resize(num_filters, vector<vector<float>>(conv_size1, vector<float>(conv_size2)));
 	biases.resize(num_filters, 0.0);
@@ -188,7 +190,7 @@ void Conv::forward_par(vector<vector<vector<float>>> &inputP) {
 	for (int i = 0; i < packets; i++) {
 		pushJob(i);
 	}
-	if ((num_filters * num_of_inputs * num_windows1 * num_windows2) % packets != 0) {
+	if (needForwCleanup) {
 		forwardJobCleanup(packets + 1);
 	}
 	sem.P(packets);
@@ -202,12 +204,9 @@ void Conv::backpropJob(int packet) {
 		loss_input[cur_featureMap][i][j] = 0;
 
 		for (int cur_filter = 0; cur_filter < num_filters; cur_filter++) { //per filter
-			for (int m = 0; m < conv_size1; m++) { //unroll?
-				for (int n = 0; n < conv_size2; n++) {
-					if (i - m > -1 && j - n > -1) {
-						loss_input[cur_featureMap][i][j] += (*loss_gradient)[cur_featureMap + num_of_inputs * cur_filter][i - m][j - n]
-								* filters[cur_filter][m][n];
-					}
+			for (int m = 0; m < min(i + 1, conv_size1); m++) { //unroll?
+				for (int n = 0; n < min(j + 1, conv_size2); n++) {
+					loss_input[cur_featureMap][i][j] += (*loss_gradient)[cur_featureMap + num_of_inputs * cur_filter][i - m][j - n] * filters[cur_filter][m][n];
 				}
 			}
 		}
@@ -250,12 +249,9 @@ void Conv::backpropJobCleanup(int packet) {
 		loss_input[cur_featureMap][i][j] = 0;
 
 		for (int cur_filter = 0; cur_filter < num_filters; cur_filter++) { //per filter
-			for (int m = 0; m < conv_size1; m++) { //unroll?
-				for (int n = 0; n < conv_size2; n++) {
-					if (i - m > -1 && j - n > -1) {
-						loss_input[cur_featureMap][i][j] += (*loss_gradient)[cur_featureMap + num_of_inputs * cur_filter][i - m][j - n]
-								* filters[cur_filter][m][n];
-					}
+			for (int m = 0; m < min(i + 1, conv_size1); m++) { //unroll?
+				for (int n = 0; n < min(j + 1, conv_size2); n++) {
+					loss_input[cur_featureMap][i][j] += (*loss_gradient)[cur_featureMap + num_of_inputs * cur_filter][i - m][j - n] * filters[cur_filter][m][n];
 				}
 			}
 		}
@@ -297,7 +293,7 @@ void Conv::backprop_par(vector<vector<vector<float>>> &loss_gradientP) {
 	for (int i = 0; i < packets; i++) {
 		pushJob(i);
 	}
-	if ((num_of_inputs * num_windows1 * num_windows2) % packets != 0) {
+	if (needBackCleanup) {
 		backpropJobCleanup(packets + 1);
 	}
 	sem.P(packets);

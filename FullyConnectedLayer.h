@@ -31,6 +31,7 @@ public:
 	vector<vector<vector<float>>> loss_input; //index1->featureMap (num_of_inputs viele), index2&3-> x und y der FeatureMap
 	int packets = 12; //in wie viele arbeitspakete sollen forward/backprop aufgeteilt werden (falls parallel)
 	int packetSize; //groesse der arbeitspakete
+	bool needCleanup; //soll JobCleanup aufgerufen werden?
 	deque<mutex> mtx; //benoetigt fuer einige parallele aufteilungen, da ueberschneidungen von indizes der arbeitspakete passieren koennen
 
 	FullyConnectedLayer(unsigned w, unsigned n, unsigned s1, unsigned s2);

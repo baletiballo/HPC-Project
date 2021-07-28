@@ -12,6 +12,7 @@ MaxPool::MaxPool(int w, int s, int n, int s1, int s2) {
 	output_size1 = (input_size1 - window) / stride + 1;
 	output_size2 = (input_size2 - window) / stride + 1;
 	packetSize = (num_of_inputs * output_size1 * output_size2) / packets;
+	needCleanup=(num_of_inputs * output_size1 * output_size2) % packets != 0;
 
 	output.resize(num_of_inputs, vector<vector<float>>(output_size1, vector<float>(output_size2, 0.0)));
 
@@ -155,7 +156,7 @@ void MaxPool::forward_par(vector<vector<vector<float>>> &inputP) {
 	for (int i = 0; i < packets; i++) {
 		pushJob(i);
 	}
-	if ((num_of_inputs * output_size1 * output_size2) % packets != 0) {
+	if (needCleanup) {
 		forwardJobCleanup(packets + 1);
 	}
 	sem.P(packets);
@@ -253,7 +254,7 @@ void MaxPool::backprop_par(vector<vector<vector<float>>> &loss_gradientP) {
 	for (int i = 0; i < packets; i++) {
 		pushJob(i);
 	}
-	if ((num_of_inputs * output_size1 * output_size2) % packets != 0) {
+	if (needCleanup) {
 		backpropJobCleanup(packets + 1);
 	}
 	sem.P(packets);

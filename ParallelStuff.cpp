@@ -2,20 +2,19 @@
 
 ////////////////////////
 /*
-ThreadPool pool(12);
+ ThreadPool pool(12);
 
-void endThreads() {
-	pool.queue.terminate();
-}
+ void endThreads() {
+ pool.queue.terminate();
+ }
 
-void pushJob(int job) {
-	pool.queue.push(job);
-}
+ void pushJob(int job) {
+ pool.queue.push(job);
+ }
 
-Sem sem(0);
-*/
+ Sem sem(0);
+ */
 /////////////////////
-
 ThreadPool pool(0); //dummy
 Sem sem(0); //dummy
 
@@ -40,7 +39,7 @@ int JobQueue::pop() {
 	});
 	if (abort)
 		return {};
-	int res=jobQueue.front();
+	int res = jobQueue.front();
 	jobQueue.pop();
 	return res;
 }
@@ -59,6 +58,7 @@ ThreadPool::ThreadPool(int numThreads) {
 	c = nullptr;
 	m = nullptr;
 	f = nullptr;
+	cnn = nullptr;
 
 	for (int i = 0; i < threads; i++) {
 		pool.push_back(thread(&ThreadPool::threadsDoWork, this));
@@ -96,6 +96,9 @@ void ThreadPool::threadsDoWork() {
 		case 8:
 			ReLuPrimeJob(job);
 			break;
+		case 9:
+			(*cnn).updateJob(job);
+			break;
 		default:
 			return;
 		}
@@ -116,6 +119,10 @@ void ThreadPool::setMaxPool(MaxPool &mnew) {
 
 void ThreadPool::setFullyConnectedLayer(FullyConnectedLayer &fnew) {
 	f = &fnew;
+}
+
+void ThreadPool::setCNN(CNN &cnnnew) {
+	cnn = &cnnnew;
 }
 
 Sem::Sem(int countInit) {

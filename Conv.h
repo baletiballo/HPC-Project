@@ -31,6 +31,8 @@ public:
 	int packets = 12; //in wie viele arbeitspakete sollen forward/backprop aufgeteilt werden (falls parallel)
 	int packetSizeForw; //groesse der arbeitspakete fuer forward
 	int packetSizeBack; //groesse der arbeitspakete fuer backprop
+	bool needForwCleanup; //soll forwardJobCleanup aufgerufen werden?
+	bool needBackCleanup; //soll backpropJobCleanup aufgerufen werden?
 
 	Conv(int f, int c1, int c2, int n, int s1, int s2);
 

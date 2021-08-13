@@ -39,8 +39,8 @@ void MaxPool::forward(vector<vector<vector<float>>> &inputP) {
 
 				//matrix max pooling
 				float max = (*input)[cur_featureMap][i][j];
-				int maxX = -1;
-				int maxY = -1;
+				int maxX = 0;
+				int maxY = 0;
 				for (int m = 0; m < window; m++) {
 					for (int n = 0; n < window; n++) {
 						if (max < (*input)[cur_featureMap][i + m][j + n]) {
@@ -109,8 +109,8 @@ void MaxPool::forwardJob(int packet) {
 
 		//matrix max pooling
 		float max = (*input)[cur_featureMap][indexX][indexY];
-		int maxX = -1;
-		int maxY = -1;
+		int maxX = 0;
+		int maxY = 0;
 		for (int m = 0; m < window; m++) {
 			for (int n = 0; n < window; n++) {
 				if (max < (*input)[cur_featureMap][indexX + m][indexY + n]) {
@@ -143,8 +143,8 @@ void MaxPool::forwardJobCleanup(int packet) {
 		int indexY = index % output_size2 * stride;
 
 		float max = (*input)[cur_featureMap][indexX][indexY];
-		int maxX = -1;
-		int maxY = -1;
+		int maxX = 0;
+		int maxY = 0;
 		for (int m = 0; m < window; m++) {
 			for (int n = 0; n < window; n++) {
 				if (max < (*input)[cur_featureMap][indexX + m][indexY + n]) {

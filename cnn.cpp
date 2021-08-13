@@ -140,7 +140,7 @@ void CNN::updateJob(int packet) {
 				second_momentum_filters[currConvLayer][currFilter][currX][currY] = beta1 * second_momentum_filters[currConvLayer][currFilter][currX][currY]
 						+ (1.0 - beta1) * pow((conv_layers[currConvLayer].filter_gradient)[currFilter][currX][currY] / batchSize, 2); //zweites moment der filter updaten
 
-				(conv_layers[currConvLayer].filter_gradient)[currFilter][currX][currY] = 0; //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
+				(conv_layers[currConvLayer].filter_gradient)[currFilter][currX][currY] = 0.0; //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
 
 				conv_layers[currConvLayer].filters[currFilter][currX][currY] = conv_layers[currConvLayer].filters[currFilter][currX][currY]
 						- alpha
@@ -154,7 +154,7 @@ void CNN::updateJob(int packet) {
 		second_momentum_conv_biases[currConvLayer][currFilter] = beta1 * second_momentum_conv_biases[currConvLayer][currFilter]
 				+ (1.0 - beta1) * pow((conv_layers[currConvLayer].bias_gradient)[currFilter] / batchSize, 2); //zweites moment der filterbiasse updaten
 
-		(conv_layers[currConvLayer].bias_gradient)[currFilter] = 0; //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
+		(conv_layers[currConvLayer].bias_gradient)[currFilter] = 0.0; //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
 
 		conv_layers[currConvLayer].biases[currFilter] = conv_layers[currConvLayer].biases[currFilter]
 				- alpha
@@ -171,7 +171,7 @@ void CNN::updateJob(int packet) {
 		second_momentum_weights[currClass][currWeight] = beta1 * second_momentum_weights[currClass][currWeight]
 				+ (1.0 - beta1) * pow(((*connected_layer).weight_gradient)[currClass][currWeight] / batchSize, 2); //zweites moment der fcl gewichte updaten
 
-		((*connected_layer).weight_gradient)[currClass][currWeight] = 0; //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
+		((*connected_layer).weight_gradient)[currClass][currWeight] = 0.0; //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
 
 		(*connected_layer).weights[currClass][currWeight] = (*connected_layer).weights[currClass][currWeight]
 				- alpha * ((first_momentum_weights[currClass][currWeight] / corr1) / (sqrt(second_momentum_weights[currClass][currWeight] / corr2) + EPSILON)); //gewichte des fcl updaten
@@ -191,7 +191,7 @@ void CNN::updateJobCleanup(int packet) {
 				second_momentum_filters[currConvLayer][currFilter][currX][currY] = beta1 * second_momentum_filters[currConvLayer][currFilter][currX][currY]
 						+ (1.0 - beta1) * pow((conv_layers[currConvLayer].filter_gradient)[currFilter][currX][currY] / batchSize, 2); //zweites moment der filter updaten
 
-				(conv_layers[currConvLayer].filter_gradient)[currFilter][currX][currY] = 0; //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
+				(conv_layers[currConvLayer].filter_gradient)[currFilter][currX][currY] = 0.0; //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
 
 				conv_layers[currConvLayer].filters[currFilter][currX][currY] = conv_layers[currConvLayer].filters[currFilter][currX][currY]
 						- alpha
@@ -205,7 +205,7 @@ void CNN::updateJobCleanup(int packet) {
 		second_momentum_conv_biases[currConvLayer][currFilter] = beta1 * second_momentum_conv_biases[currConvLayer][currFilter]
 				+ (1.0 - beta1) * pow((conv_layers[currConvLayer].bias_gradient)[currFilter] / batchSize, 2); //zweites moment der filterbiasse updaten
 
-		(conv_layers[currConvLayer].bias_gradient)[currFilter] = 0; //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
+		(conv_layers[currConvLayer].bias_gradient)[currFilter] = 0.0; //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
 
 		conv_layers[currConvLayer].biases[currFilter] = conv_layers[currConvLayer].biases[currFilter]
 				- alpha
@@ -222,7 +222,7 @@ void CNN::updateJobCleanup(int packet) {
 		second_momentum_weights[currClass][currWeight] = beta1 * second_momentum_weights[currClass][currWeight]
 				+ (1.0 - beta1) * pow(((*connected_layer).weight_gradient)[currClass][currWeight] / batchSize, 2); //zweites moment der fcl gewichte updaten
 
-		((*connected_layer).weight_gradient)[currClass][currWeight] = 0; //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
+		((*connected_layer).weight_gradient)[currClass][currWeight] = 0.0; //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
 
 		(*connected_layer).weights[currClass][currWeight] = (*connected_layer).weights[currClass][currWeight]
 				- alpha * ((first_momentum_weights[currClass][currWeight] / corr1) / (sqrt(second_momentum_weights[currClass][currWeight] / corr2) + EPSILON)); //gewichte des fcl updaten
@@ -248,7 +248,7 @@ void CNN::update_par() {
 		second_momentum_conn_biases[currClass] = beta1 * second_momentum_conn_biases[currClass]
 				+ (1.0 - beta1) * pow(((*connected_layer).bias_gradient)[currClass] / batchSize, 2); //zweites moment der fcl biasse updaten
 
-		((*connected_layer).bias_gradient)[currClass] = 0; //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
+		((*connected_layer).bias_gradient)[currClass] = 0.0; //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
 
 		(*connected_layer).biases[currClass] = (*connected_layer).biases[currClass]
 				- alpha * ((first_momentum_conn_biases[currClass] / corr1) / (sqrt(second_momentum_conn_biases[currClass] / corr2) + EPSILON)); //biasse des fcl updaten

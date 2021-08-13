@@ -56,9 +56,9 @@ void FullyConnectedLayer::forward(vector<vector<vector<float>>> &inputP) {
  */
 void FullyConnectedLayer::cleanup() {
 	for (unsigned cur_weight = 0; cur_weight < num_weights; cur_weight++) {
-		bias_gradient[cur_weight] = 0;
+		bias_gradient[cur_weight] = 0.0;
 		for (unsigned i = 0; i < total_size; i++) {
-			weight_gradient[cur_weight][i] = 0;
+			weight_gradient[cur_weight][i] = 0.0;
 		}
 	}
 }
@@ -75,7 +75,7 @@ void FullyConnectedLayer::backprop(vector<float> &loss_gradientP) {
 		for (unsigned currX = 0; currX < input_size1; currX++) {
 			for (unsigned currY = 0; currY < input_size2; currY++) {
 				//zero the loss Input, since the same method to just add them all together cannot be applied here
-				loss_input[currFeatureMap][currX][currY] = 0;
+				loss_input[currFeatureMap][currX][currY] = 0.0;
 
 				for (unsigned currClass = 0; currClass < num_weights; currClass++) {
 					loss_input[currFeatureMap][currX][currY] += weights[currClass][currFeatureMap * input_size1 * input_size2 + currX * input_size2 + currY]
@@ -207,7 +207,7 @@ void FullyConnectedLayer::backpropJob(int packet) {
 		int currFeatureMap = weightIndex / (input_size1 * input_size2);
 		int currX = (weightIndex / input_size2) % input_size1;
 		int currY = weightIndex % input_size2;
-		loss_input[currFeatureMap][currX][currY] = 0;
+		loss_input[currFeatureMap][currX][currY] = 0.0;
 		for (unsigned currClass = 0; currClass < num_weights; currClass++) {
 			loss_input[currFeatureMap][currX][currY] += weights[currClass][weightIndex] * (*loss_gradient)[currClass];
 		}
@@ -230,7 +230,7 @@ void FullyConnectedLayer::backpropJobCleanup(int packet) {
 		int currFeatureMap = weightIndex / (input_size1 * input_size2);
 		int currX = (weightIndex / input_size2) % input_size1;
 		int currY = weightIndex % input_size2;
-		loss_input[currFeatureMap][currX][currY] = 0;
+		loss_input[currFeatureMap][currX][currY] = 0.0;
 		for (unsigned currClass = 0; currClass < num_weights; currClass++) {
 			loss_input[currFeatureMap][currX][currY] += weights[currClass][weightIndex] * (*loss_gradient)[currClass];
 		}

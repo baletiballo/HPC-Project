@@ -76,7 +76,7 @@ void Conv::cleanup() {
 		bias_gradient[cur_filter] = 0;
 		for (int i = 0; i < conv_size1; i++) {
 			for (int j = 0; j < conv_size2; j++) {
-				filter_gradient[cur_filter][i][j] = 0;
+				filter_gradient[cur_filter][i][j] = 0.0;
 			}
 		}
 	}
@@ -95,7 +95,7 @@ void Conv::backprop(vector<vector<vector<float>>> &loss_gradientP) {
 	for (int cur_featureMap = 0; cur_featureMap < num_of_inputs; cur_featureMap++) {
 		for (int i = 0; i < input_size1; i++) {
 			for (int j = 0; j < input_size2; j++) {
-				loss_input[cur_featureMap][i][j] = 0;
+				loss_input[cur_featureMap][i][j] = 0.0;
 			}
 		}
 	}
@@ -201,7 +201,7 @@ void Conv::backpropJob(int packet) {
 		int cur_featureMap = index / (num_windows1 * num_windows2);
 		int i = (index / num_windows2) % num_windows1;
 		int j = index % num_windows2;
-		loss_input[cur_featureMap][i][j] = 0;
+		loss_input[cur_featureMap][i][j] = 0.0;
 
 		for (int cur_filter = 0; cur_filter < num_filters; cur_filter++) { //per filter
 			for (int m = 0; m < min(i + 1, conv_size1); m++) { //unroll?
@@ -246,7 +246,7 @@ void Conv::backpropJobCleanup(int packet) {
 		int cur_featureMap = index / (num_windows1 * num_windows2);
 		int i = (index / num_windows2) % num_windows1;
 		int j = index % num_windows2;
-		loss_input[cur_featureMap][i][j] = 0;
+		loss_input[cur_featureMap][i][j] = 0.0;
 
 		for (int cur_filter = 0; cur_filter < num_filters; cur_filter++) { //per filter
 			for (int m = 0; m < min(i + 1, conv_size1); m++) { //unroll?

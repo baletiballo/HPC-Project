@@ -32,12 +32,12 @@ float endLoss; //Gesamter Loss der letzten 10 Batches
 int_fast16_t endCorr; //Gesamtanzahl korrekt geratener Labels der letzten 10 Batches
 chrono::duration<double> totalTime; //Gesamtzeit des Trainings
 
-//Alle Trainingsdaten, als Vektor von Graustufen Matrizen
-vector<vector<vector<float>>> training_images(42000, vector<vector<float>>(imageSizeX, vector<float>(imageSizeY)));
-vector<int_fast8_t> correct_lables(42000);
-
 const int infaltionFactor = 2; //Faktor, um den jedes Bild hochskaliert wird. Also 1 px -> Block mit Kantenlänge infationFactor
 const int imageSize = 28 * infaltionFactor; //Kantenlänge eines Bildes (nach dem skalieren)
+
+//Alle Trainingsdaten, als Vektor von Graustufen Matrizen
+vector<vector<vector<float>>> training_images(42000, vector<vector<float>>(imageSizeX*infaltionFactor, vector<float>(imageSizeY*infaltionFactor)));
+vector<int_fast8_t> correct_lables(42000);
 
 /////////////////////////////////////////
 

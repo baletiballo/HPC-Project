@@ -14,6 +14,7 @@
 #include <chrono>
 #include <ctime> 
 #include <vector>
+#include <iomanip> 
 
 #include "cnn.h"
 #include "parameter.h"
@@ -36,8 +37,7 @@ chrono::duration<double> totalTime; //Gesamtzeit des Trainings
 vector<vector<vector<float>>> training_images(42000, vector<vector<float>>(imageSizeX, vector<float>(imageSizeY)));
 vector<int_fast8_t> correct_lables(42000);
 
-const int infaltionFactor = 2; //Faktor, um den jedes Bild hochskaliert wird. Also 1 px -> Block mit Kantenlänge infationFactor
-const int imageSize = 28 * infaltionFactor; //Kantenlänge eines Bildes (nach dem skalieren)
+
 
 /////////////////////////////////////////
 
@@ -52,8 +52,7 @@ int main() {
 
 	/////////////////////////
 
-	for (int i = 1; i <= 1; i++) //Bündellauf mit leicht unterschiedlichen Parametern
-			{
+	for (int i = 1; i <= 1; i++) {//Bündellauf mit leicht unterschiedlichen Parametern
 		//Parameter setzten
 
 		log << "--------------------------" << endl;
@@ -62,7 +61,7 @@ int main() {
 
 		for (int j = 0; j < 5; j++) //Mehrere Durchläufe mit denselben Parametern, um konsistenz zu erhöhen
 				{
-			train(training_images, correct_lables);
+			//train(training_images, correct_lables);
 			/*
 			 log << "Durchschnittlicher Loss in den letzten 10 Batches:" << endLoss / (float)(10 * batchSize)
 			 << "\t Durchschnittliche Praezision in den letzten 10 Batches: " << (float)endCorr / (10 * batchSize) << "\n";
@@ -73,10 +72,9 @@ int main() {
 		}
 
 		avgTime /= 5;
-		//double expectedTime = (double)(i*i) * singleTime;
 
-		log << "Durchschnittlich: " << (int) (totalTime.count() / 60) << " Minuten " << (int) (totalTime.count()) % 60 << " Sekunden" << endl;
-		//log << "Erwartet Zeit:    " <<(int) (expectedTime / 60) << " Minuten " << (int) (expectedTime) % 60 << " Sekunden" << endl;
+		//log << "Durchschnittlich: " << (int) (totalTime.count() / 60) << " Minuten " << (int) (totalTime.count()) % 60 << " Sekunden" << endl;
+		//log << "Erwartete Zeit:    " <<(int) (expectedTime / 60) << " Minuten " << (int) (expectedTime) % 60 << " Sekunden" << endl;
 		//log << "Tatsaechliche / erwartete Dauer= " << avgTime/ expectedTime <<  endl ;
 		avgTime = 0.0;
 	}
@@ -86,7 +84,7 @@ int main() {
 void train(vector<vector<vector<float>>> training_images, vector<int_fast8_t> correct_lables) {
 
 	//Alle Bilder eines Batches, als Vektor von Graustufen Matrizen
-	vector<vector<vector<float>>> batch_images(batchSize, vector<vector<float>>(imageSize, vector<float>(imageSize)));
+	vector<vector<vector<float>>> batch_images(batchSize, vector<vector<float>>(imageSizeX, vector<float>(imageSizeY)));
 	//Alle Lables eines Batches, als Vektor von Ganzzahlen
 	vector<int_fast8_t> batch_lables(batchSize);
 
@@ -96,7 +94,7 @@ void train(vector<vector<vector<float>>> training_images, vector<int_fast8_t> co
 	try {
 		/* Einlesen der Trainingsdaten*/
 		//read_scale_trainingData("train.txt", training_images, correct_lables, infaltionFactor);
-		CNN cnn(imageSize);		//Das benutzte Netzwerk. Topologieänderungen bitte in der Klasse CNN
+		CNN cnn(imageSizeX);		//Das benutzte Netzwerk. Topologieänderungen bitte in der Klasse CNN
 
 		//std::cout << "Beginn des Trainings\n";
 		auto training_startTime = chrono::system_clock::now(); // Interner Timer um die Laufzeit zu messen
@@ -190,11 +188,25 @@ void scale_image_bilinear_interpolation(vector<vector<float>> &image, vector<vec
 			}
 		}
 	}
+	fstream log;
+	log.open("Testlog.txt", std::ios_base::out);
+	if (!log.is_open())
+		return;
+	for (size_t x = 0; x < newImage.size(); x++)
+	{
+		for (int y = 0; y < newImage[0].size(); y++){
+			log << setw(10) << newImage[x][y];
+		}
+		log << endl;
+	}
+	log << endl << endl;
+	
 }
 
-void scale_trainingData_bilinear_interpolation(vector<vector<float>> tmp_images, vector<vector<vector<float>>> &training_images, int factor) {
+void scale_trainingData(vector<vector<float>> tmp_images, vector<vector<vector<float>>> &training_images, int factor) {
+	//Bilineare Interpolation
 	vector<vector<float>> tmp_image(imageSizeX, vector<float>(imageSizeY));
-	for (int image = 0; image < 42000; image++) {
+	for (int image = 2; image < 5; image++) {
 		//we want a real image not a vector so we convert it
 		for (int i = 0; i < imageSizeX; i++) { //btw this should be done when reading the data...
 			for (int j = 0; j < imageSizeY; j++) {
@@ -203,9 +215,8 @@ void scale_trainingData_bilinear_interpolation(vector<vector<float>> tmp_images,
 		}
 		scale_image_bilinear_interpolation(tmp_image, training_images[image], factor);
 	}
-}
-
-void scale_trainingData(vector<vector<float>> tmp_images, vector<vector<vector<float>>> &training_images, int factor) {
+	
+	/* //Reines Aufblasen des Bildes
 	for (int image = 0; image < 42000; image++) {
 		for (int pixel = 0; pixel < imagePixels; pixel++) {
 			float pixelValue = tmp_images[image][pixel];
@@ -216,4 +227,5 @@ void scale_trainingData(vector<vector<float>> tmp_images, vector<vector<vector<f
 			}
 		}
 	}
+	*/
 }

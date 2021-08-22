@@ -39,6 +39,10 @@ vector<int_fast8_t> correct_lables(42000);
 
 
 
+//Alle Trainingsdaten, als Vektor von Graustufen Matrizen
+vector<vector<vector<float>>> training_images(42000, vector<vector<float>>(imageSizeX*infaltionFactor, vector<float>(imageSizeY*infaltionFactor)));
+vector<int_fast8_t> correct_lables(42000);
+
 /////////////////////////////////////////
 
 int main() {

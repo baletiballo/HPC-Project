@@ -18,6 +18,8 @@ public:
 	int window, stride;
 	int output_size1, output_size2;
 	vector<vector<vector<float>>> *input = nullptr; //pointer auf den input (forward param) (kann theoretisch auch nur einmal gesetzt werden, da pointer danach immer gleich bleibt)
+	vector<vector<tuple<float, float>>> inputCoordsOfOutputPixels; //Koordinaten (relativ zum Window) des ausgewählten Pixels pro featureMap und pro Window dieser FeatureMap (geordnet)
+	vector<vector<tuple<float, float>>> previouslyUsedLossInputPixels; //Koordinaten (relativ zum Window) des zuvor beschriebenen Pixels des LossInputs pro featureMap und pro Window dieser FeatureMap (geordnet)
 	//index1->featureMap, index2&3-> x und y der FeatureMap
 	vector<vector<vector<float>>> output; //index1->(generierte) featureMap (num_of_inputs viele), index2&3-> x und y der FeatureMap
 	vector<vector<vector<float>>> *loss_gradient = nullptr; //pointer auf den loss gradienten (backprop param) (kann theoretisch auch nur einmal gesetzt werden, da pointer danach immer gleich bleibt)

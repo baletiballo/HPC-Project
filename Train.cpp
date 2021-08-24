@@ -47,23 +47,22 @@ int main() {
 	if (!log.is_open())
 		return -1;
 	read_scale_trainingData("train.txt", training_images, correct_lables, infaltionFactor);
-
 	/////////////////////////
 
 	for (int i = 1; i <= 1; i++) {//Bündellauf mit leicht unterschiedlichen Parametern
 		//Parameter setzten
 
+		
 		log << "--------------------------" << endl;
-		log << "| Skalierungsfaktor == " << 2 << " |" << endl;
+		log << "| Skalierungsfaktor == " << infaltionFactor << " |" << endl;
 		log << "--------------------------" << endl;
 
-		for (int j = 0; j < 5; j++) //Mehrere Durchläufe mit denselben Parametern, um konsistenz zu erhöhen
-				{
-			//train(training_images, correct_lables);
-			/*
-			 log << "Durchschnittlicher Loss in den letzten 10 Batches:" << endLoss / (float)(10 * batchSize)
-			 << "\t Durchschnittliche Praezision in den letzten 10 Batches: " << (float)endCorr / (10 * batchSize) << "\n";
-			 */
+		
+		for (int j = 0; j < 5; j++){ //Mehrere Durchläufe mit denselben Parametern, um Konsistenz zu erhöhen		
+			train(training_images, correct_lables);
+			log << "Durchschnittlicher Loss in den letzten 10 Batches:" << endLoss / (float)(10 * batchSize)
+			 << "\t Durchschnittliche Praezision in den letzten 10 Batches: " << (float)endCorr / (10 * batchSize) << endl;
+			log << (int) (totalTime.count() / 60) << " Minuten " << (int) (totalTime.count()) % 60 << " Sekunden" << endl;
 			endLoss = 0.0;
 			endCorr = 0;
 			avgTime += totalTime.count();
@@ -71,10 +70,9 @@ int main() {
 
 		avgTime /= 5;
 
-		//log << "Durchschnittlich: " << (int) (totalTime.count() / 60) << " Minuten " << (int) (totalTime.count()) % 60 << " Sekunden" << endl;
-		//log << "Erwartete Zeit:    " <<(int) (expectedTime / 60) << " Minuten " << (int) (expectedTime) % 60 << " Sekunden" << endl;
-		//log << "Tatsaechliche / erwartete Dauer= " << avgTime/ expectedTime <<  endl ;
+		log << "Durchschnittlich: " << (int) (totalTime.count() / 60) << " Minuten " << (int) (totalTime.count()) % 60 << " Sekunden" << endl;
 		avgTime = 0.0;
+		
 	}
 }
 
@@ -186,29 +184,36 @@ void scale_image_bilinear_interpolation(vector<vector<float>> &image, vector<vec
 			}
 		}
 	}
+	/*
 	fstream log;
-	log.open("Testlog.txt", std::ios_base::out);
+	log.open("Testlog.txt", std::ios_base::app);
 	if (!log.is_open())
 		return;
 	for (size_t x = 0; x < newImage.size(); x++)
 	{
 		for (int y = 0; y < newImage[0].size(); y++){
-			log << setw(10) << newImage[x][y];
+			if(newImage[x][y] > 0.1) 
+				log << "00";
+			else  if(newImage[x][y] > 0.01)
+				log << "++";
+			else
+				log << "--";
 		}
 		log << endl;
 	}
 	log << endl << endl;
+	*/
 	
 }
 
 void scale_trainingData(vector<vector<float>> tmp_images, vector<vector<vector<float>>> &training_images, int factor) {
 	//Bilineare Interpolation
-	vector<vector<float>> tmp_image(imageSizeX, vector<float>(imageSizeY));
-	for (int image = 2; image < 5; image++) {
+	vector<vector<float>> tmp_image(baseSizeX, vector<float>(baseSizeY));
+	for (int image = 0; image < 42000; image++) {
 		//we want a real image not a vector so we convert it
-		for (int i = 0; i < imageSizeX; i++) { //btw this should be done when reading the data...
-			for (int j = 0; j < imageSizeY; j++) {
-				tmp_image[i][j] = tmp_images[image][i * imageSizeY + j];
+		for (int i = 0; i < baseSizeX; i++) { //btw this should be done when reading the data...
+			for (int j = 0; j < baseSizeY; j++) {
+				tmp_image[i][j] = tmp_images[image][i * baseSizeY + j];
 			}
 		}
 		scale_image_bilinear_interpolation(tmp_image, training_images[image], factor);

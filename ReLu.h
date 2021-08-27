@@ -8,26 +8,33 @@
 #ifndef RELU_H_
 #define RELU_H_
 
-#pragma once
-#include <vector>
+#include "parameter.h"
+#include "Conv.h"
+#include "ParallelStuff.h"
 
-using namespace std;
 
+int reluPackets = num_packets;
+int reluPacketSize = 0;
+const int reluSize1 = num_filters;
+const int reluSize2 = imageSizeX_afterConvolution;
+const int reluSize3 = imageSizeX_afterConvolution;
+float (*relu_input) [reluSize2] [reluSize3];
+float (*relu_input_2) [reluSize2] [reluSize3];
+
+void ReLu(float t1 [reluSize1] [reluSize2] [reluSize3]);
+
+void ReLuPrime(float t1 [reluSize1] [reluSize2] [reluSize3], float t2  [reluSize1] [reluSize2] [reluSize3]);
+
+void ReLu_par();
+
+void ReLuPrime_par();
 
 void ReLuJob(int packet);
 
 void ReLuJobCleanup(int packet);
 
-void ReLu(vector<vector<vector<float>>> &t1);
-
-void ReLu_par(vector<vector<vector<float>>> &t1);
-
 void ReLuPrimeJob(int packet);
 
 void ReLuJobPrimeCleanup(int packet);
-
-void ReLuPrime(vector<vector<vector<float>>> &t1, vector<vector<vector<float>>> &t2);
-
-void ReLuPrime_par(vector<vector<vector<float>>> &t1, vector<vector<vector<float>>> &t2);
 
 #endif /* RELU_H_ */

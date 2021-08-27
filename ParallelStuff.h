@@ -8,7 +8,6 @@
 #ifndef PARALLELSTUFF_H_
 #define PARALLELSTUFF_H_
 
-#pragma once
 
 #include <thread>
 #include <queue>
@@ -16,6 +15,7 @@
 #include <condition_variable>
 #include <functional>
 #include <future>
+
 
 #include "ReLu.h"
 #include "Conv.h"

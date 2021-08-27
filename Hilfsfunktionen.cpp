@@ -1,5 +1,5 @@
 #include "Hilfsfunktionen.h"
-#include <tgmath.h>
+
 
 /*vector<float> flatten(vector<vector<vector<float>>> &t1) {
 	vector<float> out(t1.size() * t1[0].size() * t1[0][0].size());
@@ -25,13 +25,13 @@ vector<vector<vector<float>>> deflatten(vector<float> &t1, int s1, int s2, int s
 	return out;
 }*/
 
-void softmax(vector<float> &t1) {
+void softmax(float t1 [num_weights]) {
 	float sum = 0.0;
-	for (unsigned i = 0; i < t1.size(); i++) {
+	for (unsigned i = 0; i < num_weights; i++) {
 		t1[i] = exp(t1[i]);
 		sum += t1[i];
 	}
-	for (unsigned i = 0; i < t1.size(); i++) {
+	for (unsigned i = 0; i < num_weights; i++) {
 		t1[i] = t1[i] / sum;
 	}
 }

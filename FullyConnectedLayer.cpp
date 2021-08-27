@@ -1,32 +1,17 @@
 #include "FullyConnectedLayer.h"
-#include <random>
-#include "ParallelStuff.h"
 
-FullyConnectedLayer::FullyConnectedLayer(unsigned w, unsigned n, unsigned s1, unsigned s2) {
-	num_weights = w;
-	num_of_inputs = n;
-	input_size1 = s1;
-	input_size2 = s2;
-	total_size = num_of_inputs * input_size1 * input_size2;
-	weights.resize(num_weights, vector<float>(total_size));
-	biases.resize(num_weights, 0.0);
-	packetSize = (num_weights * total_size) / packets;
-	needCleanup=(num_weights * total_size) % packets != 0;
+FullyConnectedLayer::FullyConnectedLayer() {
+	packetSize = (num_weights * num_lastLayer_inputNeurons) / num_packets;
+	needCleanup=(num_weights * num_lastLayer_inputNeurons) % num_packets != 0;
 	mtx.resize(num_weights);
-
-	output.resize(num_weights);
-
-	weight_gradient.resize(num_weights, vector<float>(total_size));
-	bias_gradient.resize(num_weights);
-	loss_input.resize(num_of_inputs, vector<vector<float>>(input_size1, vector<float>(input_size2, 0.0)));
 
 	normal_distribution<float> distribution(0.0, 1.0);
 	for (unsigned i = 0; i < num_weights; i++) {
 
-		for (unsigned j = 0; j < total_size; j++) {
+		for (unsigned j = 0; j < num_lastLayer_inputNeurons; j++) {
 			random_device dev;
 			default_random_engine generator(dev());
-			weights[i][j] = distribution(generator) / (total_size);
+			weights[i][j] = distribution(generator) / (num_lastLayer_inputNeurons);
 		}
 	}
 }
@@ -36,14 +21,14 @@ FullyConnectedLayer::FullyConnectedLayer(unsigned w, unsigned n, unsigned s1, un
  *
  * @param inputP
  */
-void FullyConnectedLayer::forward(vector<vector<vector<float>>> &inputP) {
-	input = &inputP;
+void FullyConnectedLayer::forward(float inputP [num_filters] [input_size1] [input_size2]) {
+	input = inputP;
 	for (unsigned currClass = 0; currClass < num_weights; currClass++) {
 		output[currClass] = biases[currClass];
-		for (unsigned currFeatureMap = 0; currFeatureMap < num_of_inputs; currFeatureMap++) {
+		for (unsigned currFeatureMap = 0; currFeatureMap < num_inputs; currFeatureMap++) {
 			for (unsigned k = 0; k < input_size1; k++) {
 				for (unsigned l = 0; l < input_size2; l++) {
-					output[currClass] += (*input)[currFeatureMap][k][l] * weights[currClass][currFeatureMap * input_size1 * input_size2 + k * input_size2 + l];
+					output[currClass] += input[currFeatureMap][k][l] * weights[currClass][currFeatureMap * input_size1 * input_size2 + k * input_size2 + l];
 				}
 			}
 		}
@@ -57,7 +42,7 @@ void FullyConnectedLayer::forward(vector<vector<vector<float>>> &inputP) {
 void FullyConnectedLayer::cleanup() {
 	for (unsigned cur_weight = 0; cur_weight < num_weights; cur_weight++) {
 		bias_gradient[cur_weight] = 0.0;
-		for (unsigned i = 0; i < total_size; i++) {
+		for (unsigned i = 0; i < num_lastLayer_inputNeurons; i++) {
 			weight_gradient[cur_weight][i] = 0.0;
 		}
 	}
@@ -68,10 +53,10 @@ void FullyConnectedLayer::cleanup() {
  *
  * @param loss_gradientP
  */
-void FullyConnectedLayer::backprop(vector<float> &loss_gradientP) {
-	loss_gradient = &loss_gradientP;
+void FullyConnectedLayer::backprop(float loss_gradientP [num_weights]) {
+	loss_gradient = loss_gradientP;
 
-	for (unsigned currFeatureMap = 0; currFeatureMap < num_of_inputs; currFeatureMap++) {
+	for (unsigned currFeatureMap = 0; currFeatureMap < num_inputs; currFeatureMap++) {
 		for (unsigned currX = 0; currX < input_size1; currX++) {
 			for (unsigned currY = 0; currY < input_size2; currY++) {
 				//zero the loss Input, since the same method to just add them all together cannot be applied here
@@ -79,16 +64,16 @@ void FullyConnectedLayer::backprop(vector<float> &loss_gradientP) {
 
 				for (unsigned currClass = 0; currClass < num_weights; currClass++) {
 					loss_input[currFeatureMap][currX][currY] += weights[currClass][currFeatureMap * input_size1 * input_size2 + currX * input_size2 + currY]
-							* (*loss_gradient)[currClass];
-					weight_gradient[currClass][currFeatureMap * input_size1 * input_size2 + currX * input_size2 + currY] += (*loss_gradient)[currClass]
-							* (*input)[currFeatureMap][currX][currY];
+							* loss_gradient[currClass];
+					weight_gradient[currClass][currFeatureMap * input_size1 * input_size2 + currX * input_size2 + currY] += loss_gradient[currClass]
+							* input[currFeatureMap][currX][currY];
 				}
 			}
 		}
 	}
 
 	for (unsigned i = 0; i < num_weights; i++) {
-		bias_gradient[i] += (*loss_gradient)[i];
+		bias_gradient[i] += loss_gradient[i];
 	}
 
 }
@@ -103,15 +88,15 @@ void FullyConnectedLayer::forwardJob(int packet) {
 	float tmp = 0.0;
 
 	for (int index = packet * packetSize; index < (packet + 1) * packetSize; index++) {
-		int currClass = index / (total_size);
-		int weightIndex = index % total_size;
+		int currClass = index / (num_lastLayer_inputNeurons);
+		int weightIndex = index % num_lastLayer_inputNeurons;
 		int currFeatureMap = weightIndex / (input_size1 * input_size2);
 		int k = (weightIndex / input_size2) % input_size1;
 		int l = weightIndex % input_size2;
 
-		tmp += (*input)[currFeatureMap][k][l] * weights[currClass][weightIndex];
+		tmp += input[currFeatureMap][k][l] * weights[currClass][weightIndex];
 
-		if ((unsigned) weightIndex + 1 == total_size) {
+		if ((unsigned) weightIndex + 1 == num_lastLayer_inputNeurons) {
 			mtx[currClass].lock();
 			output[currClass] += tmp;
 			mtx[currClass].unlock();
@@ -120,7 +105,7 @@ void FullyConnectedLayer::forwardJob(int packet) {
 		}
 	}
 	if (tmp != 0.0) {
-		int currClass = (((packet + 1) * packetSize) - 1) / (total_size);
+		int currClass = (((packet + 1) * packetSize) - 1) / (num_lastLayer_inputNeurons);
 		mtx[currClass].lock();
 		output[currClass] += tmp;
 		mtx[currClass].unlock();
@@ -136,16 +121,16 @@ void FullyConnectedLayer::forwardJob(int packet) {
  */
 void FullyConnectedLayer::forwardJobCleanup(int packet) {
 	float tmp = 0.0;
-	for (int index = packet * packetSize; (unsigned) index < num_weights * total_size; index++) {
-		int currClass = index / (total_size);
-		int weightIndex = index % total_size;
+	for (int index = packet * packetSize; (unsigned) index < num_weights * num_lastLayer_inputNeurons; index++) {
+		int currClass = index / (num_lastLayer_inputNeurons);
+		int weightIndex = index % num_lastLayer_inputNeurons;
 		int currFeatureMap = weightIndex / (input_size1 * input_size2);
 		int k = (weightIndex / input_size2) % input_size1;
 		int l = weightIndex % input_size2;
 
-		tmp += (*input)[currFeatureMap][k][l] * weights[currClass][weightIndex];
+		tmp += input[currFeatureMap][k][l] * weights[currClass][weightIndex];
 
-		if ((unsigned) weightIndex + 1 == total_size) {
+		if ((unsigned) weightIndex + 1 == num_lastLayer_inputNeurons) {
 			mtx[currClass].lock();
 			output[currClass] += tmp;
 			mtx[currClass].unlock();
@@ -154,7 +139,7 @@ void FullyConnectedLayer::forwardJobCleanup(int packet) {
 		}
 	}
 	if (tmp != 0.0) {
-		int currClass = (((packet + 1) * packetSize) - 1) / (total_size);
+		int currClass = (((packet + 1) * packetSize) - 1) / (num_lastLayer_inputNeurons);
 		mtx[currClass].lock();
 		output[currClass] += tmp;
 		mtx[currClass].unlock();
@@ -167,19 +152,19 @@ void FullyConnectedLayer::forwardJobCleanup(int packet) {
  * @param input
  * @return
  */
-void FullyConnectedLayer::forward_par(vector<vector<vector<float>>> &inputP) {
-	input = &inputP;
+void FullyConnectedLayer::forward_par(float inputP [num_filters] [input_size1] [input_size2]) {
+	input = inputP;
 
 	sem.set(0);
 	pool.setFullyConnectedLayer(*this);
 	pool.setTask(5);
-	for (int i = 0; i < packets; i++) {
+	for (int i = 0; i < num_packets; i++) {
 		pushJob(i);
 	}
 	if (needCleanup) {
-		forwardJobCleanup(packets + 1);
+		forwardJobCleanup(num_packets + 1);
 	}
-	sem.P(packets);
+	sem.P(num_packets);
 
 	for (unsigned i = 0; i < num_weights; i++) {
 		output[i] += biases[i];
@@ -194,45 +179,45 @@ void FullyConnectedLayer::forward_par(vector<vector<vector<float>>> &inputP) {
  */
 void FullyConnectedLayer::backpropJob(int packet) {
 	for (int index = packet * packetSize; index < (packet + 1) * packetSize; index++) {
-		int currClass = index / (total_size);
-		int weightIndex = index % total_size;
+		int currClass = index / (num_lastLayer_inputNeurons);
+		int weightIndex = index % num_lastLayer_inputNeurons;
 		int currFeatureMap = weightIndex / (input_size1 * input_size2);
 		int currX = (weightIndex / input_size2) % input_size1;
 		int currY = weightIndex % input_size2;
 
-		weight_gradient[currClass][weightIndex] = (*loss_gradient)[currClass] * (*input)[currFeatureMap][currX][currY];
+		weight_gradient[currClass][weightIndex] = loss_gradient[currClass] * input[currFeatureMap][currX][currY];
 	}
 
-	for (unsigned weightIndex = packet; weightIndex < total_size; weightIndex += packets) {
+	for (unsigned weightIndex = packet; weightIndex < num_lastLayer_inputNeurons; weightIndex += num_packets) {
 		int currFeatureMap = weightIndex / (input_size1 * input_size2);
 		int currX = (weightIndex / input_size2) % input_size1;
 		int currY = weightIndex % input_size2;
 		loss_input[currFeatureMap][currX][currY] = 0.0;
 		for (unsigned currClass = 0; currClass < num_weights; currClass++) {
-			loss_input[currFeatureMap][currX][currY] += weights[currClass][weightIndex] * (*loss_gradient)[currClass];
+			loss_input[currFeatureMap][currX][currY] += weights[currClass][weightIndex] * loss_gradient[currClass];
 		}
 	}
 	sem.V(1);
 }
 
 void FullyConnectedLayer::backpropJobCleanup(int packet) {
-	for (int index = packet * packetSize; (unsigned) index < num_weights * total_size; index++) {
-		int currClass = index / (total_size);
-		int weightIndex = index % total_size;
+	for (int index = packet * packetSize; (unsigned) index < num_weights * num_lastLayer_inputNeurons; index++) {
+		int currClass = index / (num_lastLayer_inputNeurons);
+		int weightIndex = index % num_lastLayer_inputNeurons;
 		int currFeatureMap = weightIndex / (input_size1 * input_size2);
 		int currX = (weightIndex / input_size2) % input_size1;
 		int currY = weightIndex % input_size2;
 
-		weight_gradient[currClass][weightIndex] = (*loss_gradient)[currClass] * (*input)[currFeatureMap][currX][currY];
+		weight_gradient[currClass][weightIndex] = loss_gradient[currClass] * input[currFeatureMap][currX][currY];
 	}
 
-	for (unsigned weightIndex = packet; weightIndex < total_size; weightIndex += packets) {
+	for (unsigned weightIndex = packet; weightIndex < num_lastLayer_inputNeurons; weightIndex += num_packets) {
 		int currFeatureMap = weightIndex / (input_size1 * input_size2);
 		int currX = (weightIndex / input_size2) % input_size1;
 		int currY = weightIndex % input_size2;
 		loss_input[currFeatureMap][currX][currY] = 0.0;
 		for (unsigned currClass = 0; currClass < num_weights; currClass++) {
-			loss_input[currFeatureMap][currX][currY] += weights[currClass][weightIndex] * (*loss_gradient)[currClass];
+			loss_input[currFeatureMap][currX][currY] += weights[currClass][weightIndex] * loss_gradient[currClass];
 		}
 	}
 }
@@ -243,21 +228,21 @@ void FullyConnectedLayer::backpropJobCleanup(int packet) {
  * @param loss_gradientP
  * @return
  */
-void FullyConnectedLayer::backprop_par(vector<float> &loss_gradientP) {
-	loss_gradient = &loss_gradientP;
+void FullyConnectedLayer::backprop_par(float loss_gradientP [num_weights]) {
+	loss_gradient = loss_gradientP;
 
 	sem.set(0);
 	pool.setFullyConnectedLayer(*this);
 	pool.setTask(6);
-	for (int i = 0; i < packets; i++) {
+	for (int i = 0; i < num_packets; i++) {
 		pushJob(i);
 	}
 	if (needCleanup) {
-		backpropJobCleanup(packets + 1);
+		backpropJobCleanup(num_packets + 1);
 	}
 	for (unsigned currClass = 0; currClass < num_weights; currClass++) { //fast enough as is
-		bias_gradient[currClass] = (*loss_gradient)[currClass];
+		bias_gradient[currClass] = loss_gradient[currClass];
 	}
-	sem.P(packets);
+	sem.P(num_packets);
 
 }

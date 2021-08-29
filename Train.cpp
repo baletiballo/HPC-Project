@@ -13,8 +13,8 @@
 #include <ctime> 
 #include <iomanip> 
 
-#include "cnn.h"
 #include "parameter.h"
+#include "cnn.h"
 
 using namespace std;
 

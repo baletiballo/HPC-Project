@@ -16,12 +16,11 @@
 #include <functional>
 #include <future>
 
-
-#include "ReLu.h"
 #include "Conv.h"
 #include "MaxPool.h"
 #include "FullyConnectedLayer.h"
 #include "cnn.h"
+
 
 using namespace std;
 

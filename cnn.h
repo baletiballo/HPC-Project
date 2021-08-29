@@ -37,9 +37,9 @@ public:
 
 	int step; //Anzahl der bisher gelernten Batches
 
-	Conv convLayer; //Vektor aller Convolutional Layers
-	MaxPool poolLayer; //Vektor aller Pooling Layers
-	FullyConnectedLayer connected_layer; //Das eine Fully Connected layer
+	Conv *convLayer; //Vektor aller Convolutional Layers
+	MaxPool *poolLayer; //Vektor aller Pooling Layers
+	FullyConnectedLayer *connected_layer; //Das eine Fully Connected layer
 	float image [imageSizeX] [imageSizeY]; //Das Aktuell zu verarbeitende Bild.
 	
 	//Daten für ADAM

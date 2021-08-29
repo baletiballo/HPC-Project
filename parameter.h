@@ -11,6 +11,7 @@
 
 #include <cmath>
 
+
 //Alle benötigten Klassen
 class CNN;
 class Conv;
@@ -24,7 +25,7 @@ class ThreadPool;
 const int baseSizeX = 28; //Anzahl Pixel in der X-Richtung, der originalen Daten
 const int baseSizeY = 28; //        -||-        Y-Richtung,          -||-        
 const int batchSize = 32; //Anzahl Bilder pro Batch
-const int infaltionFactor = 4; //Zwischen zwei Originalpixel werden (inflationFaktor-1) interpoliert für die Trainingsdaten
+const int infaltionFactor = 3; //Zwischen zwei Originalpixel werden (inflationFaktor-1) interpoliert für die Trainingsdaten
 const int imageSizeX = ((baseSizeX - 1) * infaltionFactor) + 1 ; //Anzahl Pixel in der X-Richtung, der Trainingsdaten
 const int imageSizeY = ((baseSizeY - 1) * infaltionFactor) + 1 ; //Anzahl Pixel in der Y-Richtung, der Trainingsdaten
 const int imagePixels = baseSizeX*baseSizeY; //Anzahl der Pixel eines unskalierten Bildes == Größe eines flachen Vektors eines Bildes

@@ -14,7 +14,6 @@
 
 #include "ParallelStuff.h"
 #include "parameter.h"
-#include "MaxPool.h"
 
 using namespace std;
 

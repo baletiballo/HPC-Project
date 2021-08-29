@@ -1,5 +1,12 @@
 #include "ReLu.h"
 
+int reluPackets = num_packets;
+int reluPacketSize = 0;
+const int reluSize1 = num_filters;
+const int reluSize2 = imageSizeX_afterConvolution;
+const int reluSize3 = imageSizeY_afterConvolution;
+float (*relu_input) [reluSize2] [reluSize3];
+float (*relu_input_2) [reluSize2] [reluSize3];
 
 void ReLuJob(int packet) {
 	for (int i = packet * reluPacketSize; i < (packet + 1) * reluPacketSize; i++) {

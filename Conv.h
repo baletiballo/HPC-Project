@@ -13,13 +13,14 @@
 #include "parameter.h"
 #include "ParallelStuff.h"
 
-
-using namespace std;
-
 class Conv {
 	
 	static const int num_windowsX = imageSizeX_afterConvolution; 
 	static const int num_windowsY = imageSizeY_afterConvolution;
+	static const int packetSizeForw = (num_filters * num_windowsX * num_windowsY) / num_packets; //groesse der arbeitspakete fuer forward
+	static const int packetSizeBack = (num_windowsX * num_windowsY) / num_packets; //groesse der arbeitspakete fuer backprop
+	static const bool needForwCleanup = (num_filters * num_windowsX * num_windowsY) % num_packets != 0; //soll forwardJobCleanup aufgerufen werden?
+	static const bool needBackCleanup = (num_windowsX * num_windowsY) % num_packets != 0; //soll backpropJobCleanup aufgerufen werden?
 
 public:
 	
@@ -33,10 +34,6 @@ public:
 	float filter_gradient [num_filters] [conv_size1] [conv_size2]; //index1->filter, index2&3-> x und y des Filters index1
 	float bias_gradient [num_filters]; //index1->filter
 	float loss_input [imageSizeX] [imageSizeY]; //index1->featureMap (num_inputs viele), index2&3-> x und y der FeatureMap
-	int packetSizeForw; //groesse der arbeitspakete fuer forward
-	int packetSizeBack; //groesse der arbeitspakete fuer backprop
-	bool needForwCleanup; //soll forwardJobCleanup aufgerufen werden?
-	bool needBackCleanup; //soll backpropJobCleanup aufgerufen werden?
 
 	Conv();
 

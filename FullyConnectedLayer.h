@@ -15,12 +15,12 @@
 #include "ParallelStuff.h"
 #include "parameter.h"
 
-using namespace std;
-
 class FullyConnectedLayer {
 	static const int num_inputs		= num_filters;
 	static const int input_size1	= imageSizeX_afterPooling;
 	static const int input_size2	= imageSizeY_afterPooling;
+	static const int packetSize		= (num_weights * num_lastLayer_inputNeurons) / num_packets; //groesse der arbeitspakete
+	static const bool needCleanup	= (num_weights * num_lastLayer_inputNeurons) % num_packets != 0; //soll JobCleanup aufgerufen werden?
 
 public:
 	
@@ -34,9 +34,7 @@ public:
 	float weight_gradient [num_weights] [num_lastLayer_inputNeurons]; //index1->Klassifikationklasse, index2->gewicht der Klassifikationklasse index1
 	float bias_gradient [num_weights]; //index1->Klassifikationklasse
 	float loss_input [num_inputs] [input_size1] [input_size2]; //index1->featureMap (num_inputs viele), index2&3-> x und y der FeatureMap
-	int packetSize; //groesse der arbeitspakete
-	bool needCleanup; //soll JobCleanup aufgerufen werden?
-	deque<mutex> mtx; //benoetigt fuer einige parallele aufteilungen, da ueberschneidungen von indizes der arbeitspakete passieren koennen
+	std::deque<std::mutex> mtx; //benoetigt fuer einige parallele aufteilungen, da ueberschneidungen von indizes der arbeitspakete passieren koennen
 
 	FullyConnectedLayer();
 

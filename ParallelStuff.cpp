@@ -27,13 +27,13 @@ JobQueue::JobQueue() {
 }
 
 void JobQueue::push(int job) {
-	unique_lock<mutex> l(jobQueueMutex);
+	std::unique_lock<std::mutex> l(jobQueueMutex);
 	jobQueue.push(job);
 	cv.notify_one();
 }
 
 int JobQueue::pop() {
-	unique_lock<mutex> l(jobQueueMutex);
+	std::unique_lock<std::mutex> l(jobQueueMutex);
 	cv.wait(l, [this] {
 		return abort || !jobQueue.empty();
 	});
@@ -45,9 +45,9 @@ int JobQueue::pop() {
 }
 
 void JobQueue::terminate() {
-	unique_lock<mutex> l(jobQueueMutex);
+	std::unique_lock<std::mutex> l(jobQueueMutex);
 	abort = true;
-	queue<int> emptyQueue;
+	std::queue<int> emptyQueue;
 	emptyQueue.swap(jobQueue);
 	cv.notify_all();
 }
@@ -61,7 +61,7 @@ ThreadPool::ThreadPool(int numThreads) {
 	cnn = nullptr;
 
 	for (int i = 0; i < threads; i++) {
-		pool.push_back(thread(&ThreadPool::threadsDoWork, this));
+		pool.push_back(std::thread(&ThreadPool::threadsDoWork, this));
 	}
 }
 
@@ -130,13 +130,13 @@ Sem::Sem(int countInit) {
 }
 
 void Sem::V(int n) {
-	unique_lock<mutex> lck(mtx);
+	std::unique_lock<std::mutex> lck(mtx);
 	count += n;
 	cv.notify_all();
 }
 
 void Sem::P(int n) {
-	unique_lock<mutex> lck(mtx);
+	std::unique_lock<std::mutex> lck(mtx);
 	while (count < n) {
 		cv.wait(lck);
 	}
@@ -145,7 +145,7 @@ void Sem::P(int n) {
 }
 
 void Sem::set(int n) {
-	unique_lock<mutex> lck(mtx);
+	std::unique_lock<std::mutex> lck(mtx);
 	count = n;
 	cv.notify_all();
 }

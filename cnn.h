@@ -54,9 +54,9 @@ public:
 
 	CNN();
 
-	tuple<float, bool> forward(float image [imageSizeX] [imageSizeY], int_fast8_t label);
+	std::tuple<float, bool> forward(float image [imageSizeX] [imageSizeY], int_fast8_t label);
 
-	tuple<float, int_fast8_t> learn(float x_batch [batchSize] [imageSizeX] [imageSizeY], int_fast8_t y_batch [batchSize]);
+	std::tuple<float, int_fast8_t> learn(float x_batch [batchSize] [imageSizeX] [imageSizeY], int_fast8_t y_batch [batchSize]);
 
 	void updateJob(int packet);
 

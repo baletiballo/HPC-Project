@@ -8,7 +8,6 @@
 #ifndef PARALLELSTUFF_H_
 #define PARALLELSTUFF_H_
 
-
 #include <thread>
 #include <queue>
 #include <mutex>
@@ -21,14 +20,11 @@
 #include "FullyConnectedLayer.h"
 #include "cnn.h"
 
-
-using namespace std;
-
 class JobQueue { //stores packaged Jobs for our threads to complete
 public:
-	mutex jobQueueMutex;
-	queue<int> jobQueue;
-	condition_variable cv;
+	std::mutex jobQueueMutex;
+	std::queue<int> jobQueue;
+	std::condition_variable cv;
 	bool abort;
 
 	JobQueue();
@@ -40,7 +36,7 @@ public:
 class ThreadPool { //thread pool of worker threads, getting jobs from the queue
 public:
 	int threads;
-	vector<thread> pool;
+	std::vector<std::thread> pool;
 	JobQueue queue;
 	int currTask;
 	Conv *c;
@@ -59,8 +55,8 @@ public:
 
 class Sem { //standard semaphore
 public:
-	mutex mtx;
-	condition_variable cv;
+	std::mutex mtx;
+	std::condition_variable cv;
 	int count;
 
 	Sem(int countInit);

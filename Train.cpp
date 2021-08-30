@@ -38,7 +38,7 @@ int_fast8_t correct_lables [42000];
 /////////////////////////////////////////
 
 int main() {
-	double singleTime = 142.0 / 4; //Zeit, die ein unskalierter Traini9ngsprozess braucht (Durchschnitt von 40 Testläufen)
+	double singleTime = 142.0 / 4; //Zeit, die ein unskalierter Trainingsprozess braucht (Durchschnitt von 40 Testläufen)
 	fstream log;
 	double avgTime = 0.0;
 	log.open("Testlog.txt", std::ios_base::app);
@@ -47,17 +47,13 @@ int main() {
 	read_scale_trainingData("train.txt", training_images, correct_lables, infaltionFactor);
 	/////////////////////////
 
-	for (int i = 1; i <= 1; i++) {//Bündellauf mit leicht unterschiedlichen Parametern
+	for (int i = 1; i <= 1; i++) { //Bündellauf mit leicht unterschiedlichen Parametern
 		//Parameter setzten
-		
-
-		
 		log << "------------------------------------------" << endl;
 		log << "| " << setw(38) << "Vektoren durch Arrays ersetzt" << " |" << endl;
 		log << "------------------------------------------" << endl;
 
-		
-		for (int j = 0; j < 3; j++){ //Mehrere Durchläufe mit denselben Parametern, um Konsistenz zu erhöhen		
+		for (int j = 0; j < num_trainings_cycles; j++) { //Mehrere Durchläufe mit denselben Parametern, um Konsistenz zu erhöhen		
 			log << "Trainingsdurchlauf " << j << ":" << endl;
  			train(training_images, correct_lables);
 			log << "Durchschnittlicher Loss in den letzten 10 Batches:" << endLoss / (float)(10 * batchSize)
@@ -70,11 +66,10 @@ int main() {
 		}
 
 		avgTime /= 3;
-
 		log << "Durchschnittlich: " << (int) (avgTime / 60) << " Minuten " << (int) (avgTime) % 60 << " Sekunden" << endl << endl;
 		avgTime = 0.0;
-		
 	}
+
 	log << endl;
 }
 
@@ -97,8 +92,8 @@ void train(float training_images [42000] [imageSizeX] [imageSizeY], int_fast8_t 
 		//std::cout << "Beginn des Trainings\n";
 		auto training_startTime = chrono::system_clock::now(); // Interner Timer um die Laufzeit zu messen
 
-		for (int i = 0; i < num_steps; i++) {
-			
+		for (int i = 0; i < num_steps; i++) 
+		{			
 			/* Vorbereiten des Trainingsbatches */
 			int randIndex = rand() % (42000 - batchSize);
 			batch_images =  &training_images[randIndex];
@@ -109,9 +104,9 @@ void train(float training_images [42000] [imageSizeX] [imageSizeY], int_fast8_t 
 			float loss = get<0>(res);
 			int_fast8_t correct = get<1>(res);
 
-			if (i % 500 == 0) { //Zwischenupdates. Nur alle paar hundert Baches, um Konsole übersichtlich zu halten
+			// if (i % 500 == 0) { //Zwischenupdates. Nur alle paar hundert Baches, um Konsole übersichtlich zu halten
 				//cout << "Batch " << i << " \t Average Loss " << loss / batchSize << "\t Accuracy " << (int)correct <<"/"<< batchSize << "\n";
-			}
+			//}
 
 			if (num_steps - i <= 10) {
 				endLoss += loss;
@@ -125,7 +120,6 @@ void train(float training_images [42000] [imageSizeX] [imageSizeY], int_fast8_t 
 	} catch (const exception&) {
 		//endThreads();
 		std::cout << "Fehler => Abbruch" << endl;
-
 	}
 }
 
@@ -164,7 +158,6 @@ void scale_image_bilinear_interpolation(float image [baseSizeX] [baseSizeY], flo
 
 void scale_trainingData(float tmp_images [42000] [baseSizeX] [baseSizeY], float training_images [42000] [imageSizeX] [imageSizeY], int factor) {
 	//Bilineare Interpolation
-	
 	for (int image = 0; image < 42000; image++) {
 		for (unsigned pixelX = 0; pixelX < imageSizeX; pixelX++) {
 			for (unsigned pixelY = 0; pixelY < imageSizeY; pixelY++) {

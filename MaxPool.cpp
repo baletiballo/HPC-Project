@@ -2,11 +2,7 @@
 
 using namespace std;
 
-MaxPool::MaxPool() {
-
-	packetSize = (num_inputs * output_size1 * output_size2) / num_packets;
-	needCleanup = (num_inputs * output_size1 * output_size2) % num_packets != 0;
-}
+MaxPool::MaxPool() { }
 
 /**
  * Forward
@@ -27,14 +23,35 @@ void MaxPool::forward(float inputP [num_filters] [input_size1] [input_size2]) {
 				float max = input[cur_featureMap][i][j];
 				int maxX = 0;
 				int maxY = 0;
-				for (int m = 0; m < pool_layers_window; m++) {
-					for (int n = 0; n < pool_layers_window; n++) {
-						if (max < input[cur_featureMap][i + m][j + n]) {
-							max = input[cur_featureMap][i + m][j + n];
-							maxX = m;
-							maxY = n;
-						}
-					}
+
+				//DEPENDS ON: pool_layers_window(m, n)
+				// if (max < input[cur_featureMap][i + m][j + n]) {
+				//		max = input[cur_featureMap][i + m][j + n];
+				//		maxX = m;
+				//		maxY = n;
+				// }
+				if (max < input[cur_featureMap][i][j]) {
+					max = input[cur_featureMap][i][j];
+					maxX = 0;
+					maxY = 0;
+				}
+
+				if (max < input[cur_featureMap][i + 1][j]) {
+					max = input[cur_featureMap][i + 1][j];
+					maxX = 1;
+					maxY = 0;
+				}
+
+				if (max < input[cur_featureMap][i][j + 1]) {
+					max = input[cur_featureMap][i][j + 1];
+					maxX = 0;
+					maxY = 1;
+				}
+
+				if (max < input[cur_featureMap][i + 1][j + 1]) {
+					max = input[cur_featureMap][i + 1][j + 1];
+					maxX = 1;
+					maxY = 1;
 				}
 
 				output[cur_featureMap][i / stride][j / stride] = max;
@@ -90,28 +107,49 @@ void MaxPool::backprop(float loss_gradientP [num_filters] [output_size1] [output
 void MaxPool::forwardJob(int packet) {
 	for (int index = packet * packetSize; index < (packet + 1) * packetSize; index++) {
 		int cur_featureMap = index / (output_size1 * output_size2);
-		int indexX = (index / output_size2) % output_size1 * stride;
-		int indexY = index % output_size2 * stride;
+		int i = (index / output_size2) % output_size1 * stride;
+		int j = index % output_size2 * stride;
 
 		//matrix max pooling
-		float max = input[cur_featureMap][indexX][indexY];
+		float max = input[cur_featureMap][i][j];
 		int maxX = 0;
 		int maxY = 0;
-		for (int m = 0; m < pool_layers_window; m++) {
-			for (int n = 0; n < pool_layers_window; n++) {
-				if (max < input[cur_featureMap][indexX + m][indexY + n]) {
-					max = input[cur_featureMap][indexX + m][indexY + n];
-					maxX = m;
-					maxY = n;
-				}
-			}
+
+		//DEPENDS ON: pool_layers_window(m, n)
+		// if (max < input[cur_featureMap][i + m][j + n]) {
+		//		max = input[cur_featureMap][i + m][j + n];
+		//		maxX = m;
+		//		maxY = n;
+		// }
+		if (max < input[cur_featureMap][i][j]) {
+			max = input[cur_featureMap][i][j];
+			maxX = 0;
+			maxY = 0;
 		}
 
-		output[cur_featureMap][indexX / stride][indexY / stride] = max;
+		if (max < input[cur_featureMap][i + 1][j]) {
+			max = input[cur_featureMap][i + 1][j];
+			maxX = 1;
+			maxY = 0;
+		}
+
+		if (max < input[cur_featureMap][i][j + 1]) {
+			max = input[cur_featureMap][i][j + 1];
+			maxX = 0;
+			maxY = 1;
+		}
+
+		if (max < input[cur_featureMap][i + 1][j + 1]) {
+			max = input[cur_featureMap][i + 1][j + 1];
+			maxX = 1;
+			maxY = 1;
+		}
+
+		output[cur_featureMap][i / stride][j / stride] = max;
 
 		//Koordinaten schreiben
-		get<0>(inputCoordsOfOutputPixels[cur_featureMap][indexX / stride + indexY / stride * output_size1]) = maxX;
-		get<1>(inputCoordsOfOutputPixels[cur_featureMap][indexX / stride + indexY / stride * output_size1]) = maxY;
+		get<0>(inputCoordsOfOutputPixels[cur_featureMap][i / stride + j / stride * output_size1]) = maxX;
+		get<1>(inputCoordsOfOutputPixels[cur_featureMap][i / stride + j / stride * output_size1]) = maxY;
 	}
 	sem.V(1);
 }
@@ -125,27 +163,48 @@ void MaxPool::forwardJob(int packet) {
 void MaxPool::forwardJobCleanup(int packet) {
 	for (int index = packet * packetSize; index < num_inputs * output_size1 * output_size2; index++) {
 		int cur_featureMap = index / (output_size1 * output_size2);
-		int indexX = (index / output_size2) % output_size1 * stride;
-		int indexY = index % output_size2 * stride;
+		int i = (index / output_size2) % output_size1 * stride;
+		int j = index % output_size2 * stride;
 
-		float max = input[cur_featureMap][indexX][indexY];
+		float max = input[cur_featureMap][i][j];
 		int maxX = 0;
 		int maxY = 0;
-		for (int m = 0; m < pool_layers_window; m++) {
-			for (int n = 0; n < pool_layers_window; n++) {
-				if (max < input[cur_featureMap][indexX + m][indexY + n]) {
-					max = input[cur_featureMap][indexX + m][indexY + n];
-					maxX = m;
-					maxY = n;
-				}
-			}
+		
+		//DEPENDS ON: pool_layers_window(m, n)
+		// if (max < input[cur_featureMap][i + m][j + n]) {
+		//		max = input[cur_featureMap][i + m][j + n];
+		//		maxX = m;
+		//		maxY = n;
+		// }
+		if (max < input[cur_featureMap][i][j]) {
+			max = input[cur_featureMap][i][j];
+			maxX = 0;
+			maxY = 0;
 		}
 
-		output[cur_featureMap][indexX / stride][indexY / stride] = max;
+		if (max < input[cur_featureMap][i + 1][j]) {
+			max = input[cur_featureMap][i + 1][j];
+			maxX = 1;
+			maxY = 0;
+		}
+
+		if (max < input[cur_featureMap][i][j + 1]) {
+			max = input[cur_featureMap][i][j + 1];
+			maxX = 0;
+			maxY = 1;
+		}
+
+		if (max < input[cur_featureMap][i + 1][j + 1]) {
+			max = input[cur_featureMap][i + 1][j + 1];
+			maxX = 1;
+			maxY = 1;
+		}
+
+		output[cur_featureMap][i / stride][j / stride] = max;
 
 		//Koordinaten schreiben
-		get<0>(inputCoordsOfOutputPixels[cur_featureMap][indexX / stride + indexY / stride * output_size1]) = maxX;
-		get<1>(inputCoordsOfOutputPixels[cur_featureMap][indexX / stride + indexY / stride * output_size1]) = maxY;
+		get<0>(inputCoordsOfOutputPixels[cur_featureMap][i / stride + j / stride * output_size1]) = maxX;
+		get<1>(inputCoordsOfOutputPixels[cur_featureMap][i / stride + j / stride * output_size1]) = maxY;
 	}
 }
 
@@ -161,12 +220,12 @@ void MaxPool::forward_par(float inputP [num_filters] [input_size1] [input_size2]
 	sem.set(0);
 	pool.setMaxPool(*this);
 	pool.setTask(3);
-	for (int i = 0; i < num_packets; i++) {
+	for (int i = 0; i < num_packets; i++) 
 		pushJob(i);
-	}
-	if (needCleanup) {
+	
+	if (needCleanup) 
 		forwardJobCleanup(num_packets + 1);
-	}
+	
 	sem.P(num_packets);
 }
 
@@ -197,6 +256,7 @@ void MaxPool::backpropJob(int packet) {
 		get<0>(previouslyUsedLossInputPixels[cur_featureMap][i / stride + j / stride * output_size1]) = indexX;
 		get<1>(previouslyUsedLossInputPixels[cur_featureMap][i / stride + j / stride * output_size1]) = indexY;
 	}
+
 	sem.V(1);
 }
 
@@ -241,11 +301,11 @@ void MaxPool::backprop_par(float loss_gradientP [num_filters] [output_size1] [ou
 	sem.set(0);
 	pool.setMaxPool(*this);
 	pool.setTask(4);
-	for (int i = 0; i < num_packets; i++) {
+	for (int i = 0; i < num_packets; i++) 
 		pushJob(i);
-	}
-	if (needCleanup) {
+	
+	if (needCleanup) 
 		backpropJobCleanup(num_packets + 1);
-	}
+	
 	sem.P(num_packets);
 }

@@ -22,14 +22,14 @@ CNN::CNN(){
 }
 
 /**
- * Jagt image durch das Netzwerk und vergleicht das Ergebnis mit lable
+ * Jagt image durch das Netzwerk und vergleicht das Ergebnis mit label
  *
  * @param image Das Bild, dass klassifiziert werden soll
  * @param label Das korrekte Lable
  * @return Das Tupel (loss, correct)
  */
-tuple<float, bool> CNN::forward(float image [imageSizeX][imageSizeY], int_fast8_t label) {
-
+std::tuple<float, bool> CNN::forward(float image [imageSizeX][imageSizeY], int_fast8_t label) 
+{
 	convLayer->forward(image); //bild in ersten conv layer
 	ReLu(convLayer->output);
 	poolLayer->forward(convLayer->output);
@@ -62,15 +62,15 @@ tuple<float, bool> CNN::forward(float image [imageSizeX][imageSizeY], int_fast8_
  * @param lables Pointer auf den Beginn des Batches in den Trainingslabels
  * @return
  */
-tuple<float, int_fast8_t> CNN::learn(float images [batchSize][imageSizeX][imageSizeY], int_fast8_t lables [batchSize]) {
+std::tuple<float, int_fast8_t> CNN::learn(float images [batchSize][imageSizeX][imageSizeY], int_fast8_t lables [batchSize]) {
 
 	float loss = 0.0f;
 	int_fast8_t correct = 0;
 
 	for (int i = 0; i < batchSize; i++) {
-		tuple<float, bool> Result = forward(images[i], lables[i]);
-		loss += get<0>(Result);
-		correct += get<1>(Result);
+		std::tuple<float, bool> Result = forward(images[i], lables[i]);
+		loss += std::get<0>(Result);
+		correct += std::get<1>(Result);
 	}
 
 	//ADAM learning
@@ -87,30 +87,28 @@ void CNN::updateJob(int packet) {
 		for (int currX = 0; currX < conv_size1; currX++) {
 			for (int currY = 0; currY < conv_size2; currY++) {
 				first_momentum_filters[currFilter][currX][currY] = beta1 * first_momentum_filters[currFilter][currX][currY]
-						+ (1.0 - beta1) * (convLayer->filter_gradient)[currFilter][currX][currY] / batchSize; //erstes moment der filter updaten
+					+ (1.0f - beta1) * (convLayer->filter_gradient)[currFilter][currX][currY] / batchSize; //erstes moment der filter updaten
 				second_momentum_filters[currFilter][currX][currY] = beta1 * second_momentum_filters[currFilter][currX][currY]
-						+ (1.0 - beta1) * pow((convLayer->filter_gradient)[currFilter][currX][currY] / batchSize, 2); //zweites moment der filter updaten
+					+ (1.0f - beta1) * powf((convLayer->filter_gradient)[currFilter][currX][currY] / batchSize, 2); //zweites moment der filter updaten
 
 				(convLayer->filter_gradient)[currFilter][currX][currY] = 0.0; //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
 
 				convLayer->filters[currFilter][currX][currY] = convLayer->filters[currFilter][currX][currY]
-						- alpha
-								* ((first_momentum_filters[currFilter][currX][currY] / corr1)
-										/ (sqrt(second_momentum_filters[currFilter][currX][currY] / corr2) + EPSILON)); //filter des conv layers updaten
+					- alpha	* ((first_momentum_filters[currFilter][currX][currY] / corr1)
+					/ (sqrt(second_momentum_filters[currFilter][currX][currY] / corr2) + EPSILON)); //filter des conv layers updaten
 			}
 		}
 
 		first_momentum_conv_biases[currFilter] = beta1 * first_momentum_conv_biases[currFilter]
-				+ (1.0 - beta1) * (convLayer->bias_gradient)[currFilter] / batchSize; //erstes moment der filterbiasse updaten
+			+ (1.0f - beta1) * (convLayer->bias_gradient)[currFilter] / batchSize; //erstes moment der filterbiasse updaten
 		second_momentum_conv_biases[currFilter] = beta1 * second_momentum_conv_biases[currFilter]
-				+ (1.0 - beta1) * pow((convLayer->bias_gradient)[currFilter] / batchSize, 2); //zweites moment der filterbiasse updaten
+			+ (1.0f - beta1) * powf((convLayer->bias_gradient)[currFilter] / batchSize, 2); //zweites moment der filterbiasse updaten
 
 		(convLayer->bias_gradient)[currFilter] = 0.0; //Gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
 
-		convLayer->biases[currFilter] = convLayer->biases[currFilter]
-				- alpha
-						* ((first_momentum_conv_biases[currFilter] / corr1)
-								/ (sqrt(second_momentum_conv_biases[currFilter] / corr2) + EPSILON)); //filterbiasse des conv layers updaten
+		convLayer->biases[currFilter] = convLayer->biases[currFilter] 
+			- alpha * ((first_momentum_conv_biases[currFilter] / corr1)
+			/ (sqrt(second_momentum_conv_biases[currFilter] / corr2) + EPSILON)); //filterbiasse des conv layers updaten
 	}
 
 	for (int index = packet * packetSizeFull; index < (packet + 1) * packetSizeFull; index++) {
@@ -118,14 +116,14 @@ void CNN::updateJob(int packet) {
 		int currWeight = index % num_lastLayer_inputNeurons;
 
 		first_momentum_weights[currClass][currWeight] = beta1 * first_momentum_weights[currClass][currWeight]
-				+ (1.0 - beta1) * (connected_layer->weight_gradient)[currClass][currWeight] / batchSize; //erstes moment der fcl gewichte updaten
+			+ (1.0f - beta1) * (connected_layer->weight_gradient)[currClass][currWeight] / batchSize; //erstes moment der fcl gewichte updaten
 		second_momentum_weights[currClass][currWeight] = beta1 * second_momentum_weights[currClass][currWeight]
-				+ (1.0 - beta1) * pow((connected_layer->weight_gradient)[currClass][currWeight] / batchSize, 2); //zweites moment der fcl gewichte updaten
+			+ (1.0f - beta1) * powf((connected_layer->weight_gradient)[currClass][currWeight] / batchSize, 2); //zweites moment der fcl gewichte updaten
 
-		(connected_layer->weight_gradient)[currClass][currWeight] = 0.0; //Gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
+		(connected_layer->weight_gradient)[currClass][currWeight] = 0.0f; //Gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
 
 		connected_layer->weights[currClass][currWeight] = connected_layer->weights[currClass][currWeight]
-				- alpha * ((first_momentum_weights[currClass][currWeight] / corr1) / (sqrt(second_momentum_weights[currClass][currWeight] / corr2) + EPSILON)); //gewichte des fcl updaten
+			- alpha * ((first_momentum_weights[currClass][currWeight] / corr1) / (sqrt(second_momentum_weights[currClass][currWeight] / corr2) + EPSILON)); //gewichte des fcl updaten
 	}
 	sem.V(1);
 }
@@ -137,30 +135,28 @@ void CNN::updateJobCleanup(int packet) {
 		for (int currX = 0; currX < conv_size1; currX++) {
 			for (int currY = 0; currY < conv_size2; currY++) {
 				first_momentum_filters[currFilter][currX][currY] = beta1 * first_momentum_filters[currFilter][currX][currY]
-						+ (1.0 - beta1) * (convLayer->filter_gradient)[currFilter][currX][currY] / batchSize; //erstes moment der filter updaten
+					+ (1.0f - beta1) * (convLayer->filter_gradient)[currFilter][currX][currY] / batchSize; //erstes moment der filter updaten
 				second_momentum_filters[currFilter][currX][currY] = beta1 * second_momentum_filters[currFilter][currX][currY]
-						+ (1.0 - beta1) * pow((convLayer->filter_gradient)[currFilter][currX][currY] / batchSize, 2); //zweites moment der filter updaten
+					+ (1.0f - beta1) * powf((convLayer->filter_gradient)[currFilter][currX][currY] / batchSize, 2); //zweites moment der filter updaten
 
 				(convLayer->filter_gradient)[currFilter][currX][currY] = 0.0; //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
 
 				convLayer->filters[currFilter][currX][currY] = convLayer->filters[currFilter][currX][currY]
-						- alpha
-								* ((first_momentum_filters[currFilter][currX][currY] / corr1)
-										/ (sqrt(second_momentum_filters[currFilter][currX][currY] / corr2) + EPSILON)); //filter des conv layers updaten
+					- alpha * ((first_momentum_filters[currFilter][currX][currY] / corr1)
+					/ (sqrt(second_momentum_filters[currFilter][currX][currY] / corr2) + EPSILON)); //filter des conv layers updaten
 			}
 		}
 
 		first_momentum_conv_biases[currFilter] = beta1 * first_momentum_conv_biases[currFilter]
-				+ (1.0 - beta1) * (convLayer->bias_gradient)[currFilter] / batchSize; //erstes moment der filterbiasse updaten
+			+ (1.0f - beta1) * (convLayer->bias_gradient)[currFilter] / batchSize; //erstes moment der filterbiasse updaten
 		second_momentum_conv_biases[currFilter] = beta1 * second_momentum_conv_biases[currFilter]
-				+ (1.0 - beta1) * pow((convLayer->bias_gradient)[currFilter] / batchSize, 2); //zweites moment der filterbiasse updaten
+			+ (1.0f - beta1) * powf((convLayer->bias_gradient)[currFilter] / batchSize, 2); //zweites moment der filterbiasse updaten
 
 		(convLayer->bias_gradient)[currFilter] = 0.0; //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
 
 		convLayer->biases[currFilter] = convLayer->biases[currFilter]
-				- alpha
-						* ((first_momentum_conv_biases[currFilter] / corr1)
-								/ (sqrt(second_momentum_conv_biases[currFilter] / corr2) + EPSILON)); //filterbiasse des conv layers updaten
+			- alpha * ((first_momentum_conv_biases[currFilter] / corr1)
+			/ (sqrt(second_momentum_conv_biases[currFilter] / corr2) + EPSILON)); //filterbiasse des conv layers updaten
 	}
 
 	for (unsigned index = packet * packetSizeFull; index < num_weights * num_lastLayer_inputNeurons; index++) {
@@ -168,14 +164,15 @@ void CNN::updateJobCleanup(int packet) {
 		int currWeight = index % num_lastLayer_inputNeurons;
 
 		first_momentum_weights[currClass][currWeight] = beta1 * first_momentum_weights[currClass][currWeight]
-				+ (1.0 - beta1) * (connected_layer->weight_gradient)[currClass][currWeight] / batchSize; //erstes moment der fcl gewichte updaten
+			+ (1.0f - beta1) * (connected_layer->weight_gradient)[currClass][currWeight] / batchSize; //erstes moment der fcl gewichte updaten
 		second_momentum_weights[currClass][currWeight] = beta1 * second_momentum_weights[currClass][currWeight]
-				+ (1.0 - beta1) * pow((connected_layer->weight_gradient)[currClass][currWeight] / batchSize, 2); //zweites moment der fcl gewichte updaten
+			+ (1.0f - beta1) * powf((connected_layer->weight_gradient)[currClass][currWeight] / batchSize, 2); //zweites moment der fcl gewichte updaten
 
 		(connected_layer->weight_gradient)[currClass][currWeight] = 0.0; //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
 
 		connected_layer->weights[currClass][currWeight] = connected_layer->weights[currClass][currWeight]
-				- alpha * ((first_momentum_weights[currClass][currWeight] / corr1) / (sqrt(second_momentum_weights[currClass][currWeight] / corr2) + EPSILON)); //gewichte des fcl updaten
+			- alpha * ((first_momentum_weights[currClass][currWeight] / corr1) 
+			/ (sqrt(second_momentum_weights[currClass][currWeight] / corr2) + EPSILON)); //gewichte des fcl updaten
 	}
 }
 
@@ -186,23 +183,25 @@ void CNN::update_par() {
 	sem.set(0);
 	//pool.setCNN(*this);
 	pool.setTask(9);
-	for (int i = 0; i < num_packets; i++) {
+	for (int i = 0; i < num_packets; i++) 
 		pushJob(i);
-	}
-	if (needCleanup) {
+	
+	if (needCleanup) 
 		updateJobCleanup(num_packets + 1);
-	}
+	
 	for (int currClass = 0; currClass < num_weights; currClass++) {
 		first_momentum_conn_biases[currClass] = beta1 * first_momentum_conn_biases[currClass]
-				+ (1.0 - beta1) * (connected_layer->bias_gradient)[currClass] / batchSize; //erstes moment der fcl biasse updaten
+			+ (1.0f - beta1) * (connected_layer->bias_gradient)[currClass] / batchSize; //erstes moment der fcl biasse updaten
 		second_momentum_conn_biases[currClass] = beta1 * second_momentum_conn_biases[currClass]
-				+ (1.0 - beta1) * pow((connected_layer->bias_gradient)[currClass] / batchSize, 2); //zweites moment der fcl biasse updaten
+			+ (1.0f - beta1) * powf((connected_layer->bias_gradient)[currClass] / batchSize, 2); //zweites moment der fcl biasse updaten
 
 		(connected_layer->bias_gradient)[currClass] = 0.0; //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
 
 		connected_layer->biases[currClass] = connected_layer->biases[currClass]
-				- alpha * ((first_momentum_conn_biases[currClass] / corr1) / (sqrt(second_momentum_conn_biases[currClass] / corr2) + EPSILON)); //biasse des fcl updaten
+			- alpha * ((first_momentum_conn_biases[currClass] / corr1) 
+			/ (sqrt(second_momentum_conn_biases[currClass] / corr2) + EPSILON)); //biasse des fcl updaten
 	}
+
 	sem.P(num_packets);
 }
 
@@ -214,42 +213,77 @@ void CNN::update() {
 	corr1 = 1.0f;		// - pow(beta1, step); //Korrekturterm des erstes Moments
 	corr2 = 1.0f;		// - pow(beta2, step); //Korrekturterm des zweiten Moments
 
-
 	for (unsigned curr_filter = 0; curr_filter < num_filters; curr_filter++) { //filters des conv layer
 		for (unsigned k = 0; k < conv_size1; k++) { //filter x
 			for (unsigned l = 0; l < conv_size2; l++) { //filter y
 				first_momentum_filters[curr_filter][k][l] = beta1 * first_momentum_filters[curr_filter][k][l]
-						+ (1.0 - beta1) * (convLayer->filter_gradient)[curr_filter][k][l] / batchSize; //erstes moment der filter updaten
+					+ (1.0f - beta1) * (convLayer->filter_gradient)[curr_filter][k][l] / batchSize; //erstes moment der filter updaten
 				second_momentum_filters[curr_filter][k][l] = beta1 * second_momentum_filters[curr_filter][k][l]
-						+ (1.0 - beta1) * pow((convLayer->filter_gradient)[curr_filter][k][l] / batchSize, 2); //zweites moment der filter updaten
+					+ (1.0f - beta1) * powf((convLayer->filter_gradient)[curr_filter][k][l] / batchSize, 2); //zweites moment der filter updaten
 
 				convLayer->filters[curr_filter][k][l] = convLayer->filters[curr_filter][k][l]
-						- alpha * ((first_momentum_filters[curr_filter][k][l] / corr1) / (sqrt(second_momentum_filters[curr_filter][k][l] / corr2) + EPSILON)); //filter des conv layers updaten
+					- alpha * ((first_momentum_filters[curr_filter][k][l] / corr1) 
+					/ (sqrt(second_momentum_filters[curr_filter][k][l] / corr2) + EPSILON)); //filter des conv layers updaten
 			}
 		}
-		first_momentum_conv_biases[curr_filter] = beta1 * first_momentum_conv_biases[curr_filter] + (1.0 - beta1) * (convLayer->bias_gradient)[curr_filter] / batchSize; //erstes moment der filterbiasse updaten
+		first_momentum_conv_biases[curr_filter] = beta1 * first_momentum_conv_biases[curr_filter] 
+			+ (1.0f - beta1) * (convLayer->bias_gradient)[curr_filter] / batchSize; //erstes moment der filterbiasse updaten
 		second_momentum_conv_biases[curr_filter] = beta1 * second_momentum_conv_biases[curr_filter]
-				+ (1.0 - beta1) * pow((convLayer->bias_gradient)[curr_filter] / batchSize, 2); //zweites moment der filterbiasse updaten
+			+ (1.0f - beta1) * powf((convLayer->bias_gradient)[curr_filter] / batchSize, 2); //zweites moment der filterbiasse updaten
 
 		convLayer->biases[curr_filter] = convLayer->biases[curr_filter]
-				- alpha * ((first_momentum_conv_biases[curr_filter] / corr1) / (sqrt(second_momentum_conv_biases[curr_filter] / corr2) + EPSILON)); //filterbiasse des conv layers updaten
+			- alpha * ((first_momentum_conv_biases[curr_filter] / corr1) 
+			/ (sqrt(second_momentum_conv_biases[curr_filter] / corr2) + EPSILON)); //filterbiasse des conv layers updaten
 	}
+
 	convLayer->cleanup(); //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
-
 	for (unsigned curr_class = 0; curr_class < num_weights; curr_class++) { //outputzahlen
-		for (unsigned curr_neuron = 0; curr_neuron < num_lastLayer_inputNeurons; curr_neuron++) { //gesamtgroesse des inputs f�r den fully connected layer (fcl)
-			first_momentum_weights[curr_class][curr_neuron] = beta1 * first_momentum_weights[curr_class][curr_neuron] + (1.0 - beta1) * (connected_layer->weight_gradient)[curr_class][curr_neuron] / batchSize; //erstes moment der fcl gewichte updaten
-			second_momentum_weights[curr_class][curr_neuron] = beta1 * second_momentum_weights[curr_class][curr_neuron]
-					+ (1.0 - beta1) * pow((connected_layer->weight_gradient)[curr_class][curr_neuron] / batchSize, 2); //zweites moment der fcl gewichte updaten
+		for (unsigned curr_neuron = 0; curr_neuron < num_lastLayer_inputNeurons; curr_neuron += 10) { //gesamtgroesse des inputs f�r den fully connected layer (fcl)
+			first_momentum_weights[curr_class][0] = beta1 * first_momentum_weights[curr_class][0] + (1.0f - beta1) * (connected_layer->weight_gradient)[curr_class][0] / batchSize; //erstes moment der fcl gewichte updaten
+			second_momentum_weights[curr_class][0] = beta1 * second_momentum_weights[curr_class][0]	+ (1.0f - beta1) * powf((connected_layer->weight_gradient)[curr_class][0] / batchSize, 2); //zweites moment der fcl gewichte updaten
+			connected_layer->weights[curr_class][0] = connected_layer->weights[curr_class][0] - alpha * ((first_momentum_weights[curr_class][0] / corr1) / (sqrt(second_momentum_weights[curr_class][0] / corr2) + EPSILON)); //gewichte des fcl updaten
 
-			connected_layer->weights[curr_class][curr_neuron] = connected_layer->weights[curr_class][curr_neuron]
-					- alpha * ((first_momentum_weights[curr_class][curr_neuron] / corr1) / (sqrt(second_momentum_weights[curr_class][curr_neuron] / corr2) + EPSILON)); //gewichte des fcl updaten
+			first_momentum_weights[curr_class][1] = beta1 * first_momentum_weights[curr_class][1] + (1.0f - beta1) * (connected_layer->weight_gradient)[curr_class][1] / batchSize; //erstes moment der fcl gewichte updaten
+			second_momentum_weights[curr_class][1] = beta1 * second_momentum_weights[curr_class][1] + (1.0f - beta1) * powf((connected_layer->weight_gradient)[curr_class][1] / batchSize, 2); //zweites moment der fcl gewichte updaten
+			connected_layer->weights[curr_class][1] = connected_layer->weights[curr_class][1] - alpha * ((first_momentum_weights[curr_class][1] / corr1) / (sqrt(second_momentum_weights[curr_class][1] / corr2) + EPSILON)); //gewichte des fcl updaten
+
+			first_momentum_weights[curr_class][2] = beta1 * first_momentum_weights[curr_class][2] + (1.0f - beta1) * (connected_layer->weight_gradient)[curr_class][2] / batchSize; //erstes moment der fcl gewichte updaten
+			second_momentum_weights[curr_class][2] = beta1 * second_momentum_weights[curr_class][2] + (1.0f - beta1) * powf((connected_layer->weight_gradient)[curr_class][2] / batchSize, 2); //zweites moment der fcl gewichte updaten
+			connected_layer->weights[curr_class][2] = connected_layer->weights[curr_class][2] - alpha * ((first_momentum_weights[curr_class][2] / corr1) / (sqrt(second_momentum_weights[curr_class][2] / corr2) + EPSILON)); //gewichte des fcl updaten
+
+			first_momentum_weights[curr_class][3] = beta1 * first_momentum_weights[curr_class][3] + (1.0f - beta1) * (connected_layer->weight_gradient)[curr_class][3] / batchSize; //erstes moment der fcl gewichte updaten
+			second_momentum_weights[curr_class][3] = beta1 * second_momentum_weights[curr_class][3] + (1.0f - beta1) * powf((connected_layer->weight_gradient)[curr_class][3] / batchSize, 2); //zweites moment der fcl gewichte updaten
+			connected_layer->weights[curr_class][3] = connected_layer->weights[curr_class][3] - alpha * ((first_momentum_weights[curr_class][3] / corr1) / (sqrt(second_momentum_weights[curr_class][3] / corr2) + EPSILON)); //gewichte des fcl updaten
+
+			first_momentum_weights[curr_class][4] = beta1 * first_momentum_weights[curr_class][4] + (1.0f - beta1) * (connected_layer->weight_gradient)[curr_class][4] / batchSize; //erstes moment der fcl gewichte updaten
+			second_momentum_weights[curr_class][4] = beta1 * second_momentum_weights[curr_class][4] + (1.0f - beta1) * powf((connected_layer->weight_gradient)[curr_class][4] / batchSize, 2); //zweites moment der fcl gewichte updaten
+			connected_layer->weights[curr_class][4] = connected_layer->weights[curr_class][4] - alpha * ((first_momentum_weights[curr_class][4] / corr1) / (sqrt(second_momentum_weights[curr_class][4] / corr2) + EPSILON)); //gewichte des fcl updaten
+
+			first_momentum_weights[curr_class][5] = beta1 * first_momentum_weights[curr_class][5] + (1.0f - beta1) * (connected_layer->weight_gradient)[curr_class][5] / batchSize; //erstes moment der fcl gewichte updaten
+			second_momentum_weights[curr_class][5] = beta1 * second_momentum_weights[curr_class][5] + (1.0f - beta1) * powf((connected_layer->weight_gradient)[curr_class][5] / batchSize, 2); //zweites moment der fcl gewichte updaten
+			connected_layer->weights[curr_class][5] = connected_layer->weights[curr_class][5] - alpha * ((first_momentum_weights[curr_class][5] / corr1) / (sqrt(second_momentum_weights[curr_class][5] / corr2) + EPSILON)); //gewichte des fcl updaten
+
+			first_momentum_weights[curr_class][6] = beta1 * first_momentum_weights[curr_class][6] + (1.0f - beta1) * (connected_layer->weight_gradient)[curr_class][6] / batchSize; //erstes moment der fcl gewichte updaten
+			second_momentum_weights[curr_class][6] = beta1 * second_momentum_weights[curr_class][6] + (1.0f - beta1) * powf((connected_layer->weight_gradient)[curr_class][6] / batchSize, 2); //zweites moment der fcl gewichte updaten
+			connected_layer->weights[curr_class][6] = connected_layer->weights[curr_class][6] - alpha * ((first_momentum_weights[curr_class][6] / corr1) / (sqrt(second_momentum_weights[curr_class][6] / corr2) + EPSILON)); //gewichte des fcl updaten
+
+			first_momentum_weights[curr_class][7] = beta1 * first_momentum_weights[curr_class][7] + (1.0f - beta1) * (connected_layer->weight_gradient)[curr_class][7] / batchSize; //erstes moment der fcl gewichte updaten
+			second_momentum_weights[curr_class][7] = beta1 * second_momentum_weights[curr_class][7] + (1.0f - beta1) * powf((connected_layer->weight_gradient)[curr_class][7] / batchSize, 2); //zweites moment der fcl gewichte updaten
+			connected_layer->weights[curr_class][7] = connected_layer->weights[curr_class][7] - alpha * ((first_momentum_weights[curr_class][7] / corr1) / (sqrt(second_momentum_weights[curr_class][7] / corr2) + EPSILON)); //gewichte des fcl updaten
+
+			first_momentum_weights[curr_class][8] = beta1 * first_momentum_weights[curr_class][8] + (1.0f - beta1) * (connected_layer->weight_gradient)[curr_class][8] / batchSize; //erstes moment der fcl gewichte updaten
+			second_momentum_weights[curr_class][8] = beta1 * second_momentum_weights[curr_class][8] + (1.0f - beta1) * powf((connected_layer->weight_gradient)[curr_class][8] / batchSize, 2); //zweites moment der fcl gewichte updaten
+			connected_layer->weights[curr_class][8] = connected_layer->weights[curr_class][8] - alpha * ((first_momentum_weights[curr_class][8] / corr1) / (sqrt(second_momentum_weights[curr_class][8] / corr2) + EPSILON)); //gewichte des fcl updaten
+
+			first_momentum_weights[curr_class][9] = beta1 * first_momentum_weights[curr_class][9] + (1.0f - beta1) * (connected_layer->weight_gradient)[curr_class][9] / batchSize; //erstes moment der fcl gewichte updaten
+			second_momentum_weights[curr_class][9] = beta1 * second_momentum_weights[curr_class][9] + (1.0f - beta1) * powf((connected_layer->weight_gradient)[curr_class][9] / batchSize, 2); //zweites moment der fcl gewichte updaten
+			connected_layer->weights[curr_class][9] = connected_layer->weights[curr_class][9] - alpha * ((first_momentum_weights[curr_class][9] / corr1) / (sqrt(second_momentum_weights[curr_class][9] / corr2) + EPSILON)); //gewichte des fcl updaten
 		}
-		first_momentum_conn_biases[curr_class] = beta1 * first_momentum_conn_biases[curr_class] + (1.0 - beta1) * (connected_layer->bias_gradient)[curr_class] / batchSize; //erstes moment der fcl biasse updaten
-		second_momentum_conn_biases[curr_class] = beta1 * second_momentum_conn_biases[curr_class] + (1.0 - beta1) * pow((connected_layer->bias_gradient)[curr_class] / batchSize, 2); //zweites moment der fcl biasse updaten
 
-		connected_layer->biases[curr_class] = connected_layer->biases[curr_class]
-				- alpha * ((first_momentum_conn_biases[curr_class] / corr1) / (sqrt(second_momentum_conn_biases[curr_class] / corr2) + EPSILON)); //biasse des fcl updaten
+		first_momentum_conn_biases[curr_class] = beta1 * first_momentum_conn_biases[curr_class] + (1.0f - beta1) * (connected_layer->bias_gradient)[curr_class] / batchSize; //erstes moment der fcl biasse updaten
+		second_momentum_conn_biases[curr_class] = beta1 * second_momentum_conn_biases[curr_class] + (1.0f - beta1) * powf((connected_layer->bias_gradient)[curr_class] / batchSize, 2); //zweites moment der fcl biasse updaten
+
+		connected_layer->biases[curr_class] = connected_layer->biases[curr_class] - alpha * ((first_momentum_conn_biases[curr_class] / corr1) / (sqrt(second_momentum_conn_biases[curr_class] / corr2) + EPSILON)); //biasse des fcl updaten
 	}
 
 	connected_layer->cleanup(); //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch

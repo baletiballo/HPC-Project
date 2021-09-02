@@ -21,10 +21,10 @@ using namespace std;
 /*
  Ließt die Trainingsdaten ein, und skaliert sie, um aussagekräftigere Inputs bieten zu können
  */
-void read_scale_trainingData(string filename, float training_images [42000] [imageSizeX] [imageSizeY], int_fast8_t correct_lables[42000], int factor);
-void scale_trainingData(float tmp_images[42000] [baseSizeX] [baseSizeY], float training_images [42000] [imageSizeX] [imageSizeY], int factor); //skaliert die Tainingsdaten
+void read_scale_trainingData(string filename, float training_images [num_trainingData] [imageSizeX] [imageSizeY], int_fast8_t correct_lables[num_trainingData], int factor);
+void scale_trainingData(vector<vector<vector<float>>> tmp_images, float training_images [num_trainingData] [imageSizeX] [imageSizeY], int factor); //skaliert die Tainingsdaten
 //Die ursprüngliche main(). So können mehrere ähnliche Trainingsläufe durchgeführt werden, ohne dass sie alle einzeln angestoßen werden müssen
-void train(float training_images [42000] [imageSizeX] [imageSizeY], int_fast8_t correct_lables [42000]);
+void train();
 
 float endLoss; //Gesamter Loss der letzten 10 Batches
 int_fast16_t endCorr; //Gesamtanzahl korrekt geratener Labels der letzten 10 Batches
@@ -32,13 +32,17 @@ chrono::duration<double> totalTime; //Gesamtzeit des Trainings
 
 
 //Alle Trainingsdaten, als Vektor von Graustufen Matrizen
-float training_images [42000] [imageSizeX] [imageSizeY];
-int_fast8_t correct_lables [42000];
+float training_images [num_trainingData] [imageSizeX] [imageSizeY];
+int_fast8_t correct_lables [num_trainingData];
+
+//Alle Bilder eines Batches, als Vektor von Graustufen Matrizen
+float (*batch_images) [imageSizeX] [imageSizeY];
+//Alle Lables eines Batches, als Vektor von Ganzzahlen
+int_fast8_t (*batch_lables);
 
 /////////////////////////////////////////
 
 int main() {
-	double singleTime = 142.0 / 4; //Zeit, die ein unskalierter Trainingsprozess braucht (Durchschnitt von 40 Testläufen)
 	fstream log;
 	double avgTime = 0.0;
 	log.open("Testlog.txt", std::ios_base::app);
@@ -55,7 +59,7 @@ int main() {
 
 		for (int j = 0; j < num_trainings_cycles; j++) { //Mehrere Durchläufe mit denselben Parametern, um Konsistenz zu erhöhen		
 			log << "Trainingsdurchlauf " << j << ":" << endl;
- 			train(training_images, correct_lables);
+ 			train();
 			log << "Durchschnittlicher Loss in den letzten 10 Batches:" << endLoss / (float)(10 * batchSize)
 			 << "\t Durchschnittliche Praezision in den letzten 10 Batches: " << (float)endCorr / (10 * batchSize) << endl;
 			log << (int) (totalTime.count() / 60) << " Minuten " << (int) (totalTime.count()) % 60 << " Sekunden" << endl;
@@ -74,20 +78,13 @@ int main() {
 }
 
 //Die ursprüngliche main(). So können mehrere ähnliche Trainingsläufe durchgeführt werden, ohne dass sie alle einzeln angestoßen werden müssen
-void train(float training_images [42000] [imageSizeX] [imageSizeY], int_fast8_t correct_lables [42000]) {
-
-	//Alle Bilder eines Batches, als Vektor von Graustufen Matrizen
-	float (*batch_images) [imageSizeX] [imageSizeY];
-	//Alle Lables eines Batches, als Vektor von Ganzzahlen
-	int_fast8_t (*batch_lables);
+void train() {
 
 	endCorr = 0;
 	endLoss = 0;
 
 	try {
-		/* Einlesen der Trainingsdaten*/
-		//read_scale_trainingData("train.txt", training_images, correct_lables, infaltionFactor);
-		CNN cnn;		//Das benutzte Netzwerk. Topologieänderungen bitte in der Klasse CNN
+		CNN cnn;		//Das benutzte Netzwerk.
 
 		//std::cout << "Beginn des Trainings\n";
 		auto training_startTime = chrono::system_clock::now(); // Interner Timer um die Laufzeit zu messen
@@ -95,7 +92,7 @@ void train(float training_images [42000] [imageSizeX] [imageSizeY], int_fast8_t 
 		for (int i = 0; i < num_steps; i++) 
 		{			
 			/* Vorbereiten des Trainingsbatches */
-			int randIndex = rand() % (42000 - batchSize);
+			int randIndex = rand() % (num_trainingData - batchSize);
 			batch_images =  &training_images[randIndex];
 			batch_lables =  &correct_lables[randIndex];
 
@@ -103,10 +100,6 @@ void train(float training_images [42000] [imageSizeX] [imageSizeY], int_fast8_t 
 
 			float loss = get<0>(res);
 			int_fast8_t correct = get<1>(res);
-
-			// if (i % 500 == 0) { //Zwischenupdates. Nur alle paar hundert Baches, um Konsole übersichtlich zu halten
-				//cout << "Batch " << i << " \t Average Loss " << loss / batchSize << "\t Accuracy " << (int)correct <<"/"<< batchSize << "\n";
-			//}
 
 			if (num_steps - i <= 10) {
 				endLoss += loss;
@@ -123,10 +116,10 @@ void train(float training_images [42000] [imageSizeX] [imageSizeY], int_fast8_t 
 	}
 }
 
-void read_scale_trainingData(string filename, float training_images [42000] [imageSizeX] [imageSizeY], int_fast8_t correct_lables [42000], int factor) {
+void read_scale_trainingData(string filename, float training_images [num_trainingData] [imageSizeX] [imageSizeY], int_fast8_t correct_lables [num_trainingData], int factor) {
 	ifstream myFile(filename);
 	if (myFile.is_open()) {
-		float tmp_images [42000] [baseSizeX] [baseSizeY]; //Die originalen (nicht skalierten) Trainingsdaten
+		vector<vector<vector<float>>> tmp_images (num_trainingData, vector<vector<float>> (baseSizeX, vector<float> (baseSizeY))); //Die originalen (nicht skalierten) Trainingsdaten
 		//cout << "Lese Trainingsdaten ein;\n";
 		int lineNum = 0;
 		string line;
@@ -139,7 +132,7 @@ void read_scale_trainingData(string filename, float training_images [42000] [ima
 				if (i == 0)			//erste Zahl jeder Zeile ist das lable
 					correct_lables[lineNum] = digit;
 				else				//der Rest das Graustufenbild
-					tmp_images[lineNum][(i - 1)/baseSizeX][(i - 1)%baseSizeX] = static_cast<float>(digit) / static_cast<float>(255);
+					tmp_images [lineNum] [(i - 1)/baseSizeX] [(i - 1)%baseSizeX] = static_cast<float>(digit) / static_cast<float>(255);
 				i++;
 			}
 
@@ -156,9 +149,9 @@ void read_scale_trainingData(string filename, float training_images [42000] [ima
 //sooo make sure training_images[image] has those sizes
 void scale_image_bilinear_interpolation(float image [baseSizeX] [baseSizeY], float newImage [imageSizeX] [imageSizeY], int factor) {}
 
-void scale_trainingData(float tmp_images [42000] [baseSizeX] [baseSizeY], float training_images [42000] [imageSizeX] [imageSizeY], int factor) {
+void scale_trainingData(vector<vector<vector<float>>> tmp_images, float training_images [num_trainingData] [imageSizeX] [imageSizeY], int factor) {
 	//Bilineare Interpolation
-	for (int image = 0; image < 42000; image++) {
+	for (int image = 0; image < num_trainingData; image++) {
 		for (unsigned pixelX = 0; pixelX < imageSizeX; pixelX++) {
 			for (unsigned pixelY = 0; pixelY < imageSizeY; pixelY++) {
 				if (pixelX % factor == 0) {
@@ -203,7 +196,7 @@ void scale_trainingData(float tmp_images [42000] [baseSizeX] [baseSizeY], float 
 	*/
 	
 	/* //Reines Aufblasen des Bildes
-	for (int image = 0; image < 42000; image++) {
+	for (int image = 0; image < num_trainingData; image++) {
 		for (int pixel = 0; pixel < imagePixels; pixel++) {
 			float pixelValue = tmp_images[image][pixel];
 			for (int xShift = 0; xShift < factor; xShift++) {

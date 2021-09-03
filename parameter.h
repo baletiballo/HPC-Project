@@ -20,7 +20,7 @@ class JobQueue;
 class ThreadPool;
 
 //Parameter der Trainingsdaten
-const int num_trainingData = 42000; //Anzahl an Trainingsdatensätzen (42000 bei MNist)
+const int num_trainingData = 420; //Anzahl an Trainingsdatensätzen (42000 bei MNist)
 const int baseSizeX = 28; //Anzahl Pixel in der X-Richtung, der originalen Daten
 const int baseSizeY = 28; //        -||-        Y-Richtung,          -||-        
 const int batchSize = 32; //Anzahl Bilder pro Batch

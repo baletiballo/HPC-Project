@@ -3,6 +3,13 @@
 FullyConnectedLayer::FullyConnectedLayer() {
 	mtx.resize(num_weights);
 
+	weights  = new float [num_weights] [num_lastLayer_inputNeurons];
+	biases = new float [num_weights];
+	output = new float [num_weights];
+	weight_gradient = new float [num_weights] [num_lastLayer_inputNeurons];
+	bias_gradient = new float [num_weights];
+	loss_input = new float [num_inputs] [input_size1] [input_size2];
+
 	std::normal_distribution<float> distribution(0.0, 1.0);
 	for (unsigned i = 0; i < num_weights; i++) 
 	{

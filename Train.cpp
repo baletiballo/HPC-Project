@@ -45,7 +45,7 @@ int_fast8_t (*batch_lables);
 int main() {
 	fstream log;
 	double avgTime = 0.0;
-	log.open("Testlog.txt", std::ios_base::app);
+	log.open("Testlog.txt", std::ios_base::out);
 	if (!log.is_open())
 		return -1;
 	read_scale_trainingData("train.txt", training_images, correct_lables, infaltionFactor);
@@ -75,6 +75,7 @@ int main() {
 	}
 
 	log << endl;
+	std::cout << "Training finished." << endl;
 }
 
 //Die ursprüngliche main(). So können mehrere ähnliche Trainingsläufe durchgeführt werden, ohne dass sie alle einzeln angestoßen werden müssen
@@ -98,12 +99,9 @@ void train() {
 
 			tuple<float, int_fast8_t> res = cnn.learn(batch_images, batch_lables);
 
-			float loss = get<0>(res);
-			int_fast8_t correct = get<1>(res);
-
 			if (num_steps - i <= 10) {
-				endLoss += loss;
-				endCorr += correct;
+				endLoss += get<0>(res);
+				endCorr += get<1>(res);
 			}
 		}
 
@@ -121,9 +119,9 @@ void read_scale_trainingData(string filename, float training_images [num_trainin
 	if (myFile.is_open()) {
 		vector<vector<vector<float>>> tmp_images (num_trainingData, vector<vector<float>> (baseSizeX, vector<float> (baseSizeY))); //Die originalen (nicht skalierten) Trainingsdaten
 		//cout << "Lese Trainingsdaten ein;\n";
-		int lineNum = 0;
 		string line;
-		while (getline(myFile, line)) {
+		for(int lineNum = 0; lineNum < num_trainingData; lineNum++){
+			getline(myFile, line);
 			istringstream ss(line);
 			string token;
 			int i = 0;

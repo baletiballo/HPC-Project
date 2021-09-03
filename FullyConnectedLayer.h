@@ -24,17 +24,17 @@ class FullyConnectedLayer {
 
 public:
 	
-	float weights [num_weights] [num_lastLayer_inputNeurons]; //index1->Klassifikationklasse, index2->gewicht der Klassifikationklasse index1
-	float biases [num_weights]; //index1->Klassifikationklasse
-	float (*input)  [input_size1] [input_size2]; //pointer auf den input (forward param) (kann theoretisch auch nur einmal gesetzt werden, da pointer danach immer gleich bleibt)
-	//index1->featureMap, index2&3-> x und y der FeatureMap
-	float output [num_weights]; //index1->Klassifikationklasse
-	float (*loss_gradient); //pointer auf den loss gradienten (backprop param) (kann theoretisch auch nur einmal gesetzt werden, da pointer danach immer gleich bleibt)
-	//index1->Klassifikationklasse, index2->gewicht der Klassifikationklasse index1
-	float weight_gradient [num_weights] [num_lastLayer_inputNeurons]; //index1->Klassifikationklasse, index2->gewicht der Klassifikationklasse index1
-	float bias_gradient [num_weights]; //index1->Klassifikationklasse
-	float loss_input [num_inputs] [input_size1] [input_size2]; //index1->featureMap (num_inputs viele), index2&3-> x und y der FeatureMap
+	float (*weights)  [num_lastLayer_inputNeurons]; //index1->Klassifikationklasse, index2->gewicht der Klassifikationklasse index1
+	float (*biases) ; //index1->Klassifikationklasse
+	float (*output) ; //index1->Klassifikationklasse
+	float (*weight_gradient)  [num_lastLayer_inputNeurons]; //index1->Klassifikationklasse, index2->gewicht der Klassifikationklasse index1
+	float (*bias_gradient); //index1->Klassifikationklasse
+	float (*loss_input) [input_size1] [input_size2]; //index1->featureMap (num_inputs viele), index2&3-> x und y der FeatureMap
 	std::deque<std::mutex> mtx; //benoetigt fuer einige parallele aufteilungen, da ueberschneidungen von indizes der arbeitspakete passieren koennen
+	float (*loss_gradient); //pointer auf den loss gradienten (backprop param) (kann theoretisch auch nur einmal gesetzt werden, da pointer danach immer gleich bleibt)
+	//index1->featureMap, index2&3-> x und y der FeatureMap
+	float (*input)  [input_size1] [input_size2]; //pointer auf den input (forward param) (kann theoretisch auch nur einmal gesetzt werden, da pointer danach immer gleich bleibt)
+	//index1->Klassifikationklasse, index2->gewicht der Klassifikationklasse index1
 
 	FullyConnectedLayer();
 

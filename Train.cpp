@@ -69,7 +69,7 @@ int main() {
 			log << endl;
 		}
 
-		avgTime /= 3;
+		avgTime /= num_trainings_cycles;
 		log << "Durchschnittlich: " << (int) (avgTime / 60) << " Minuten " << (int) (avgTime) % 60 << " Sekunden" << endl << endl;
 		avgTime = 0.0;
 	}

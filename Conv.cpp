@@ -91,27 +91,31 @@ void Conv::backprop(float loss_gradientP [num_filters] [num_windowsX] [num_windo
 				//DEPENDS ON: conv_size1(m), conv_size2(n)
 				//loss_input[i + m][j + n] += loss_gradient[cur_filter][i][j] * filters[cur_filter][m][n];
 				//filter_gradient[cur_filter][m][n] += loss_gradient[cur_filter][i][j] * input[i + m][j + n];
-				loss_input[i + 0][j + 0] += loss_gradient[cur_filter][i][j] * filters[cur_filter][0][0];
-				filter_gradient[cur_filter][0][0] += loss_gradient[cur_filter][i][j] * input[i + 0][j + 0];
-				loss_input[i + 0][j + 0] += loss_gradient[cur_filter][i][j] * filters[cur_filter][0][0];
-				filter_gradient[cur_filter][0][1] += loss_gradient[cur_filter][i][j] * input[i + 0][j + 1];
-				loss_input[i + 0][j + 1] += loss_gradient[cur_filter][i][j] * filters[cur_filter][0][1];
-				filter_gradient[cur_filter][0][2] += loss_gradient[cur_filter][i][j] * input[i + 0][j + 2];
-				loss_input[i + 0][j + 2] += loss_gradient[cur_filter][i][j] * filters[cur_filter][0][2];
 
-				filter_gradient[cur_filter][1][0] += loss_gradient[cur_filter][i][j] * input[i + 1][j + 0];
-				loss_input[i + 1][j + 0] += loss_gradient[cur_filter][i][j] * filters[cur_filter][0][0];
-				filter_gradient[cur_filter][1][1] += loss_gradient[cur_filter][i][j] * input[i + 1][j + 1];
-				loss_input[i + 1][j + 1] += loss_gradient[cur_filter][i][j] * filters[cur_filter][0][1];
-				filter_gradient[cur_filter][1][2] += loss_gradient[cur_filter][i][j] * input[i + 1][j + 2];
-				loss_input[i + 1][j + 2] += loss_gradient[cur_filter][i][j] * filters[cur_filter][0][2];
+				filter_gradient[cur_filter][0][0] 	+= loss_gradient[cur_filter][i][j] * input[i + 0][j + 0];
+				filter_gradient[cur_filter][0][1] 	+= loss_gradient[cur_filter][i][j] * input[i + 0][j + 1];
+				filter_gradient[cur_filter][0][2] 	+= loss_gradient[cur_filter][i][j] * input[i + 0][j + 2];
 
-				filter_gradient[cur_filter][2][0] += loss_gradient[cur_filter][i][j] * input[i + 2][j + 0];
-				loss_input[i + 2][j + 0] += loss_gradient[cur_filter][i][j] * filters[cur_filter][2][0];
-				filter_gradient[cur_filter][2][1] += loss_gradient[cur_filter][i][j] * input[i + 2][j + 1];
-				loss_input[i + 2][j + 1] += loss_gradient[cur_filter][i][j] * filters[cur_filter][2][1];
-				filter_gradient[cur_filter][2][2] += loss_gradient[cur_filter][i][j] * input[i + 2][j + 2];
-				loss_input[i + 2][j + 2] += loss_gradient[cur_filter][i][j] * filters[cur_filter][2][2];
+				filter_gradient[cur_filter][1][0] 	+= loss_gradient[cur_filter][i][j] * input[i + 1][j + 0];
+				filter_gradient[cur_filter][1][1] 	+= loss_gradient[cur_filter][i][j] * input[i + 1][j + 1];
+				filter_gradient[cur_filter][1][2] 	+= loss_gradient[cur_filter][i][j] * input[i + 1][j + 2];
+
+				filter_gradient[cur_filter][2][0] 	+= loss_gradient[cur_filter][i][j] * input[i + 2][j + 0];
+				filter_gradient[cur_filter][2][1] 	+= loss_gradient[cur_filter][i][j] * input[i + 2][j + 1];
+				filter_gradient[cur_filter][2][2] 	+= loss_gradient[cur_filter][i][j] * input[i + 2][j + 2];
+
+
+				loss_input[i + 0][j + 0] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][0][0];				
+				loss_input[i + 0][j + 1] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][0][1];
+				loss_input[i + 0][j + 2] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][0][2];	
+
+				loss_input[i + 1][j + 0] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][1][0];				
+				loss_input[i + 1][j + 1] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][1][1];				
+				loss_input[i + 1][j + 2] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][1][2];	
+							
+				loss_input[i + 2][j + 0] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][2][0];				
+				loss_input[i + 2][j + 1] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][2][1];				
+				loss_input[i + 2][j + 2] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][2][2];
 
 				bias_gradient[cur_filter] += loss_gradient[cur_filter][i][j];
 			}

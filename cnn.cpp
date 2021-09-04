@@ -31,7 +31,7 @@ std::tuple<float, bool> CNN::forward(float image [imageSizeX][imageSizeY], int_f
 	poolLayer->forward(convLayer->output);
 	connected_layer->forward(poolLayer->output); //nutzt immer den output des letzten pooling layers als input
 
-	softmax(connected_layer->output); //achtung alles folgende findet in place statt, es aendert sich als connected_layer->output
+	softmax(connected_layer->output); //achtung alles folgende findet in place statt, es aendert sich also connected_layer->output
 	float loss = -log(connected_layer->output[label]);
 
 	int argmax = 0;

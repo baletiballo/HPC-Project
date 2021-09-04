@@ -44,11 +44,11 @@ const int imageSizeX_afterPooling = (imageSizeX_afterConvolution - pool_layers_w
 const int imageSizeY_afterPooling = (imageSizeY_afterConvolution - pool_layers_window) / pool_layers_stride + 1; //DO NOT CHANGE
 const int num_weights = 10; //DO NOT CHANGE: Anzahl an Klassifikations Klassen (10, da zehn Ziffern)
 const int num_finalImages = pow(num_filters, num_conv_layers); // eigentlich pow(num_filters, num_conv_layers), aber das will nicht
-const int num_lastLayer_inputNeurons = num_finalImages * (imageSizeX - num_conv_layers * (conv_size1 - 1)) * (imageSizeY - num_conv_layers * (conv_size1 - 1)); //Assert: Durch 100 teilbar
+const int num_lastLayer_inputNeurons = num_finalImages * imageSizeX_afterPooling * imageSizeY_afterPooling; //Assert: Durch 100 teilbar
 
 //Parameter der Paralelisierung
 const bool parallel = false; //sollen die parallelen Methoden aufgerufen werden?
-const int num_packets = 12; //in wie viele arbeitspakete soll update aufgeteilt werden (falls parallel)
+//const int num_packets = 12; //in wie viele arbeitspakete soll update aufgeteilt werden (falls parallel)
 
 //Konstanten für ADAM, direkt die aus dem Paper
 const float alpha = 0.001f; //Lernrate

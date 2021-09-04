@@ -1,96 +1,96 @@
 #include "ReLu.h"
 
-int reluPackets = num_packets;
-int reluPacketSize = 0;
+/*int reluPackets = num_packets;
+int reluPacketSize = 0;*/
 const int reluSize1 = num_filters;
 const int reluSize2 = imageSizeX_afterConvolution;
 const int reluSize3 = imageSizeY_afterConvolution;
-float (*relu_input) [reluSize2] [reluSize3];
-float (*relu_input_2) [reluSize2] [reluSize3];
+/*float (*relu_input) [reluSize2] [reluSize3];
+float (*relu_input_2) [reluSize2] [reluSize3];*/
 
-void ReLuJob(int packet) {
-	for (int i = packet * reluPacketSize; i < (packet + 1) * reluPacketSize; i++) {
-		int index1 = i / (reluSize2 * reluSize3);
-		int index2 = (i / reluSize3) % reluSize2;
-		int index3 = i % reluSize3;
-
-		if (relu_input[index1][index2][index3] <= 0) 
-			relu_input[index1][index2][index3] = 0;
-	}
-
-	sem.V(1);
-}
-
-void ReLuJobCleanup(int packet) {
-	for (int i = packet * reluPacketSize; i < (reluSize1 * reluSize2 * reluSize3); i++) {
-		int index1 = i / (reluSize2 * reluSize3);
-		int index2 = (i / reluSize3) % reluSize2;
-		int index3 = i % reluSize3;
-
-		if (relu_input[index1][index2][index3] <= 0) 
-			relu_input[index1][index2][index3] = 0;
-	}
-}
-
-void ReLu_par() {
-	reluPacketSize = (reluSize1 * reluSize2 * reluSize3) / reluPackets;
-
-	sem.set(0);
-	pool.setTask(7);
-	for (int i = 0; i < reluPackets; i++) 
-		pushJob(i);
-	
-	if ((reluSize1 * reluSize2 * reluSize3) % reluPackets != 0) 
-		ReLuJobCleanup(reluPackets + 1);
-	
-	sem.P(reluPackets);
-}
-
-void ReLuPrimeJob(int packet) {
-	for (int i = packet * reluPacketSize; i < (packet + 1) * reluPacketSize; i++) {
-		int index1 = i / (reluSize2 * reluSize3);
-		int index2 = (i / reluSize3) % reluSize2;
-		int index3 = i % reluSize3;
-
-		if (relu_input_2[index1][index2][index3] <= 0)
-			relu_input[index1][index2][index3] = 0;
-	}
-
-	sem.V(1);
-}
-
-void ReLuJobPrimeCleanup(int packet) {
-	for (int i = packet * reluPacketSize; i < (reluSize1 * reluSize2 * reluSize3); i++) {
-		int index1 = i / (reluSize2 * reluSize3);
-		int index2 = (i / reluSize3) % reluSize2;
-		int index3 = i % reluSize3;
-
-		if (relu_input_2[index1][index2][index3] <= 0)
-			relu_input[index1][index2][index3] = 0;
-	}
-}
-
-void ReLuPrime_par() {
-	reluPacketSize = (reluSize1 * reluSize2 * reluSize3) / reluPackets;
-
-	sem.set(0);
-	pool.setTask(8);
-	for (int i = 0; i < reluPackets; i++) 
-		pushJob(i);
-
-	if ((reluSize1 * reluSize2 * reluSize3) % reluPackets != 0) 
-		ReLuJobPrimeCleanup(reluPackets + 1);
-	
-	sem.P(reluPackets);
-}
+//void ReLuJob(int packet) {
+//	for (int i = packet * reluPacketSize; i < (packet + 1) * reluPacketSize; i++) {
+//		int index1 = i / (reluSize2 * reluSize3);
+//		int index2 = (i / reluSize3) % reluSize2;
+//		int index3 = i % reluSize3;
+//
+//		if (relu_input[index1][index2][index3] <= 0)
+//			relu_input[index1][index2][index3] = 0;
+//	}
+//
+//	sem.V(1);
+//}
+//
+//void ReLuJobCleanup(int packet) {
+//	for (int i = packet * reluPacketSize; i < (reluSize1 * reluSize2 * reluSize3); i++) {
+//		int index1 = i / (reluSize2 * reluSize3);
+//		int index2 = (i / reluSize3) % reluSize2;
+//		int index3 = i % reluSize3;
+//
+//		if (relu_input[index1][index2][index3] <= 0)
+//			relu_input[index1][index2][index3] = 0;
+//	}
+//}
+//
+//void ReLu_par() {
+//	reluPacketSize = (reluSize1 * reluSize2 * reluSize3) / reluPackets;
+//
+//	sem.set(0);
+//	pool.setTask(7);
+//	for (int i = 0; i < reluPackets; i++)
+//		pushJob(i);
+//
+//	if ((reluSize1 * reluSize2 * reluSize3) % reluPackets != 0)
+//		ReLuJobCleanup(reluPackets + 1);
+//
+//	sem.P(reluPackets);
+//}
+//
+//void ReLuPrimeJob(int packet) {
+//	for (int i = packet * reluPacketSize; i < (packet + 1) * reluPacketSize; i++) {
+//		int index1 = i / (reluSize2 * reluSize3);
+//		int index2 = (i / reluSize3) % reluSize2;
+//		int index3 = i % reluSize3;
+//
+//		if (relu_input_2[index1][index2][index3] <= 0)
+//			relu_input[index1][index2][index3] = 0;
+//	}
+//
+//	sem.V(1);
+//}
+//
+//void ReLuJobPrimeCleanup(int packet) {
+//	for (int i = packet * reluPacketSize; i < (reluSize1 * reluSize2 * reluSize3); i++) {
+//		int index1 = i / (reluSize2 * reluSize3);
+//		int index2 = (i / reluSize3) % reluSize2;
+//		int index3 = i % reluSize3;
+//
+//		if (relu_input_2[index1][index2][index3] <= 0)
+//			relu_input[index1][index2][index3] = 0;
+//	}
+//}
+//
+//void ReLuPrime_par() {
+//	reluPacketSize = (reluSize1 * reluSize2 * reluSize3) / reluPackets;
+//
+//	sem.set(0);
+//	pool.setTask(8);
+//	for (int i = 0; i < reluPackets; i++)
+//		pushJob(i);
+//
+//	if ((reluSize1 * reluSize2 * reluSize3) % reluPackets != 0)
+//		ReLuJobPrimeCleanup(reluPackets + 1);
+//
+//	sem.P(reluPackets);
+//}
 
 void ReLu(float t1 [reluSize1] [reluSize2] [reluSize3]) {
-	if (parallel) 
+	/*if (parallel)
 	{
 		relu_input = t1;
 		ReLu_par();
 	}
-	else {
+	else {*/
 		for (unsigned i = 0; i < reluSize1; i++) {
 			for (unsigned j = 0; j < reluSize2; j++) {
 				for(unsigned k = 0; k < reluSize3; k+=10){
@@ -129,17 +129,17 @@ void ReLu(float t1 [reluSize1] [reluSize2] [reluSize3]) {
 				}
 			}
 		}
-	}
+	//}
 }
 
 void ReLuPrime(float t1 [reluSize1] [reluSize2] [reluSize3], float t2  [reluSize1] [reluSize2] [reluSize3]) {
-	if (parallel) 
+	/*if (parallel)
 	{
 		relu_input = t1;
 		relu_input_2 = t2;
 		ReLuPrime_par();
 	} 
-	else {
+	else {*/
 		for (unsigned i = 0; i < reluSize1; i++) {
 			for (unsigned j = 0; j < reluSize2; j++) {
 				for(unsigned k = 0; k < reluSize3; k+=10){
@@ -178,5 +178,5 @@ void ReLuPrime(float t1 [reluSize1] [reluSize2] [reluSize3], float t2  [reluSize
 				}
 			}
 		}
-	}
+	//}
 }

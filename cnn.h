@@ -28,9 +28,9 @@ class CNN {
 	
 public:
 
-	const int packetSizeConv = (num_conv_layers * num_filters) / num_packets; //groesse der arbeitspakete fuer update Conv
+	/*const int packetSizeConv = (num_conv_layers * num_filters) / num_packets; //groesse der arbeitspakete fuer update Conv
 	int packetSizeFull = (num_weights * num_finalImages * imageSizeX_afterPooling * imageSizeY_afterPooling) / num_packets; //groesse der arbeitspakete fuer update FullyConnectedLayer
-	bool needCleanup = (num_conv_layers * num_filters) % num_packets != 0 || (num_weights * num_finalImages * imageSizeX_afterPooling *imageSizeY_afterPooling) % num_packets != 0; //soll JobCleanup aufgerufen werden?
+	bool needCleanup = (num_conv_layers * num_filters) % num_packets != 0 || (num_weights * num_finalImages * imageSizeX_afterPooling *imageSizeY_afterPooling) % num_packets != 0; //soll JobCleanup aufgerufen werden?*/
 
 	float corr1 = 1.0f;		//Korrekturterm des erstes Moments
 	float corr2 = 1.0f;		//Korrekturterm des zweiten Moments
@@ -57,11 +57,11 @@ public:
 
 	std::tuple<float, int_fast8_t> learn(float x_batch [batchSize] [imageSizeX] [imageSizeY], int_fast8_t y_batch [batchSize]);
 
-	void updateJob(int packet);
+	/*void updateJob(int packet);
 
 	void updateJobCleanup(int packet);
 
-	void update_par();
+	void update_par();*/
 
 	void update();
 

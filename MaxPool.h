@@ -22,8 +22,8 @@ class MaxPool {
 	static const int window 		= pool_layers_window;
 	static const int output_size1	= imageSizeX_afterPooling;
 	static const int output_size2	= imageSizeY_afterPooling;
-	static const int packetSize		= (num_inputs * output_size1 * output_size2) / num_packets; //groesse der arbeitspakete
-	static const bool needCleanup	= (num_inputs * output_size1 * output_size2) % num_packets != 0; //soll JobCleanup aufgerufen werden?
+	/*static const int packetSize		= (num_inputs * output_size1 * output_size2) / num_packets; //groesse der arbeitspakete
+	static const bool needCleanup	= (num_inputs * output_size1 * output_size2) % num_packets != 0; //soll JobCleanup aufgerufen werden?*/
 
 public:
 
@@ -38,21 +38,21 @@ public:
 
 	MaxPool();
 
-	void forwardJob(int packet);
+	/*void forwardJob(int packet);
 
-	void forwardJobCleanup(int packet);
+	void forwardJobCleanup(int packet);*/
 
 	void forward(float inputP [num_filters] [input_size1] [input_size2]);
 
-	void forward_par(float inputP [num_filters] [input_size1] [input_size2]);
+	/*void forward_par(float inputP [num_filters] [input_size1] [input_size2]);
 
 	void backpropJob(int packet);
 
-	void backpropJobCleanup(int packet);
+	void backpropJobCleanup(int packet);*/
 
 	void backprop(float loss_gradientP [num_filters] [output_size1] [output_size2]);
 
-	void backprop_par(float loss_gradientP [num_filters] [output_size1] [output_size2]);
+	//void backprop_par(float loss_gradientP [num_filters] [output_size1] [output_size2]);
 };
 
 #endif /* MAXPOOL_H_ */

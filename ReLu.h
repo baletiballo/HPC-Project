@@ -16,7 +16,7 @@ void ReLu(float t1 [num_filters] [imageSizeX_afterConvolution] [imageSizeY_after
 void ReLuPrime( float t1 [num_filters] [imageSizeX_afterConvolution] [imageSizeY_afterConvolution],
                 float t2  [num_filters] [imageSizeX_afterConvolution] [imageSizeY_afterConvolution]);
 
-void ReLu_par();
+/*void ReLu_par();
 
 void ReLuPrime_par();
 
@@ -26,6 +26,6 @@ void ReLuJobCleanup(int packet);
 
 void ReLuPrimeJob(int packet);
 
-void ReLuJobPrimeCleanup(int packet);
+void ReLuJobPrimeCleanup(int packet);*/
 
 #endif /* RELU_H_ */

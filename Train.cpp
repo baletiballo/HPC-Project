@@ -101,8 +101,8 @@ void train() {
 
 			tuple<float, int_fast8_t> res = cnn.learn(batch_images, batch_lables);
 
-			cout<<"Durchschnittlicher Loss: " << get<0>(res) / (float)(batchSize)
-					 << "\t Durchschnittliche Praezision: " << (float)get<1>(res) / (batchSize) << endl;
+			/*cout<<"Durchschnittlicher Loss: " << get<0>(res) / (float)(batchSize)
+					 << "\t Durchschnittliche Praezision: " << (float)get<1>(res) / (batchSize) << endl;*/
 
 			if (num_steps - i <= 10) {
 				endLoss += get<0>(res);

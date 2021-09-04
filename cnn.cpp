@@ -1,9 +1,5 @@
 #include "cnn.h"
 
-#include <fstream>
-#include <iostream>
-#include <sstream>
-
 CNN::CNN() {
 	step = 1;
 

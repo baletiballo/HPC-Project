@@ -48,7 +48,7 @@ public:
 
 	void forwardJobCleanup(int packet);*/
 
-	void forward(int_fast8_t spot, int_fast8_t image);
+	void forward(int_fast8_t spot, int image);
 
 	/*void forward_par(float inputP [imageSizeX] [imageSizeY]);
 
@@ -56,7 +56,7 @@ public:
 
 	void backpropJobCleanup(int packet);*/
 
-	void backprop(int_fast8_t spot, int_fast8_t image);
+	void backprop(int_fast8_t spot, int image);
 
 	//void backprop_par(float loss_gradientP [num_filters] [num_windowsX] [num_windowsY]);
 

@@ -23,7 +23,7 @@ class ThreadPool;
 const int num_trainingData = 42000; //Anzahl an Trainingsdatensätzen (42000 bei MNist)
 const int baseSizeX = 28; //Anzahl Pixel in der X-Richtung, der originalen Daten
 const int baseSizeY = 28; //        -||-        Y-Richtung,          -||-        
-const int batchSize = 32; //Anzahl Bilder pro Batch
+const int batchSize = 320; //Anzahl Bilder pro Batch
 const int infaltionFactor = 3; //Zwischen zwei Originalpixel werden (inflationFaktor-1) interpoliert für die Trainingsdaten
 const int imageSizeX = ((baseSizeX - 1) * infaltionFactor) + 1 ; //DO NOT CHANGE: Anzahl Pixel in der X-Richtung, der Trainingsdaten
 const int imageSizeY = ((baseSizeY - 1) * infaltionFactor) + 1 ; //DO NOT CHANGE: Anzahl Pixel in der Y-Richtung, der Trainingsdaten 
@@ -47,9 +47,9 @@ const int num_finalImages = pow(num_filters, num_conv_layers); // eigentlich pow
 const int num_lastLayer_inputNeurons = num_finalImages * imageSizeX_afterPooling * imageSizeY_afterPooling; //Assert: Durch 100 teilbar
 
 //Parameter der Paralelisierung
-const bool parallel = false; //sollen die parallelen Methoden aufgerufen werden?
+//const bool parallel = false; //sollen die parallelen Methoden aufgerufen werden?
 //const int num_packets = 12; //in wie viele arbeitspakete soll update aufgeteilt werden (falls parallel)
-const int threads = 12;
+const int threads = 8;
 
 //Konstanten für ADAM, direkt die aus dem Paper
 const float alpha = 0.001f; //Lernrate

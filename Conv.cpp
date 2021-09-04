@@ -35,8 +35,8 @@ void Conv::setInput(float (*inputP) [imageSizeX][imageSizeY]) {
  * @param inputP
  * @return
  */
-void Conv::forward(int_fast8_t spot, int_fast8_t image) {
-	for (int cur_filter = 0; cur_filter < num_filters; cur_filter++) { //per filter		
+void Conv::forward(int_fast8_t spot, int image) {
+	for (int cur_filter = 0; cur_filter < num_filters; cur_filter++) { //per filter
 		for (int i = 0; i < num_windowsX; i++) { //per region
 			for (int j = 0; j < num_windowsY; j++) { // per region
 				output[spot][cur_filter][i][j] = biases[cur_filter];
@@ -84,7 +84,7 @@ void Conv::cleanup() {
  * @param loss_gradientP
  * @return
  */
-void Conv::backprop(int_fast8_t spot, int_fast8_t image) {
+void Conv::backprop(int_fast8_t spot, int image) {
 	/*//zero the loss Input, since the same method to just add them all together cannot be applied here
 	 for (int i = 0; i < imageSizeX; i++) {
 	 for (int j = 0; j < imageSizeY; j++) {

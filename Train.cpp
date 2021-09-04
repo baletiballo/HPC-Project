@@ -102,7 +102,7 @@ void train() {
 			batch_images =  &training_images[randIndex];
 			batch_lables =  &correct_lables[randIndex];
 
-			tuple<float, int_fast8_t> res = cnn.learn(batch_images, batch_lables);
+			tuple<float, int> res = cnn.learn(batch_images, batch_lables);
 
 			/*cout<<"Durchschnittlicher Loss: " << get<0>(res) / (float)(batchSize)
 					 << "\t Durchschnittliche Praezision: " << (float)get<1>(res) / (batchSize) << endl;*/

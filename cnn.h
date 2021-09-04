@@ -54,16 +54,16 @@ public:
 	float (*second_momentum_conn_biases); //Zweites Moment der Gewichtbiasse: index1->Klassifikationklasse
 
 	std::mutex mtx;
-	int_fast8_t totalCorrect;
+	int totalCorrect;
 	float totalLoss;
 
 	int_fast8_t (*labels);
 
 	CNN();
 
-	void forward(int_fast8_t image, int_fast8_t spot);
+	void forward(int image, int_fast8_t spot);
 
-	std::tuple<float, int_fast8_t> learn(float x_batch [batchSize] [imageSizeX] [imageSizeY], int_fast8_t y_batch [batchSize]);
+	std::tuple<float, int> learn(float x_batch [batchSize] [imageSizeX] [imageSizeY], int_fast8_t y_batch [batchSize]);
 
 	/*void updateJob(int packet);
 

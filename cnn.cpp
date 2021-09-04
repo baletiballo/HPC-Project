@@ -37,7 +37,7 @@ void CNN::forward(int_fast8_t image, int_fast8_t spot) {
 	poolLayer->forward(spot);
 	connected_layer->forward(spot); //nutzt immer den output des letzten pooling layers als input
 
-	softmax(connected_layer->output[spot]); //achtung alles folgende findet in place statt, es aendert sich als connected_layer->output
+	softmax(connected_layer->output[spot]); //achtung alles folgende findet in place statt, es aendert sich also connected_layer->output
 	float loss = -log(connected_layer->output[spot][label]);
 
 	int argmax = 0;

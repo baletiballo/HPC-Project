@@ -55,6 +55,7 @@ int main() {
 		//Parameter setzten
 		log << "------------------------------------------" << endl;
 		log << "| " << setw(38) << "Vektoren durch Arrays ersetzt" << " |" << endl;
+		log << "| " << setw(38) << "Einige Loops unrolled" << " |" << endl;
 		log << "------------------------------------------" << endl;
 
 		for (int j = 0; j < num_trainings_cycles; j++) { //Mehrere Durchläufe mit denselben Parametern, um Konsistenz zu erhöhen		

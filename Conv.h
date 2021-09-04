@@ -42,7 +42,7 @@ public:
 
 	void setLossGradient(float loss_gradientP [threads] [num_filters] [num_windowsX] [num_windowsY]);
 
-	void setInput(float inputP [batchSize] [imageSizeX] [imageSizeY]);
+	void setInput(float (*inputP) [imageSizeX] [imageSizeY]);
 
 	/*void forwardJob(int packet);
 

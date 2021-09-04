@@ -63,7 +63,7 @@ public:
 
 	void forward(int_fast8_t image, int_fast8_t spot);
 
-	std::tuple<float, int_fast8_t> learn(float x_batch [batchSize] [imageSizeX] [imageSizeY], int_fast8_t y_batch [batchSize]);
+	std::tuple<float, int_fast8_t> learn(float (*x_batch) [imageSizeX] [imageSizeY], int_fast8_t (*y_batch));
 
 	/*void updateJob(int packet);
 

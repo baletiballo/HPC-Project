@@ -25,7 +25,7 @@ void Conv::setLossGradient(float loss_gradientP[threads][num_filters][num_window
 	loss_gradient = loss_gradientP;
 }
 
-void Conv::setInput(float inputP[batchSize][imageSizeX][imageSizeY]) {
+void Conv::setInput(float (*inputP) [imageSizeX][imageSizeY]) {
 	input = inputP;
 }
 

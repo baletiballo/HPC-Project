@@ -69,7 +69,7 @@ void CNN::forward(int_fast8_t image, int_fast8_t spot) {
  * @param lables Pointer auf den Beginn des Batches in den Trainingslabels
  * @return
  */
-std::tuple<float, int_fast8_t> CNN::learn(float x_batch[batchSize][imageSizeX][imageSizeY], int_fast8_t y_batch[batchSize]) {
+std::tuple<float, int_fast8_t> CNN::learn(float (*x_batch) [imageSizeX][imageSizeY], int_fast8_t (*y_batch)) {
 	convLayer->setInput(x_batch);
 	labels = y_batch;
 

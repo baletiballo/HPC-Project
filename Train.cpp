@@ -64,7 +64,7 @@ int main() {
  			train();
 			log << "Durchschnittlicher Loss in den letzten 10 Batches:" << endLoss / (float)(10 * batchSize)
 			 << "\t Durchschnittliche Praezision in den letzten 10 Batches: " << (float)endCorr / (10 * batchSize) << endl;
-			log << (int) (totalTime.count() / 60) << " Minuten " << (int) (totalTime.count()) % 60 << " Sekunden" << endl;
+			log << totalTime.count()<< " Sekunden" << endl;
 			endLoss = 0.0;
 			endCorr = 0;
 			avgTime += totalTime.count();
@@ -73,7 +73,7 @@ int main() {
 
 		if (num_trainings_cycles != 1){
 			avgTime /= num_trainings_cycles;
-			log << "Durchschnittlich: " << (int) (avgTime / 60) << " Minuten " << (int) (avgTime) % 60 << " Sekunden" << endl << endl;
+			log << "Durchschnittlich: " << avgTime << " Sekunden" << endl << endl;
 			avgTime = 0.0;
 		}
 	}

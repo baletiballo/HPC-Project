@@ -1,0 +1,82 @@
+Bündellauf Batchsizes/Threadanzahl 04.09 17:00
+
+------------------------------------------
+|                        Batchsize =  32 |
+|                Anzahl an Threads =  12 |
+------------------------------------------
+Durchschnittlicher Loss in den letzten 10 Batches:0.0656155	 Durchschnittliche Praezision in den letzten 10 Batches: 0.98125
+0 Minuten 10 Sekunden
+
+------------------------------------------
+|                        Batchsize =  64 |
+|                Anzahl an Threads =  12 |
+------------------------------------------
+Durchschnittlicher Loss in den letzten 10 Batches:0.0694558	 Durchschnittliche Praezision in den letzten 10 Batches: 0.978125
+0 Minuten 8 Sekunden
+
+------------------------------------------
+|                        Batchsize = 128 |
+|                Anzahl an Threads =  12 |
+------------------------------------------
+Durchschnittlicher Loss in den letzten 10 Batches:0.0970593	 Durchschnittliche Praezision in den letzten 10 Batches: 0.974219
+0 Minuten 8 Sekunden
+
+------------------------------------------
+|                        Batchsize = 320 |
+|                Anzahl an Threads =  12 |
+------------------------------------------
+Crashed!!
+
+
+------------------------------------------
+|                        Batchsize =  32 |
+|                Anzahl an Threads =   6 |
+------------------------------------------
+Durchschnittlicher Loss in den letzten 10 Batches:0.065801	 Durchschnittliche Praezision in den letzten 10 Batches: 0.98125
+0 Minuten 10 Sekunden
+
+------------------------------------------
+|                        Batchsize =  64 |
+|                Anzahl an Threads =   6 |
+------------------------------------------
+Durchschnittlicher Loss in den letzten 10 Batches:0.0696538	 Durchschnittliche Praezision in den letzten 10 Batches: 0.978125
+0 Minuten 8 Sekunden
+
+------------------------------------------
+|                        Batchsize = 128 |
+|                Anzahl an Threads =   6 |
+------------------------------------------
+Durchschnittlicher Loss in den letzten 10 Batches:0.0970632	 Durchschnittliche Praezision in den letzten 10 Batches: 0.974219
+0 Minuten 9 Sekunden
+
+------------------------------------------
+|                        Batchsize = 320 |
+|                Anzahl an Threads =   6 |
+------------------------------------------
+Crashed!!
+
+
+------------------------------------------
+|                        Batchsize =  32 |
+|                Anzahl an Threads =  24 |
+------------------------------------------
+Durchschnittlicher Loss in den letzten 10 Batches:0.0653976	 Durchschnittliche Praezision in den letzten 10 Batches: 0.98125
+0 Minuten 9 Sekunden
+
+
+------------------------------------------
+|                        Batchsize =  64 |
+|                Anzahl an Threads =  24 |
+------------------------------------------
+Durchschnittlicher Loss in den letzten 10 Batches:0.069709	 Durchschnittliche Praezision in den letzten 10 Batches: 0.978125
+0 Minuten 7 Sekunden
+
+
+------------------------------------------
+|                        Batchsize = 128 |
+|                Anzahl an Threads =  24 |
+------------------------------------------
+Durchschnittlicher Loss in den letzten 10 Batches:0.0970552	 Durchschnittliche Praezision in den letzten 10 Batches: 0.974219
+0 Minuten 6 Sekunden
+
+

@@ -45,7 +45,7 @@ int_fast8_t (*batch_lables);
 int main() {
 	fstream log;
 	double avgTime = 0.0;
-	log.open("Testlog.txt", std::ios_base::out);
+	log.open("Testlog.txt", std::ios_base::app);
 	if (!log.is_open())
 		return -1;
 	read_scale_trainingData("train.txt", training_images, correct_lables, infaltionFactor);
@@ -54,12 +54,13 @@ int main() {
 	for (int i = 1; i <= 1; i++) { //Bündellauf mit leicht unterschiedlichen Parametern
 		//Parameter setzten
 		log << "------------------------------------------" << endl;
-		log << "| " << setw(38) << "Vektoren durch Arrays ersetzt" << " |" << endl;
-		log << "| " << setw(38) << "Einige Loops unrolled" << " |" << endl;
+		log << "| " << setw(35) << "Batchsize = " << setw(3) << batchSize << " |" << endl;
+		log << "| " << setw(35) << "Anzahl an Threads = " << setw(3) << threads << " |" << endl;
+		//log << "| " << setw(38) << "Einige Loops unrolled" << " |" << endl;
 		log << "------------------------------------------" << endl;
 
 		for (int j = 0; j < num_trainings_cycles; j++) { //Mehrere Durchläufe mit denselben Parametern, um Konsistenz zu erhöhen		
-			log << "Trainingsdurchlauf " << j << ":" << endl;
+			if (num_trainings_cycles != 1) log << "Trainingsdurchlauf " << j << ":" << endl;
  			train();
 			log << "Durchschnittlicher Loss in den letzten 10 Batches:" << endLoss / (float)(10 * batchSize)
 			 << "\t Durchschnittliche Praezision in den letzten 10 Batches: " << (float)endCorr / (10 * batchSize) << endl;
@@ -70,9 +71,11 @@ int main() {
 			log << endl;
 		}
 
-		avgTime /= num_trainings_cycles;
-		log << "Durchschnittlich: " << (int) (avgTime / 60) << " Minuten " << (int) (avgTime) % 60 << " Sekunden" << endl << endl;
-		avgTime = 0.0;
+		if (num_trainings_cycles != 1){
+			avgTime /= num_trainings_cycles;
+			log << "Durchschnittlich: " << (int) (avgTime / 60) << " Minuten " << (int) (avgTime) % 60 << " Sekunden" << endl << endl;
+			avgTime = 0.0;
+		}
 	}
 
 	log << endl;

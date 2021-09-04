@@ -25,8 +25,8 @@ class FullyConnectedLayer {
 public:
 	
 	float (*weights)  [num_lastLayer_inputNeurons]; //index1->Klassifikationklasse, index2->gewicht der Klassifikationklasse index1
-	float (*biases) ; //index1->Klassifikationklasse
-	float (*output) ; //index1->Klassifikationklasse
+	float (*biases); //index1->Klassifikationklasse
+	float (*output); //index1->Klassifikationklasse
 	float (*weight_gradient)  [num_lastLayer_inputNeurons]; //index1->Klassifikationklasse, index2->gewicht der Klassifikationklasse index1
 	float (*bias_gradient); //index1->Klassifikationklasse
 	float (*loss_input) [input_size1] [input_size2]; //index1->featureMap (num_inputs viele), index2&3-> x und y der FeatureMap

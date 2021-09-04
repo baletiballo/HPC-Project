@@ -3,8 +3,8 @@
 using namespace std;
 
 MaxPool::MaxPool() {
-	output = new float [num_filters] [output_size1] [output_size2];
-	loss_input = new float [num_inputs] [input_size1] [input_size2];
+	output = new float [num_filters] [output_size1] [output_size2]{};
+	loss_input = new float [num_inputs] [input_size1] [input_size2]{};
 }
 
 /**

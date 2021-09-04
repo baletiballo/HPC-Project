@@ -1,12 +1,12 @@
 #include "Conv.h"
 
 Conv::Conv(){
-	filters = new float [num_filters] [conv_size1] [conv_size2];
-	biases = new float [num_filters];
-	output = new float [num_filters] [num_windowsX] [num_windowsY];
-	filter_gradient = new float [num_filters] [conv_size1] [conv_size2];
-	bias_gradient = new float [num_filters];
-	loss_input = new float [imageSizeX] [imageSizeY];
+	filters = new float [num_filters] [conv_size1] [conv_size2] {};
+	biases = new float [num_filters]{};
+	output = new float [num_filters] [num_windowsX] [num_windowsY]{};
+	filter_gradient = new float [num_filters] [conv_size1] [conv_size2]{};
+	bias_gradient = new float [num_filters]{};
+	loss_input = new float [imageSizeX] [imageSizeY]{};
 
 	std::normal_distribution<float> distribution(0.0, 1.0);
 	std::random_device dev;

@@ -7,14 +7,14 @@ CNN::CNN(){
 	poolLayer = new MaxPool();
 	connected_layer = new FullyConnectedLayer();
 
-	first_momentum_filters  = new float [num_filters] [conv_size1] [conv_size2];
-	second_momentum_filters = new float [num_filters] [conv_size1] [conv_size2];
-	first_momentum_conv_biases  = new float [num_filters];
-	second_momentum_conv_biases = new float [num_filters];
-	first_momentum_weights  = new float [num_weights] [num_lastLayer_inputNeurons];
-	second_momentum_weights = new float [num_weights] [num_lastLayer_inputNeurons];
-	first_momentum_conn_biases  = new float [num_weights];
-	second_momentum_conn_biases = new float [num_weights];
+	first_momentum_filters  = new float [num_filters] [conv_size1] [conv_size2]{};
+	second_momentum_filters = new float [num_filters] [conv_size1] [conv_size2]{};
+	first_momentum_conv_biases  = new float [num_filters]{};
+	second_momentum_conv_biases = new float [num_filters]{};
+	first_momentum_weights  = new float [num_weights] [num_lastLayer_inputNeurons]{};
+	second_momentum_weights = new float [num_weights] [num_lastLayer_inputNeurons]{};
+	first_momentum_conn_biases  = new float [num_weights]{};
+	second_momentum_conn_biases = new float [num_weights]{};
 }
 
 /**

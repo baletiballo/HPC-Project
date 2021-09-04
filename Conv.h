@@ -23,26 +23,32 @@ class Conv {
 	static const bool needBackCleanup = (num_windowsX * num_windowsY) % num_packets != 0; //soll backpropJobCleanup aufgerufen werden?*/
 
 public:
-	
+
 	float (*filters) [conv_size1] [conv_size2]; //index1->filter, index2&3-> x und y des Filters index1
 	float (*biases); //index1->filter
-	float (*output) [num_windowsX] [num_windowsY]; //index1->(generierte) featureMap (num_inputs*num_filters viele), index2&3-> x und y der FeatureMap
-	float (*filter_gradient) [conv_size1] [conv_size2]; //index1->filter, index2&3-> x und y des Filters index1
-	float (*bias_gradient); //index1->filter
+
+	//index0->thread
+	float (*output) [num_filters] [num_windowsX] [num_windowsY]; //index1->(generierte) featureMap (num_inputs*num_filters viele), index2&3-> x und y der FeatureMap
+	float (*filter_gradient) [num_filters] [conv_size1] [conv_size2]; //index1->filter, index2&3-> x und y des Filters index1
+	float (*bias_gradient) [num_filters]; //index1->filter
 	//float (*loss_input) [imageSizeY]; //index1->featureMap (num_inputs viele), index2&3-> x und y der FeatureMap
 	
-	float (*input) [imageSizeY]; //pointer auf den input (forward param) (kann theoretisch auch nur einmal gesetzt werden, da pointer danach immer gleich bleibt)
+	float (*input) [imageSizeX] [imageSizeY]; //pointer auf den input (forward param) (kann theoretisch auch nur einmal gesetzt werden, da pointer danach immer gleich bleibt)
 	//index1->featureMap, index2&3-> x und y der FeatureMap
-	float (*loss_gradient) [num_windowsX] [num_windowsY]; //pointer auf den loss gradienten (backprop param) (kann theoretisch auch nur einmal gesetzt werden, da pointer danach immer gleich bleibt)
+	float (*loss_gradient) [num_filters] [num_windowsX] [num_windowsY]; //pointer auf den loss gradienten (backprop param) (kann theoretisch auch nur einmal gesetzt werden, da pointer danach immer gleich bleibt)
 	//index1->featureMap num_filters viele, da wir ja die losses der generierten featureMaps betrachten), index2&3-> x und y der FeatureMap
 
 	Conv();
+
+	void setLossGradient(float loss_gradientP [threads] [num_filters] [num_windowsX] [num_windowsY]);
+
+	void setInput(float inputP [batchSize] [imageSizeX] [imageSizeY]);
 
 	/*void forwardJob(int packet);
 
 	void forwardJobCleanup(int packet);*/
 
-	void forward(float inputP [imageSizeX] [imageSizeY]);
+	void forward(int_fast8_t spot, int_fast8_t image);
 
 	/*void forward_par(float inputP [imageSizeX] [imageSizeY]);
 
@@ -50,7 +56,7 @@ public:
 
 	void backpropJobCleanup(int packet);*/
 
-	void backprop(float loss_gradientP [num_filters] [num_windowsX] [num_windowsY]);
+	void backprop(int_fast8_t spot, int_fast8_t image);
 
 	//void backprop_par(float loss_gradientP [num_filters] [num_windowsX] [num_windowsY]);
 

@@ -3,8 +3,16 @@
 using namespace std;
 
 MaxPool::MaxPool() {
-	output = new float [num_filters] [output_size1] [output_size2]{};
-	loss_input = new float [num_inputs] [input_size1] [input_size2]{};
+	output = new float [threads][num_filters] [output_size1] [output_size2]{};
+	loss_input = new float [threads][num_inputs] [input_size1] [input_size2]{};
+}
+
+void MaxPool::setLossGradient(float loss_gradientP [threads][num_filters] [output_size1] [output_size2]) {
+	loss_gradient = loss_gradientP;
+}
+
+void MaxPool::setInput(float inputP [threads][num_filters] [input_size1] [input_size2]) {
+	input = inputP;
 }
 
 /**
@@ -13,8 +21,7 @@ MaxPool::MaxPool() {
  * @param inputP
  * @return
  */
-void MaxPool::forward(float inputP [num_filters] [input_size1] [input_size2]) {
-	input = inputP;
+void MaxPool::forward(int_fast8_t spot) {
 
 	for (int cur_featureMap = 0; cur_featureMap < num_inputs; cur_featureMap++) { //per input
 		for (int i = 0; i < input_size1 - window; i += stride) {
@@ -23,7 +30,7 @@ void MaxPool::forward(float inputP [num_filters] [input_size1] [input_size2]) {
 				// per region
 
 				//matrix max pooling
-				float max = input[cur_featureMap][i][j];
+				float max = input[spot][cur_featureMap][i][j];
 				int maxX = 0;
 				int maxY = 0;
 
@@ -33,35 +40,35 @@ void MaxPool::forward(float inputP [num_filters] [input_size1] [input_size2]) {
 				//		maxX = m;
 				//		maxY = n;
 				// }
-				if (max < input[cur_featureMap][i][j]) {
-					max = input[cur_featureMap][i][j];
+				if (max < input[spot][cur_featureMap][i][j]) {
+					max = input[spot][cur_featureMap][i][j];
 					maxX = 0;
 					maxY = 0;
 				}
 
-				if (max < input[cur_featureMap][i + 1][j]) {
-					max = input[cur_featureMap][i + 1][j];
+				if (max < input[spot][cur_featureMap][i + 1][j]) {
+					max = input[spot][cur_featureMap][i + 1][j];
 					maxX = 1;
 					maxY = 0;
 				}
 
-				if (max < input[cur_featureMap][i][j + 1]) {
-					max = input[cur_featureMap][i][j + 1];
+				if (max < input[spot][cur_featureMap][i][j + 1]) {
+					max = input[spot][cur_featureMap][i][j + 1];
 					maxX = 0;
 					maxY = 1;
 				}
 
-				if (max < input[cur_featureMap][i + 1][j + 1]) {
-					max = input[cur_featureMap][i + 1][j + 1];
+				if (max < input[spot][cur_featureMap][i + 1][j + 1]) {
+					max = input[spot][cur_featureMap][i + 1][j + 1];
 					maxX = 1;
 					maxY = 1;
 				}
 
-				output[cur_featureMap][i / stride][j / stride] = max;
+				output[spot][cur_featureMap][i / stride][j / stride] = max;
 
 				//Koordinaten schreiben
-				get<0>(inputCoordsOfOutputPixels[cur_featureMap][i / stride + j / stride * output_size1]) = maxX;
-				get<1>(inputCoordsOfOutputPixels[cur_featureMap][i / stride + j / stride * output_size1]) = maxY;
+				get<0>(inputCoordsOfOutputPixels[spot][cur_featureMap][i / stride + j / stride * output_size1]) = maxX;
+				get<1>(inputCoordsOfOutputPixels[spot][cur_featureMap][i / stride + j / stride * output_size1]) = maxY;
 			}
 		}
 	}
@@ -73,8 +80,7 @@ void MaxPool::forward(float inputP [num_filters] [input_size1] [input_size2]) {
  * @param loss_gradientP
  * @return
  */
-void MaxPool::backprop(float loss_gradientP [num_filters] [output_size1] [output_size2]) {
-	loss_gradient = loss_gradientP;
+void MaxPool::backprop(int_fast8_t spot) {
 
 	for (int cur_featureMap = 0; cur_featureMap < num_inputs; cur_featureMap++) { //per input
 		for (int i = 0; i < input_size1 - window; i += stride) {
@@ -83,19 +89,19 @@ void MaxPool::backprop(float loss_gradientP [num_filters] [output_size1] [output
 				// per region
 
 				//zero the loss Input
-				int previousIndexX = get<0>(previouslyUsedLossInputPixels[cur_featureMap][i / stride + j / stride * output_size1]);
-				int previousIndexY = get<1>(previouslyUsedLossInputPixels[cur_featureMap][i / stride + j / stride * output_size1]);
-				loss_input[cur_featureMap][i + previousIndexX][j + previousIndexY] = 0.0;
+				int previousIndexX = get<0>(previouslyUsedLossInputPixels[spot][cur_featureMap][i / stride + j / stride * output_size1]);
+				int previousIndexY = get<1>(previouslyUsedLossInputPixels[spot][cur_featureMap][i / stride + j / stride * output_size1]);
+				loss_input[spot][cur_featureMap][i + previousIndexX][j + previousIndexY] = 0.0;
 
 				//matrix max pooling
-				int indexX = get<0>(inputCoordsOfOutputPixels[cur_featureMap][i / stride + j / stride * output_size1]);
-				int indexY = get<1>(inputCoordsOfOutputPixels[cur_featureMap][i / stride + j / stride * output_size1]);
+				int indexX = get<0>(inputCoordsOfOutputPixels[spot][cur_featureMap][i / stride + j / stride * output_size1]);
+				int indexY = get<1>(inputCoordsOfOutputPixels[spot][cur_featureMap][i / stride + j / stride * output_size1]);
 
 				//set only the lossInput of the "pixel" max pool kept
-				loss_input[cur_featureMap][i + indexX][j + indexY] = loss_gradient[cur_featureMap][i / stride][j / stride];
+				loss_input[spot][cur_featureMap][i + indexX][j + indexY] = loss_gradient[spot][cur_featureMap][i / stride][j / stride];
 
-				get<0>(previouslyUsedLossInputPixels[cur_featureMap][i / stride + j / stride * output_size1]) = indexX;
-				get<1>(previouslyUsedLossInputPixels[cur_featureMap][i / stride + j / stride * output_size1]) = indexY;
+				get<0>(previouslyUsedLossInputPixels[spot][cur_featureMap][i / stride + j / stride * output_size1]) = indexX;
+				get<1>(previouslyUsedLossInputPixels[spot][cur_featureMap][i / stride + j / stride * output_size1]) = indexY;
 			}
 		}
 	}

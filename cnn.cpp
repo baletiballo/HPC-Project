@@ -1,20 +1,25 @@
 #include "cnn.h"
 
-CNN::CNN(){
+CNN::CNN() {
 	step = 1;
 
 	convLayer = new Conv();
 	poolLayer = new MaxPool();
 	connected_layer = new FullyConnectedLayer();
+	convLayer->setLossGradient(poolLayer->loss_input);
+	poolLayer->setInput(convLayer->output);
+	poolLayer->setLossGradient(connected_layer->loss_input);
+	connected_layer->setInput(poolLayer->output);
+	connected_layer->setLossGradient(connected_layer->output);
 
-	first_momentum_filters  = new float [num_filters] [conv_size1] [conv_size2]{};
-	second_momentum_filters = new float [num_filters] [conv_size1] [conv_size2]{};
-	first_momentum_conv_biases  = new float [num_filters]{};
-	second_momentum_conv_biases = new float [num_filters]{};
-	first_momentum_weights  = new float [num_weights] [num_lastLayer_inputNeurons]{};
-	second_momentum_weights = new float [num_weights] [num_lastLayer_inputNeurons]{};
-	first_momentum_conn_biases  = new float [num_weights]{};
-	second_momentum_conn_biases = new float [num_weights]{};
+	first_momentum_filters = new float[num_filters][conv_size1][conv_size2] { };
+	second_momentum_filters = new float[num_filters][conv_size1][conv_size2] { };
+	first_momentum_conv_biases = new float[num_filters] { };
+	second_momentum_conv_biases = new float[num_filters] { };
+	first_momentum_weights = new float[num_weights][num_lastLayer_inputNeurons] { };
+	second_momentum_weights = new float[num_weights][num_lastLayer_inputNeurons] { };
+	first_momentum_conn_biases = new float[num_weights] { };
+	second_momentum_conn_biases = new float[num_weights] { };
 }
 
 /**
@@ -24,31 +29,37 @@ CNN::CNN(){
  * @param label Das korrekte Lable
  * @return Das Tupel (loss, correct)
  */
-std::tuple<float, bool> CNN::forward(float image [imageSizeX][imageSizeY], int_fast8_t label) 
-{
-	convLayer->forward(image); //bild in ersten conv layer
-	ReLu(convLayer->output);
-	poolLayer->forward(convLayer->output);
-	connected_layer->forward(poolLayer->output); //nutzt immer den output des letzten pooling layers als input
+void CNN::forward(int_fast8_t image, int_fast8_t spot) {
+	int_fast8_t label = labels[image];
 
-	softmax(connected_layer->output); //achtung alles folgende findet in place statt, es aendert sich also connected_layer->output
-	float loss = -log(connected_layer->output[label]);
+	convLayer->forward(spot, image); //bild in ersten conv layer
+	ReLu(convLayer->output[spot]);
+	poolLayer->forward(spot);
+	connected_layer->forward(spot); //nutzt immer den output des letzten pooling layers als input
+
+	softmax(connected_layer->output[spot]); //achtung alles folgende findet in place statt, es aendert sich also connected_layer->output
+	float loss = -log(connected_layer->output[spot][label]);
 
 	int argmax = 0;
 	for (int i = 0; i < num_weights; i++)
-		if (connected_layer->output[i] >= connected_layer->output[argmax])
+		if (connected_layer->output[spot][i] >= connected_layer->output[spot][argmax])
 			argmax = i;
 
-	bool correct = label == argmax;
-	connected_layer->output[label] -= 1;
+	connected_layer->output[spot][label] -= 1;
 
-	connected_layer->backprop(connected_layer->output); //transformierter connected_layer->output wird als input fuer backprop genutzt
+	connected_layer->backprop(spot); //transformierter connected_layer->output wird als input fuer backprop genutzt
 
-	poolLayer->backprop(connected_layer->loss_input); //zurueckgehen in umgekehrter Reihenfolge
-	ReLuPrime(poolLayer->loss_input, poolLayer->input);
-	convLayer->backprop(poolLayer->loss_input);
-	
-	return {loss, correct};
+	poolLayer->backprop(spot); //zurueckgehen in umgekehrter Reihenfolge
+	ReLuPrime(poolLayer->loss_input[spot], poolLayer->input[spot]);
+	convLayer->backprop(spot, image);
+
+	mtx.lock();
+	totalLoss += loss;
+	if (label == argmax) {
+		totalCorrect++;
+	}
+	mtx.unlock();
+	sem.V(1);
 }
 
 /**
@@ -58,22 +69,23 @@ std::tuple<float, bool> CNN::forward(float image [imageSizeX][imageSizeY], int_f
  * @param lables Pointer auf den Beginn des Batches in den Trainingslabels
  * @return
  */
-std::tuple<float, int_fast8_t> CNN::learn(float images [batchSize][imageSizeX][imageSizeY], int_fast8_t lables [batchSize]) {
+std::tuple<float, int_fast8_t> CNN::learn(float x_batch[batchSize][imageSizeX][imageSizeY], int_fast8_t y_batch[batchSize]) {
+	convLayer->setInput(x_batch);
+	labels = y_batch;
 
-	float loss = 0.0f;
-	int_fast8_t correct = 0;
+	totalLoss = 0.0f;
+	totalCorrect = 0;
 
+	sem.set(0);
 	for (int i = 0; i < batchSize; i++) {
-		std::tuple<float, bool> Result = forward(images[i], lables[i]);
-		loss += std::get<0>(Result);
-		correct += std::get<1>(Result);
+		pushJob(i);
 	}
-
+	sem.P(batchSize);
 	//ADAM learning
 	update();
 	step++;
 
-	return {loss, correct};
+	return {totalLoss, totalCorrect};
 }
 
 //void CNN::updateJob(int packet) {
@@ -212,74 +224,177 @@ void CNN::update() {
 	for (unsigned curr_filter = 0; curr_filter < num_filters; curr_filter++) { //filters des conv layer
 		for (unsigned k = 0; k < conv_size1; k++) { //filter x
 			for (unsigned l = 0; l < conv_size2; l++) { //filter y
-				first_momentum_filters[curr_filter][k][l] = beta1 * first_momentum_filters[curr_filter][k][l]
-					+ (1.0f - beta1) * (convLayer->filter_gradient)[curr_filter][k][l] / batchSize; //erstes moment der filter updaten
-				second_momentum_filters[curr_filter][k][l] = beta2 * second_momentum_filters[curr_filter][k][l]
-					+ (1.0f - beta2) * powf((convLayer->filter_gradient)[curr_filter][k][l] / batchSize, 2); //zweites moment der filter updaten
+
+				float fg = 0.0;
+				for (int spot = 0; spot < threads; spot++) {
+					fg += (convLayer->filter_gradient)[spot][curr_filter][k][l];
+				}
+
+				first_momentum_filters[curr_filter][k][l] = beta1 * first_momentum_filters[curr_filter][k][l] + (1.0f - beta1) * fg / batchSize; //erstes moment der filter updaten
+				second_momentum_filters[curr_filter][k][l] = beta2 * second_momentum_filters[curr_filter][k][l] + (1.0f - beta2) * powf(fg / batchSize, 2); //zweites moment der filter updaten
 
 				convLayer->filters[curr_filter][k][l] = convLayer->filters[curr_filter][k][l]
-					- alpha * ((first_momentum_filters[curr_filter][k][l] / corr1) 
-					/ (sqrt(second_momentum_filters[curr_filter][k][l] / corr2) + EPSILON)); //filter des conv layers updaten
+						- alpha * ((first_momentum_filters[curr_filter][k][l] / corr1) / (sqrt(second_momentum_filters[curr_filter][k][l] / corr2) + EPSILON)); //filter des conv layers updaten
 			}
 		}
-		first_momentum_conv_biases[curr_filter] = beta1 * first_momentum_conv_biases[curr_filter] 
-			+ (1.0f - beta1) * (convLayer->bias_gradient)[curr_filter] / batchSize; //erstes moment der filterbiasse updaten
-		second_momentum_conv_biases[curr_filter] = beta2 * second_momentum_conv_biases[curr_filter]
-			+ (1.0f - beta2) * powf((convLayer->bias_gradient)[curr_filter] / batchSize, 2); //zweites moment der filterbiasse updaten
+
+		float bg = 0.0;
+		for (int spot = 0; spot < threads; spot++) {
+			bg += (convLayer->bias_gradient)[spot][curr_filter];
+		}
+
+		first_momentum_conv_biases[curr_filter] = beta1 * first_momentum_conv_biases[curr_filter] + (1.0f - beta1) * bg / batchSize; //erstes moment der filterbiasse updaten
+		second_momentum_conv_biases[curr_filter] = beta2 * second_momentum_conv_biases[curr_filter] + (1.0f - beta2) * powf(bg / batchSize, 2); //zweites moment der filterbiasse updaten
 
 		convLayer->biases[curr_filter] = convLayer->biases[curr_filter]
-			- alpha * ((first_momentum_conv_biases[curr_filter] / corr1) 
-			/ (sqrt(second_momentum_conv_biases[curr_filter] / corr2) + EPSILON)); //filterbiasse des conv layers updaten
+				- alpha * ((first_momentum_conv_biases[curr_filter] / corr1) / (sqrt(second_momentum_conv_biases[curr_filter] / corr2) + EPSILON)); //filterbiasse des conv layers updaten
 	}
 
 	convLayer->cleanup(); //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
 	for (unsigned curr_class = 0; curr_class < num_weights; curr_class++) { //outputzahlen
 		for (unsigned curr_neuron = 0; curr_neuron < num_lastLayer_inputNeurons; curr_neuron += 10) { //gesamtgroesse des inputs f�r den fully connected layer (fcl)
-			first_momentum_weights[curr_class][curr_neuron + 0] = beta1 * first_momentum_weights[curr_class][curr_neuron + 0] + (1.0f - beta1) * (connected_layer->weight_gradient)[curr_class][curr_neuron + 0] / batchSize; //erstes moment der fcl gewichte updaten
-			second_momentum_weights[curr_class][curr_neuron + 0] = beta2 * second_momentum_weights[curr_class][curr_neuron + 0]	+ (1.0f - beta2) * powf((connected_layer->weight_gradient)[curr_class][curr_neuron + 0] / batchSize, 2); //zweites moment der fcl gewichte updaten
-			connected_layer->weights[curr_class][curr_neuron + 0] = connected_layer->weights[curr_class][curr_neuron + 0] - alpha * ((first_momentum_weights[curr_class][curr_neuron + 0] / corr1) / (sqrt(second_momentum_weights[curr_class][curr_neuron + 0] / corr2) + EPSILON)); //gewichte des fcl updaten
 
-			first_momentum_weights[curr_class][curr_neuron + 1] = beta1 * first_momentum_weights[curr_class][curr_neuron + 1] + (1.0f - beta1) * (connected_layer->weight_gradient)[curr_class][curr_neuron + 1] / batchSize; //erstes moment der fcl gewichte updaten
-			second_momentum_weights[curr_class][curr_neuron + 1] = beta2 * second_momentum_weights[curr_class][curr_neuron + 1] + (1.0f - beta2) * powf((connected_layer->weight_gradient)[curr_class][curr_neuron + 1] / batchSize, 2); //zweites moment der fcl gewichte updaten
-			connected_layer->weights[curr_class][curr_neuron + 1] = connected_layer->weights[curr_class][curr_neuron + 1] - alpha * ((first_momentum_weights[curr_class][curr_neuron + 1] / corr1) / (sqrt(second_momentum_weights[curr_class][curr_neuron + 1] / corr2) + EPSILON)); //gewichte des fcl updaten
+			float wg = 0.0;
+			for (int spot = 0; spot < threads; spot++) {
+				wg += (connected_layer->weight_gradient)[spot][curr_class][curr_neuron + 0];
+			}
 
-			first_momentum_weights[curr_class][curr_neuron + 2] = beta1 * first_momentum_weights[curr_class][curr_neuron + 2] + (1.0f - beta1) * (connected_layer->weight_gradient)[curr_class][curr_neuron + 2] / batchSize; //erstes moment der fcl gewichte updaten
-			second_momentum_weights[curr_class][curr_neuron + 2] = beta2 * second_momentum_weights[curr_class][curr_neuron + 2] + (1.0f - beta2) * powf((connected_layer->weight_gradient)[curr_class][curr_neuron + 2] / batchSize, 2); //zweites moment der fcl gewichte updaten
-			connected_layer->weights[curr_class][curr_neuron + 2] = connected_layer->weights[curr_class][curr_neuron + 2] - alpha * ((first_momentum_weights[curr_class][curr_neuron + 2] / corr1) / (sqrt(second_momentum_weights[curr_class][curr_neuron + 2] / corr2) + EPSILON)); //gewichte des fcl updaten
+			first_momentum_weights[curr_class][curr_neuron + 0] = beta1 * first_momentum_weights[curr_class][curr_neuron + 0] + (1.0f - beta1) * wg / batchSize; //erstes moment der fcl gewichte updaten
+			second_momentum_weights[curr_class][curr_neuron + 0] = beta2 * second_momentum_weights[curr_class][curr_neuron + 0]
+					+ (1.0f - beta2) * powf(wg / batchSize, 2); //zweites moment der fcl gewichte updaten
+			connected_layer->weights[curr_class][curr_neuron + 0] = connected_layer->weights[curr_class][curr_neuron + 0]
+					- alpha
+							* ((first_momentum_weights[curr_class][curr_neuron + 0] / corr1)
+									/ (sqrt(second_momentum_weights[curr_class][curr_neuron + 0] / corr2) + EPSILON)); //gewichte des fcl updaten
 
-			first_momentum_weights[curr_class][curr_neuron + 3] = beta1 * first_momentum_weights[curr_class][curr_neuron + 3] + (1.0f - beta1) * (connected_layer->weight_gradient)[curr_class][curr_neuron + 3] / batchSize; //erstes moment der fcl gewichte updaten
-			second_momentum_weights[curr_class][curr_neuron + 3] = beta2 * second_momentum_weights[curr_class][curr_neuron + 3] + (1.0f - beta2) * powf((connected_layer->weight_gradient)[curr_class][curr_neuron + 3] / batchSize, 2); //zweites moment der fcl gewichte updaten
-			connected_layer->weights[curr_class][curr_neuron + 3] = connected_layer->weights[curr_class][curr_neuron + 3] - alpha * ((first_momentum_weights[curr_class][curr_neuron + 3] / corr1) / (sqrt(second_momentum_weights[curr_class][curr_neuron + 3] / corr2) + EPSILON)); //gewichte des fcl updaten
+			wg = 0.0;
+			for (int spot = 0; spot < threads; spot++) {
+				wg += (connected_layer->weight_gradient)[spot][curr_class][curr_neuron + 1];
+			}
 
-			first_momentum_weights[curr_class][curr_neuron + 4] = beta1 * first_momentum_weights[curr_class][curr_neuron + 4] + (1.0f - beta1) * (connected_layer->weight_gradient)[curr_class][curr_neuron + 4] / batchSize; //erstes moment der fcl gewichte updaten
-			second_momentum_weights[curr_class][curr_neuron + 4] = beta2 * second_momentum_weights[curr_class][curr_neuron + 4] + (1.0f - beta2) * powf((connected_layer->weight_gradient)[curr_class][curr_neuron + 4] / batchSize, 2); //zweites moment der fcl gewichte updaten
-			connected_layer->weights[curr_class][curr_neuron + 4] = connected_layer->weights[curr_class][curr_neuron + 4] - alpha * ((first_momentum_weights[curr_class][curr_neuron + 4] / corr1) / (sqrt(second_momentum_weights[curr_class][curr_neuron + 4] / corr2) + EPSILON)); //gewichte des fcl updaten
+			first_momentum_weights[curr_class][curr_neuron + 1] = beta1 * first_momentum_weights[curr_class][curr_neuron + 1] + (1.0f - beta1) * wg / batchSize; //erstes moment der fcl gewichte updaten
+			second_momentum_weights[curr_class][curr_neuron + 1] = beta2 * second_momentum_weights[curr_class][curr_neuron + 1]
+					+ (1.0f - beta2) * powf(wg / batchSize, 2); //zweites moment der fcl gewichte updaten
+			connected_layer->weights[curr_class][curr_neuron + 1] = connected_layer->weights[curr_class][curr_neuron + 1]
+					- alpha
+							* ((first_momentum_weights[curr_class][curr_neuron + 1] / corr1)
+									/ (sqrt(second_momentum_weights[curr_class][curr_neuron + 1] / corr2) + EPSILON)); //gewichte des fcl updaten
 
-			first_momentum_weights[curr_class][curr_neuron + 5] = beta1 * first_momentum_weights[curr_class][curr_neuron + 5] + (1.0f - beta1) * (connected_layer->weight_gradient)[curr_class][curr_neuron + 5] / batchSize; //erstes moment der fcl gewichte updaten
-			second_momentum_weights[curr_class][curr_neuron + 5] = beta2 * second_momentum_weights[curr_class][curr_neuron + 5] + (1.0f - beta2) * powf((connected_layer->weight_gradient)[curr_class][curr_neuron + 5] / batchSize, 2); //zweites moment der fcl gewichte updaten
-			connected_layer->weights[curr_class][curr_neuron + 5] = connected_layer->weights[curr_class][curr_neuron + 5] - alpha * ((first_momentum_weights[curr_class][curr_neuron + 5] / corr1) / (sqrt(second_momentum_weights[curr_class][curr_neuron + 5] / corr2) + EPSILON)); //gewichte des fcl updaten
+			wg = 0.0;
+			for (int spot = 0; spot < threads; spot++) {
+				wg += (connected_layer->weight_gradient)[spot][curr_class][curr_neuron + 2];
+			}
 
-			first_momentum_weights[curr_class][curr_neuron + 6] = beta1 * first_momentum_weights[curr_class][curr_neuron + 6] + (1.0f - beta1) * (connected_layer->weight_gradient)[curr_class][curr_neuron + 6] / batchSize; //erstes moment der fcl gewichte updaten
-			second_momentum_weights[curr_class][curr_neuron + 6] = beta2 * second_momentum_weights[curr_class][curr_neuron + 6] + (1.0f - beta2) * powf((connected_layer->weight_gradient)[curr_class][curr_neuron + 6] / batchSize, 2); //zweites moment der fcl gewichte updaten
-			connected_layer->weights[curr_class][curr_neuron + 6] = connected_layer->weights[curr_class][curr_neuron + 6] - alpha * ((first_momentum_weights[curr_class][curr_neuron + 6] / corr1) / (sqrt(second_momentum_weights[curr_class][curr_neuron + 6] / corr2) + EPSILON)); //gewichte des fcl updaten
+			first_momentum_weights[curr_class][curr_neuron + 2] = beta1 * first_momentum_weights[curr_class][curr_neuron + 2] + (1.0f - beta1) * wg / batchSize; //erstes moment der fcl gewichte updaten
+			second_momentum_weights[curr_class][curr_neuron + 2] = beta2 * second_momentum_weights[curr_class][curr_neuron + 2]
+					+ (1.0f - beta2) * powf(wg / batchSize, 2); //zweites moment der fcl gewichte updaten
+			connected_layer->weights[curr_class][curr_neuron + 2] = connected_layer->weights[curr_class][curr_neuron + 2]
+					- alpha
+							* ((first_momentum_weights[curr_class][curr_neuron + 2] / corr1)
+									/ (sqrt(second_momentum_weights[curr_class][curr_neuron + 2] / corr2) + EPSILON)); //gewichte des fcl updaten
 
-			first_momentum_weights[curr_class][curr_neuron + 7] = beta1 * first_momentum_weights[curr_class][curr_neuron + 7] + (1.0f - beta1) * (connected_layer->weight_gradient)[curr_class][curr_neuron + 7] / batchSize; //erstes moment der fcl gewichte updaten
-			second_momentum_weights[curr_class][curr_neuron + 7] = beta2 * second_momentum_weights[curr_class][curr_neuron + 7] + (1.0f - beta2) * powf((connected_layer->weight_gradient)[curr_class][curr_neuron + 7] / batchSize, 2); //zweites moment der fcl gewichte updaten
-			connected_layer->weights[curr_class][curr_neuron + 7] = connected_layer->weights[curr_class][curr_neuron + 7] - alpha * ((first_momentum_weights[curr_class][curr_neuron + 7] / corr1) / (sqrt(second_momentum_weights[curr_class][curr_neuron + 7] / corr2) + EPSILON)); //gewichte des fcl updaten
+			wg = 0.0;
+			for (int spot = 0; spot < threads; spot++) {
+				wg += (connected_layer->weight_gradient)[spot][curr_class][curr_neuron + 3];
+			}
 
-			first_momentum_weights[curr_class][curr_neuron + 8] = beta1 * first_momentum_weights[curr_class][curr_neuron + 8] + (1.0f - beta1) * (connected_layer->weight_gradient)[curr_class][curr_neuron + 8] / batchSize; //erstes moment der fcl gewichte updaten
-			second_momentum_weights[curr_class][curr_neuron + 8] = beta2 * second_momentum_weights[curr_class][curr_neuron + 8] + (1.0f - beta2) * powf((connected_layer->weight_gradient)[curr_class][curr_neuron + 8] / batchSize, 2); //zweites moment der fcl gewichte updaten
-			connected_layer->weights[curr_class][curr_neuron + 8] = connected_layer->weights[curr_class][curr_neuron + 8] - alpha * ((first_momentum_weights[curr_class][curr_neuron + 8] / corr1) / (sqrt(second_momentum_weights[curr_class][curr_neuron + 8] / corr2) + EPSILON)); //gewichte des fcl updaten
+			first_momentum_weights[curr_class][curr_neuron + 3] = beta1 * first_momentum_weights[curr_class][curr_neuron + 3] + (1.0f - beta1) * wg / batchSize; //erstes moment der fcl gewichte updaten
+			second_momentum_weights[curr_class][curr_neuron + 3] = beta2 * second_momentum_weights[curr_class][curr_neuron + 3]
+					+ (1.0f - beta2) * powf(wg / batchSize, 2); //zweites moment der fcl gewichte updaten
+			connected_layer->weights[curr_class][curr_neuron + 3] = connected_layer->weights[curr_class][curr_neuron + 3]
+					- alpha
+							* ((first_momentum_weights[curr_class][curr_neuron + 3] / corr1)
+									/ (sqrt(second_momentum_weights[curr_class][curr_neuron + 3] / corr2) + EPSILON)); //gewichte des fcl updaten
 
-			first_momentum_weights[curr_class][curr_neuron + 9] = beta1 * first_momentum_weights[curr_class][curr_neuron + 9] + (1.0f - beta1) * (connected_layer->weight_gradient)[curr_class][curr_neuron + 9] / batchSize; //erstes moment der fcl gewichte updaten
-			second_momentum_weights[curr_class][curr_neuron + 9] = beta2 * second_momentum_weights[curr_class][curr_neuron + 9] + (1.0f - beta2) * powf((connected_layer->weight_gradient)[curr_class][curr_neuron + 9] / batchSize, 2); //zweites moment der fcl gewichte updaten
-			connected_layer->weights[curr_class][curr_neuron + 9] = connected_layer->weights[curr_class][curr_neuron + 9] - alpha * ((first_momentum_weights[curr_class][curr_neuron + 9] / corr1) / (sqrt(second_momentum_weights[curr_class][curr_neuron + 9] / corr2) + EPSILON)); //gewichte des fcl updaten
+			wg = 0.0;
+			for (int spot = 0; spot < threads; spot++) {
+				wg += (connected_layer->weight_gradient)[spot][curr_class][curr_neuron + 4];
+			}
+
+			first_momentum_weights[curr_class][curr_neuron + 4] = beta1 * first_momentum_weights[curr_class][curr_neuron + 4] + (1.0f - beta1) * wg / batchSize; //erstes moment der fcl gewichte updaten
+			second_momentum_weights[curr_class][curr_neuron + 4] = beta2 * second_momentum_weights[curr_class][curr_neuron + 4]
+					+ (1.0f - beta2) * powf(wg / batchSize, 2); //zweites moment der fcl gewichte updaten
+			connected_layer->weights[curr_class][curr_neuron + 4] = connected_layer->weights[curr_class][curr_neuron + 4]
+					- alpha
+							* ((first_momentum_weights[curr_class][curr_neuron + 4] / corr1)
+									/ (sqrt(second_momentum_weights[curr_class][curr_neuron + 4] / corr2) + EPSILON)); //gewichte des fcl updaten
+
+			wg = 0.0;
+			for (int spot = 0; spot < threads; spot++) {
+				wg += (connected_layer->weight_gradient)[spot][curr_class][curr_neuron + 5];
+			}
+
+			first_momentum_weights[curr_class][curr_neuron + 5] = beta1 * first_momentum_weights[curr_class][curr_neuron + 5] + (1.0f - beta1) * wg / batchSize; //erstes moment der fcl gewichte updaten
+			second_momentum_weights[curr_class][curr_neuron + 5] = beta2 * second_momentum_weights[curr_class][curr_neuron + 5]
+					+ (1.0f - beta2) * powf(wg / batchSize, 2); //zweites moment der fcl gewichte updaten
+			connected_layer->weights[curr_class][curr_neuron + 5] = connected_layer->weights[curr_class][curr_neuron + 5]
+					- alpha
+							* ((first_momentum_weights[curr_class][curr_neuron + 5] / corr1)
+									/ (sqrt(second_momentum_weights[curr_class][curr_neuron + 5] / corr2) + EPSILON)); //gewichte des fcl updaten
+
+			wg = 0.0;
+			for (int spot = 0; spot < threads; spot++) {
+				wg += (connected_layer->weight_gradient)[spot][curr_class][curr_neuron + 6];
+			}
+
+			first_momentum_weights[curr_class][curr_neuron + 6] = beta1 * first_momentum_weights[curr_class][curr_neuron + 6] + (1.0f - beta1) * wg / batchSize; //erstes moment der fcl gewichte updaten
+			second_momentum_weights[curr_class][curr_neuron + 6] = beta2 * second_momentum_weights[curr_class][curr_neuron + 6]
+					+ (1.0f - beta2) * powf(wg / batchSize, 2); //zweites moment der fcl gewichte updaten
+			connected_layer->weights[curr_class][curr_neuron + 6] = connected_layer->weights[curr_class][curr_neuron + 6]
+					- alpha
+							* ((first_momentum_weights[curr_class][curr_neuron + 6] / corr1)
+									/ (sqrt(second_momentum_weights[curr_class][curr_neuron + 6] / corr2) + EPSILON)); //gewichte des fcl updaten
+
+			wg = 0.0;
+			for (int spot = 0; spot < threads; spot++) {
+				wg += (connected_layer->weight_gradient)[spot][curr_class][curr_neuron + 7];
+			}
+
+			first_momentum_weights[curr_class][curr_neuron + 7] = beta1 * first_momentum_weights[curr_class][curr_neuron + 7] + (1.0f - beta1) * wg / batchSize; //erstes moment der fcl gewichte updaten
+			second_momentum_weights[curr_class][curr_neuron + 7] = beta2 * second_momentum_weights[curr_class][curr_neuron + 7]
+					+ (1.0f - beta2) * powf(wg / batchSize, 2); //zweites moment der fcl gewichte updaten
+			connected_layer->weights[curr_class][curr_neuron + 7] = connected_layer->weights[curr_class][curr_neuron + 7]
+					- alpha
+							* ((first_momentum_weights[curr_class][curr_neuron + 7] / corr1)
+									/ (sqrt(second_momentum_weights[curr_class][curr_neuron + 7] / corr2) + EPSILON)); //gewichte des fcl updaten
+
+			wg = 0.0;
+			for (int spot = 0; spot < threads; spot++) {
+				wg += (connected_layer->weight_gradient)[spot][curr_class][curr_neuron + 8];
+			}
+
+			first_momentum_weights[curr_class][curr_neuron + 8] = beta1 * first_momentum_weights[curr_class][curr_neuron + 8] + (1.0f - beta1) * wg / batchSize; //erstes moment der fcl gewichte updaten
+			second_momentum_weights[curr_class][curr_neuron + 8] = beta2 * second_momentum_weights[curr_class][curr_neuron + 8]
+					+ (1.0f - beta2) * powf(wg / batchSize, 2); //zweites moment der fcl gewichte updaten
+			connected_layer->weights[curr_class][curr_neuron + 8] = connected_layer->weights[curr_class][curr_neuron + 8]
+					- alpha
+							* ((first_momentum_weights[curr_class][curr_neuron + 8] / corr1)
+									/ (sqrt(second_momentum_weights[curr_class][curr_neuron + 8] / corr2) + EPSILON)); //gewichte des fcl updaten
+
+			wg = 0.0;
+			for (int spot = 0; spot < threads; spot++) {
+				wg += (connected_layer->weight_gradient)[spot][curr_class][curr_neuron + 9];
+			}
+
+			first_momentum_weights[curr_class][curr_neuron + 9] = beta1 * first_momentum_weights[curr_class][curr_neuron + 9] + (1.0f - beta1) * wg / batchSize; //erstes moment der fcl gewichte updaten
+			second_momentum_weights[curr_class][curr_neuron + 9] = beta2 * second_momentum_weights[curr_class][curr_neuron + 9]
+					+ (1.0f - beta2) * powf(wg / batchSize, 2); //zweites moment der fcl gewichte updaten
+			connected_layer->weights[curr_class][curr_neuron + 9] = connected_layer->weights[curr_class][curr_neuron + 9]
+					- alpha
+							* ((first_momentum_weights[curr_class][curr_neuron + 9] / corr1)
+									/ (sqrt(second_momentum_weights[curr_class][curr_neuron + 9] / corr2) + EPSILON)); //gewichte des fcl updaten
 		}
 
-		first_momentum_conn_biases[curr_class] = beta1 * first_momentum_conn_biases[curr_class] + (1.0f - beta1) * (connected_layer->bias_gradient)[curr_class] / batchSize; //erstes moment der fcl biasse updaten
-		second_momentum_conn_biases[curr_class] = beta2 * second_momentum_conn_biases[curr_class] + (1.0f - beta2) * powf((connected_layer->bias_gradient)[curr_class] / batchSize, 2); //zweites moment der fcl biasse updaten
+		float bg = 0.0;
+		for (int spot = 0; spot < threads; spot++) {
+			bg += (connected_layer->bias_gradient)[spot][curr_class];
+		}
 
-		connected_layer->biases[curr_class] = connected_layer->biases[curr_class] - alpha * ((first_momentum_conn_biases[curr_class] / corr1) / (sqrt(second_momentum_conn_biases[curr_class] / corr2) + EPSILON)); //biasse des fcl updaten
+		first_momentum_conn_biases[curr_class] = beta1 * first_momentum_conn_biases[curr_class] + (1.0f - beta1) * bg / batchSize; //erstes moment der fcl biasse updaten
+		second_momentum_conn_biases[curr_class] = beta2 * second_momentum_conn_biases[curr_class] + (1.0f - beta2) * powf(bg / batchSize, 2); //zweites moment der fcl biasse updaten
+
+		connected_layer->biases[curr_class] = connected_layer->biases[curr_class]
+				- alpha * ((first_momentum_conn_biases[curr_class] / corr1) / (sqrt(second_momentum_conn_biases[curr_class] / corr2) + EPSILON)); //biasse des fcl updaten
 	}
 
 	connected_layer->cleanup(); //gradienten wieder auf 0 zuruecksetzen fuer naechstes batch

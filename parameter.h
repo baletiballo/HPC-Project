@@ -49,6 +49,7 @@ const int num_lastLayer_inputNeurons = num_finalImages * imageSizeX_afterPooling
 //Parameter der Paralelisierung
 const bool parallel = false; //sollen die parallelen Methoden aufgerufen werden?
 //const int num_packets = 12; //in wie viele arbeitspakete soll update aufgeteilt werden (falls parallel)
+const int threads = 12;
 
 //Konstanten für ADAM, direkt die aus dem Paper
 const float alpha = 0.001f; //Lernrate

@@ -15,6 +15,8 @@
 #include <sstream>
 #include <cmath>
 
+#include <mutex>
+
 #include "parameter.h"
 #include "Hilfsfunktionen.h"
 #include "ReLu.h"
@@ -51,9 +53,15 @@ public:
 	float (*first_momentum_conn_biases); //Erstes Moment der Gewichtbiasse: index1->Klassifikationklasse
 	float (*second_momentum_conn_biases); //Zweites Moment der Gewichtbiasse: index1->Klassifikationklasse
 
+	std::mutex mtx;
+	int_fast8_t totalCorrect;
+	float totalLoss;
+
+	int_fast8_t (*labels);
+
 	CNN();
 
-	std::tuple<float, bool> forward(float image [imageSizeX] [imageSizeY], int_fast8_t label);
+	void forward(int_fast8_t image, int_fast8_t spot);
 
 	std::tuple<float, int_fast8_t> learn(float x_batch [batchSize] [imageSizeX] [imageSizeY], int_fast8_t y_batch [batchSize]);
 

@@ -1,0 +1,19 @@
+------------------------------------------
+|          Vektoren durch Arrays ersetzt |
+|                  Einige Loops unrolled |
+------------------------------------------
+Trainingsdurchlauf 0:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0654656	 Durchschnittliche Praezision in den letzten 10 Batches: 0.98125
+0 Minuten 26 Sekunden
+
+Trainingsdurchlauf 1:
+Durchschnittlicher Loss in den letzten 10 Batches:0.107336	 Durchschnittliche Praezision in den letzten 10 Batches: 0.975
+0 Minuten 27 Sekunden
+
+Trainingsdurchlauf 2:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0952521	 Durchschnittliche Praezision in den letzten 10 Batches: 0.96875
+0 Minuten 26 Sekunden
+
+Durchschnittlich: 0 Minuten 27 Sekunden
+
+

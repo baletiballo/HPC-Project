@@ -1,11 +1,12 @@
 #include "Conv.h"
 
-Conv::Conv(){
-	filters = new float [num_filters] [conv_size1] [conv_size2] {};
-	biases = new float [num_filters]{};
-	output = new float [num_filters] [num_windowsX] [num_windowsY]{};
-	filter_gradient = new float [num_filters] [conv_size1] [conv_size2]{};
-	bias_gradient = new float [num_filters]{};
+Conv::Conv() {
+	filters = new float[num_filters][conv_size1][conv_size2] { };
+	biases = new float[num_filters] { };
+
+	output = new float[threads][num_filters][num_windowsX][num_windowsY] { };
+	filter_gradient = new float[threads][num_filters][conv_size1][conv_size2] { };
+	bias_gradient = new float[threads][num_filters] { };
 	//loss_input = new float [imageSizeX] [imageSizeY]{};
 
 	std::normal_distribution<float> distribution(0.0, 1.0);
@@ -20,34 +21,41 @@ Conv::Conv(){
 	}
 }
 
+void Conv::setLossGradient(float loss_gradientP[threads][num_filters][num_windowsX][num_windowsY]) {
+	loss_gradient = loss_gradientP;
+}
+
+void Conv::setInput(float inputP[batchSize][imageSizeX][imageSizeY]) {
+	input = inputP;
+}
+
 /**
  * Forward
  *
  * @param inputP
  * @return
  */
-void Conv::forward(float inputP [imageSizeX] [imageSizeY]) {
-	input = inputP;
+void Conv::forward(int_fast8_t spot, int_fast8_t image) {
 	for (int cur_filter = 0; cur_filter < num_filters; cur_filter++) { //per filter		
-		for (int i = 0; i < num_windowsX; i++) {//per region
-			for (int j = 0; j < num_windowsY; j++) {// per region
-				output[cur_filter][i][j] = biases[cur_filter];
+		for (int i = 0; i < num_windowsX; i++) { //per region
+			for (int j = 0; j < num_windowsY; j++) { // per region
+				output[spot][cur_filter][i][j] = biases[cur_filter];
 
 				//set output at i j for the input representation cur_featureMap when filter cur_filter is applied
 				//matrix multiplication and summation
 				//DEPENDS ON: conv_size1(m), conv_size2(n)
 				//output[cur_filter][i][j] += input[i + m][j + n] * filters[cur_filter][m][n];
-				output[cur_filter][i][j] += input[i + 0][j + 0] * filters[cur_filter][0][0]; 
-				output[cur_filter][i][j] += input[i + 0][j + 1] * filters[cur_filter][0][1];
-				output[cur_filter][i][j] += input[i + 0][j + 2] * filters[cur_filter][0][2];
+				output[spot][cur_filter][i][j] += input[image][i + 0][j + 0] * filters[cur_filter][0][0];
+				output[spot][cur_filter][i][j] += input[image][i + 0][j + 1] * filters[cur_filter][0][1];
+				output[spot][cur_filter][i][j] += input[image][i + 0][j + 2] * filters[cur_filter][0][2];
 
-				output[cur_filter][i][j] += input[i + 1][j + 0] * filters[cur_filter][1][0];
-				output[cur_filter][i][j] += input[i + 1][j + 1] * filters[cur_filter][1][1];
-				output[cur_filter][i][j] += input[i + 1][j + 2] * filters[cur_filter][1][2];
+				output[spot][cur_filter][i][j] += input[image][i + 1][j + 0] * filters[cur_filter][1][0];
+				output[spot][cur_filter][i][j] += input[image][i + 1][j + 1] * filters[cur_filter][1][1];
+				output[spot][cur_filter][i][j] += input[image][i + 1][j + 2] * filters[cur_filter][1][2];
 
-				output[cur_filter][i][j] += input[i + 2][j + 0] * filters[cur_filter][2][0];
-				output[cur_filter][i][j] += input[i + 2][j + 1] * filters[cur_filter][2][1];
-				output[cur_filter][i][j] += input[i + 2][j + 2] * filters[cur_filter][2][2];
+				output[spot][cur_filter][i][j] += input[image][i + 2][j + 0] * filters[cur_filter][2][0];
+				output[spot][cur_filter][i][j] += input[image][i + 2][j + 1] * filters[cur_filter][2][1];
+				output[spot][cur_filter][i][j] += input[image][i + 2][j + 2] * filters[cur_filter][2][2];
 			}
 		}
 	}
@@ -58,11 +66,13 @@ void Conv::forward(float inputP [imageSizeX] [imageSizeY]) {
  *
  */
 void Conv::cleanup() {
-	for (int cur_filter = 0; cur_filter < num_filters; cur_filter++) {
-		bias_gradient[cur_filter] = 0.0;
-		for (int i = 0; i < conv_size1; i++) {
-			for (int j = 0; j < conv_size2; j++) {
-				filter_gradient[cur_filter][i][j] = 0.0;
+	for (int spot = 0; spot < threads; spot++) {
+		for (int cur_filter = 0; cur_filter < num_filters; cur_filter++) {
+			bias_gradient[spot][cur_filter] = 0.0;
+			for (int i = 0; i < conv_size1; i++) {
+				for (int j = 0; j < conv_size2; j++) {
+					filter_gradient[spot][cur_filter][i][j] = 0.0;
+				}
 			}
 		}
 	}
@@ -74,50 +84,47 @@ void Conv::cleanup() {
  * @param loss_gradientP
  * @return
  */
-void Conv::backprop(float loss_gradientP [num_filters] [num_windowsX] [num_windowsY]) {
-	loss_gradient = loss_gradientP;
-
+void Conv::backprop(int_fast8_t spot, int_fast8_t image) {
 	/*//zero the loss Input, since the same method to just add them all together cannot be applied here
-	for (int i = 0; i < imageSizeX; i++) {
-		for (int j = 0; j < imageSizeY; j++) {
-			loss_input[i][j] = 0.0;
-		}
-	}*/
+	 for (int i = 0; i < imageSizeX; i++) {
+	 for (int j = 0; j < imageSizeY; j++) {
+	 loss_input[i][j] = 0.0;
+	 }
+	 }*/
 
 	for (int cur_filter = 0; cur_filter < num_filters; cur_filter++) { //per filter
-		for (int i = 0; i < num_windowsX; i++) {//per region
-			for (int j = 0; j < num_windowsY; j++) {// per region
+		for (int i = 0; i < num_windowsX; i++) { //per region
+			for (int j = 0; j < num_windowsY; j++) { // per region
 				//matrix multiplication and summation
 				//DEPENDS ON: conv_size1(m), conv_size2(n)
 				//loss_input[i + m][j + n] += loss_gradient[cur_filter][i][j] * filters[cur_filter][m][n];
 				//filter_gradient[cur_filter][m][n] += loss_gradient[cur_filter][i][j] * input[i + m][j + n];
 
-				filter_gradient[cur_filter][0][0] 	+= loss_gradient[cur_filter][i][j] * input[i + 0][j + 0];
-				filter_gradient[cur_filter][0][1] 	+= loss_gradient[cur_filter][i][j] * input[i + 0][j + 1];
-				filter_gradient[cur_filter][0][2] 	+= loss_gradient[cur_filter][i][j] * input[i + 0][j + 2];
+				filter_gradient[spot][cur_filter][0][0] += loss_gradient[spot][cur_filter][i][j] * input[image][i + 0][j + 0];
+				filter_gradient[spot][cur_filter][0][1] += loss_gradient[spot][cur_filter][i][j] * input[image][i + 0][j + 1];
+				filter_gradient[spot][cur_filter][0][2] += loss_gradient[spot][cur_filter][i][j] * input[image][i + 0][j + 2];
 
-				filter_gradient[cur_filter][1][0] 	+= loss_gradient[cur_filter][i][j] * input[i + 1][j + 0];
-				filter_gradient[cur_filter][1][1] 	+= loss_gradient[cur_filter][i][j] * input[i + 1][j + 1];
-				filter_gradient[cur_filter][1][2] 	+= loss_gradient[cur_filter][i][j] * input[i + 1][j + 2];
+				filter_gradient[spot][cur_filter][1][0] += loss_gradient[spot][cur_filter][i][j] * input[image][i + 1][j + 0];
+				filter_gradient[spot][cur_filter][1][1] += loss_gradient[spot][cur_filter][i][j] * input[image][i + 1][j + 1];
+				filter_gradient[spot][cur_filter][1][2] += loss_gradient[spot][cur_filter][i][j] * input[image][i + 1][j + 2];
 
-				filter_gradient[cur_filter][2][0] 	+= loss_gradient[cur_filter][i][j] * input[i + 2][j + 0];
-				filter_gradient[cur_filter][2][1] 	+= loss_gradient[cur_filter][i][j] * input[i + 2][j + 1];
-				filter_gradient[cur_filter][2][2] 	+= loss_gradient[cur_filter][i][j] * input[i + 2][j + 2];
-
+				filter_gradient[spot][cur_filter][2][0] += loss_gradient[spot][cur_filter][i][j] * input[image][i + 2][j + 0];
+				filter_gradient[spot][cur_filter][2][1] += loss_gradient[spot][cur_filter][i][j] * input[image][i + 2][j + 1];
+				filter_gradient[spot][cur_filter][2][2] += loss_gradient[spot][cur_filter][i][j] * input[image][i + 2][j + 2];
 
 				/*loss_input[i + 0][j + 0] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][0][0];
-				loss_input[i + 0][j + 1] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][0][1];
-				loss_input[i + 0][j + 2] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][0][2];	
+				 loss_input[i + 0][j + 1] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][0][1];
+				 loss_input[i + 0][j + 2] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][0][2];
 
-				loss_input[i + 1][j + 0] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][1][0];				
-				loss_input[i + 1][j + 1] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][1][1];				
-				loss_input[i + 1][j + 2] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][1][2];	
-							
-				loss_input[i + 2][j + 0] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][2][0];				
-				loss_input[i + 2][j + 1] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][2][1];				
-				loss_input[i + 2][j + 2] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][2][2];*/
+				 loss_input[i + 1][j + 0] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][1][0];
+				 loss_input[i + 1][j + 1] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][1][1];
+				 loss_input[i + 1][j + 2] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][1][2];
 
-				bias_gradient[cur_filter] += loss_gradient[cur_filter][i][j];
+				 loss_input[i + 2][j + 0] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][2][0];
+				 loss_input[i + 2][j + 1] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][2][1];
+				 loss_input[i + 2][j + 2] 			+= loss_gradient[cur_filter][i][j] * filters[cur_filter][2][2];*/
+
+				bias_gradient[spot][cur_filter] += loss_gradient[spot][cur_filter][i][j];
 			}
 		}
 	}

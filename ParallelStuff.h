@@ -43,6 +43,8 @@ public:
 	MaxPool *m;
 	FullyConnectedLayer *f;
 	CNN *cnn;
+	std::mutex helperMtx;
+	int spotCounter=0;
 
 	ThreadPool(int numThreads);
 	void threadsDoWork(); //thread method, making them get and complete jobs in an infinite loop

@@ -1,0 +1,90 @@
+------------------------------------------
+|                        Batchsize =  16 |
+|                Anzahl an Threads =  12 |
+------------------------------------------
+Trainingsdurchlauf 0:
+Durchschnittlicher Loss in den letzten 10 Batches:0.275207	 Durchschnittliche Praezision in den letzten 10 Batches: 0.9375
+140 Batches													 Schlechteste Präzision in den letzten 10 Batches: 0.8125
+1.15091 Sekunden
+
+Trainingsdurchlauf 1:
+Durchschnittlicher Loss in den letzten 10 Batches:0.187963	 Durchschnittliche Praezision in den letzten 10 Batches: 0.94375
+281 Batches													 Schlechteste Präzision in den letzten 10 Batches: 0.875
+1.857 Sekunden
+
+Trainingsdurchlauf 2:
+Durchschnittlicher Loss in den letzten 10 Batches:0.235365	 Durchschnittliche Praezision in den letzten 10 Batches: 0.93125
+227 Batches													 Schlechteste Präzision in den letzten 10 Batches: 0.8125
+1.52089 Sekunden
+
+Durchschnittlich: 1.5096 Sekunden
+
+
+------------------------------------------
+|                        Batchsize =  32 |
+|                Anzahl an Threads =  12 |
+------------------------------------------
+Trainingsdurchlauf 0:
+Durchschnittlicher Loss in den letzten 10 Batches:0.116576	 Durchschnittliche Praezision in den letzten 10 Batches: 0.9625
+709 Batches													 Schlechteste Präzision in den letzten 10 Batches: 0.875
+7.0172 Sekunden
+
+Trainingsdurchlauf 1:
+Durchschnittlicher Loss in den letzten 10 Batches:0.130299	 Durchschnittliche Praezision in den letzten 10 Batches: 0.9625
+492 Batches													 Schlechteste Präzision in den letzten 10 Batches: 0.9375
+5.03548 Sekunden
+
+Trainingsdurchlauf 2:
+Durchschnittlicher Loss in den letzten 10 Batches:0.113155	 Durchschnittliche Praezision in den letzten 10 Batches: 0.975
+674 Batches													 Schlechteste Präzision in den letzten 10 Batches: 0.9375
+6.66415 Sekunden
+
+Durchschnittlich: 6.23895 Sekunden
+
+
+------------------------------------------
+|                        Batchsize =  64 |
+|                Anzahl an Threads =  12 |
+------------------------------------------
+Trainingsdurchlauf 0:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0722692	 Durchschnittliche Praezision in den letzten 10 Batches: 0.976562
+502 Batches													 Schlechteste Präzision in den letzten 10 Batches: 0.953125
+8.68677 Sekunden
+
+Trainingsdurchlauf 1:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0505326	 Durchschnittliche Praezision in den letzten 10 Batches: 0.989062
+841 Batches													 Schlechteste Präzision in den letzten 10 Batches: 0.96875
+13.8938 Sekunden
+
+Trainingsdurchlauf 2:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0527226	 Durchschnittliche Praezision in den letzten 10 Batches: 0.990625
+898 Batches													 Schlechteste Präzision in den letzten 10 Batches: 0.96875
+15.2751 Sekunden
+
+Durchschnittlich: 12.6186 Sekunden
+
+
+------------------------------------------
+|                        Batchsize = 128 |
+|                Anzahl an Threads =  12 |
+------------------------------------------
+Trainingsdurchlauf 0:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0420912	 Durchschnittliche Praezision in den letzten 10 Batches: 0.989062
+712 Batches													 Schlechteste Präzision in den letzten 10 Batches: 0.96875
+21.7229 Sekunden
+
+Trainingsdurchlauf 1:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0411666	 Durchschnittliche Praezision in den letzten 10 Batches: 0.989062
+846 Batches													 Schlechteste Präzision in den letzten 10 Batches: 0.976562
+26.6856 Sekunden
+
+Trainingsdurchlauf 2:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0489989	 Durchschnittliche Praezision in den letzten 10 Batches: 0.983594
+658 Batches													 Schlechteste Präzision in den letzten 10 Batches: 0.96875
+20.93 Sekunden
+
+Durchschnittlich: 23.1128 Sekunden
+
+
+Fazit:
+Abbrechen bei Unterschreiten einer bestimmten Loss-Schranke ist nicht sinnvoll, da bei geringerer Batchsize Ausreißer wahrscheinlicher werden.

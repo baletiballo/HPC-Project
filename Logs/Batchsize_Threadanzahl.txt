@@ -22,13 +22,6 @@ Durchschnittlicher Loss in den letzten 10 Batches:0.0970593	 Durchschnittliche P
 0 Minuten 8 Sekunden
 
 ------------------------------------------
-|                        Batchsize = 320 |
-|                Anzahl an Threads =  12 |
-------------------------------------------
-Crashed!!
-
-
-------------------------------------------
 |                        Batchsize =  32 |
 |                Anzahl an Threads =   6 |
 ------------------------------------------
@@ -48,13 +41,6 @@ Durchschnittlicher Loss in den letzten 10 Batches:0.0696538	 Durchschnittliche P
 ------------------------------------------
 Durchschnittlicher Loss in den letzten 10 Batches:0.0970632	 Durchschnittliche Praezision in den letzten 10 Batches: 0.974219
 0 Minuten 9 Sekunden
-
-------------------------------------------
-|                        Batchsize = 320 |
-|                Anzahl an Threads =   6 |
-------------------------------------------
-Crashed!!
-
 
 ------------------------------------------
 |                        Batchsize =  32 |
@@ -80,3 +66,20 @@ Durchschnittlicher Loss in den letzten 10 Batches:0.0970552	 Durchschnittliche P
 0 Minuten 6 Sekunden
 
 
+------------------------------------------
+|                        Batchsize = 640 |
+|                Anzahl an Threads =  12 |
+------------------------------------------
+Trainingsdurchlauf 0:
+Durchschnittlicher Loss in den letzten 10 Batches:0.186567	 Durchschnittliche Praezision in den letzten 10 Batches: 0.94625
+6.93441 Sekunden
+
+Trainingsdurchlauf 1:
+Durchschnittlicher Loss in den letzten 10 Batches:0.175506	 Durchschnittliche Praezision in den letzten 10 Batches: 0.949219
+7.11194 Sekunden
+
+Trainingsdurchlauf 2:
+Durchschnittlicher Loss in den letzten 10 Batches:0.19274	 Durchschnittliche Praezision in den letzten 10 Batches: 0.948281
+6.9574 Sekunden
+
+Durchschnittlich: 7.00125 Sekunden

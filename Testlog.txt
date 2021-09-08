@@ -1,76 +1,77 @@
+Wie stark schadet das nicht parallele update() der Performance?
+
 ------------------------------------------
-|                        Batchsize =  32 |
+|                Anzahl an Threads =   1 |
+|                           Mit update() |
+------------------------------------------
+Durchschnittlich: 26.3442 Sekunden
+
+
+------------------------------------------
+|                Anzahl an Threads =  12 |
+|                           Mit update() |
+------------------------------------------
+Durchschnittlich: 9.87222 Sekunden
+
+26.3/9.9 = 2.65
+
+
+------------------------------------------
+|                Anzahl an Threads =   1 |
+|                          Ohne update() |
+------------------------------------------
+Durchschnittlich: 25.3842 Sekunden
+
+
+------------------------------------------
+|                Anzahl an Threads =  12 |
+|                          Ohne update() |
+------------------------------------------
+Durchschnittlich: 7.71632 Sekunden
+
+25.4/7.7 = 3.30
+
+Fazit: Ziemlich.
+Test mit größerer Batchsize
+------------------------------------------
+|                Anzahl an Threads =   1 |
+|                           Mit update() |
+------------------------------------------
+Durchschnittlich: 25.6973 Sekunden
+
+
+------------------------------------------
+|                Anzahl an Threads =  12 |
+|                           Mit update() |
+------------------------------------------
+Durchschnittlich: 8.51087 Sekunden
+
+25.7/8.5 = 3.02
+
+
+------------------------------------------
+|                Anzahl an Threads =   1 |
+|                          Ohne update() |
+------------------------------------------
+Durchschnittlich: 25.5238 Sekunden
+
+
+------------------------------------------
+|                Anzahl an Threads =  12 |
+|                          Ohne update() |
+------------------------------------------
+Durchschnittlich: 7.44538 Sekunden
+
+25.5/7.4 = 3.45
+
+Fazit: Der Effekt bleibt auch bei größerer BatchSize erhalten, wenn auch schwächer.
+    Eine BatchSize von 64 ist aber grundsätzlich schneller und ähnlich präzise (bei weniger Batches insgesamt):
+
+------------------------------------------
+|                        Batchsize =  64 |
 |                Anzahl an Threads =  12 |
 ------------------------------------------
-Trainingsdurchlauf 0:
-Durchschnittlicher Loss in den letzten 10 Batches:0.0653568	 Durchschnittliche Praezision in den letzten 10 Batches: 0.98125
-0 Minuten 9 Sekunden
-
-Trainingsdurchlauf 1:
-Durchschnittlicher Loss in den letzten 10 Batches:0.107072	 Durchschnittliche Praezision in den letzten 10 Batches: 0.975
-0 Minuten 10 Sekunden
-
-Trainingsdurchlauf 2:
-Durchschnittlicher Loss in den letzten 10 Batches:0.0951407	 Durchschnittliche Praezision in den letzten 10 Batches: 0.96875
-0 Minuten 9 Sekunden
-
-Durchschnittlich: 0 Minuten 9 Sekunden
-
-
-------------------------------------------
-|                        Batchsize =  32 |
-|                Anzahl an Threads =  12 |
-------------------------------------------
-Trainingsdurchlauf 0:
-Durchschnittlicher Loss in den letzten 10 Batches:0.0656425	 Durchschnittliche Praezision in den letzten 10 Batches: 0.98125
-10.0292entspricht: 0 Minuten 10 Sekunden
-
-Trainingsdurchlauf 1:
-Durchschnittlicher Loss in den letzten 10 Batches:0.107031	 Durchschnittliche Praezision in den letzten 10 Batches: 0.975
-10.1139entspricht: 0 Minuten 10 Sekunden
-
-Trainingsdurchlauf 2:
-Durchschnittlicher Loss in den letzten 10 Batches:0.0952177	 Durchschnittliche Praezision in den letzten 10 Batches: 0.96875
-9.92546entspricht: 0 Minuten 9 Sekunden
-
-Durchschnittlich: 0 Minuten 10 Sekunden
-
-
-------------------------------------------
-|                        Batchsize =  32 |
-|                Anzahl an Threads =  12 |
-------------------------------------------
-Trainingsdurchlauf 0:
-Durchschnittlicher Loss in den letzten 10 Batches:0.0656759	 Durchschnittliche Praezision in den letzten 10 Batches: 0.98125
-9.82568 Sekunden
-
-Trainingsdurchlauf 1:
-Durchschnittlicher Loss in den letzten 10 Batches:0.107132	 Durchschnittliche Praezision in den letzten 10 Batches: 0.975
-10.1059 Sekunden
-
-Trainingsdurchlauf 2:
-Durchschnittlicher Loss in den letzten 10 Batches:0.0952773	 Durchschnittliche Praezision in den letzten 10 Batches: 0.96875
-10.1089 Sekunden
-
-Durchschnittlich: 10.0135 Sekunden
-
-
-------------------------------------------
-|                        Batchsize = 640 |
-|                Anzahl an Threads =  12 |
-------------------------------------------
-Trainingsdurchlauf 0:
-Durchschnittlicher Loss in den letzten 10 Batches:0.186567	 Durchschnittliche Praezision in den letzten 10 Batches: 0.94625
-6.93441 Sekunden
-
-Trainingsdurchlauf 1:
-Durchschnittlicher Loss in den letzten 10 Batches:0.175506	 Durchschnittliche Praezision in den letzten 10 Batches: 0.949219
-7.11194 Sekunden
-
-Trainingsdurchlauf 2:
-Durchschnittlicher Loss in den letzten 10 Batches:0.19274	 Durchschnittliche Praezision in den letzten 10 Batches: 0.948281
-6.9574 Sekunden
-
-Durchschnittlich: 7.00125 Sekunden
+Durchschnittlicher Loss in den letzten 10 Batches:0.0699035	 Durchschnittliche Praezision in den letzten 10 Batches: 0.978125
+8.60693 Sekunden
 
 

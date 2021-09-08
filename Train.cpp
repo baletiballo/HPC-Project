@@ -77,6 +77,7 @@ int main() {
 			avgTime = 0.0;
 		}
 	}
+	endThreads();
 
 	log << endl;
 	std::cout << "Training finished." << endl;
@@ -104,13 +105,19 @@ void train() {
 
 			tuple<float, int> res = cnn.learn(batch_images, batch_lables);
 
-			/*cout<<"Durchschnittlicher Loss: " << get<0>(res) / (float)(batchSize)
-					 << "\t Durchschnittliche Praezision: " << (float)get<1>(res) / (batchSize) << endl;*/
+			float loss = get<0>(res) / batchSize;
+			float prez = (float)get<1>(res) / (batchSize);
 
-			if (num_steps - i <= 10) {
+			
+			//cout<<"Durchschnittlicher Loss: " << get<0>(res) / (float)(batchSize)
+			//		 << "\t Durchschnittliche Praezision: " << (float)get<1>(res) / (batchSize) << endl;
+			
+			if(num_steps - i <=10 ){
 				endLoss += get<0>(res);
 				endCorr += get<1>(res);
 			}
+			
+			
 		}
 
 		auto training_endTime = chrono::system_clock::now();

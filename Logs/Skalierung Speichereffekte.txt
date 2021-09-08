@@ -66,8 +66,11 @@ Durchschnittlich: 22 Minuten 46 Sekunden
 Erwartet Zeit:    17 Minuten 13 Sekunden
 Tatsaechliche / erwartete Dauer= 1.34339
 
-Schätzung anhand eines um 2 skalierten Durchlaufs. Schätzung ist deutlich besser => Skalierung um 2 scheint auszureichen,
-um Speichereffekte zu bekommen.
+%%%%%%%%%%%%%%
+%Schätzung anhand eines um 2 skalierten Durchlaufs. Schätzung ist deutlich besser => Skalierung um 2 scheint auszureichen,
+%um Speichereffekte zu bekommen.
+%%%%%%%%%%%%%%
+
 --------------------------
 | Skalierungsfaktor == 1 |
 --------------------------

@@ -15,12 +15,6 @@ void MaxPool::setInput(float inputP [threads][num_filters] [input_size1] [input_
 	input = inputP;
 }
 
-/**
- * Forward
- *
- * @param inputP
- * @return
- */
 void MaxPool::forward(int_fast8_t spot) {
 
 	for (int cur_featureMap = 0; cur_featureMap < num_inputs; cur_featureMap++) { //per input
@@ -74,12 +68,6 @@ void MaxPool::forward(int_fast8_t spot) {
 	}
 }
 
-/**
- * Backprop
- *
- * @param loss_gradientP
- * @return
- */
 void MaxPool::backprop(int_fast8_t spot) {
 
 	for (int cur_featureMap = 0; cur_featureMap < num_inputs; cur_featureMap++) { //per input
@@ -89,13 +77,13 @@ void MaxPool::backprop(int_fast8_t spot) {
 				// per region
 
 				//zero the loss Input
-				int previousIndexX = get<0>(previouslyUsedLossInputPixels[spot][cur_featureMap][i / stride + j / stride * output_size1]);
-				int previousIndexY = get<1>(previouslyUsedLossInputPixels[spot][cur_featureMap][i / stride + j / stride * output_size1]);
+				const int previousIndexX = get<0>(previouslyUsedLossInputPixels[spot][cur_featureMap][i / stride + j / stride * output_size1]);
+				const int previousIndexY = get<1>(previouslyUsedLossInputPixels[spot][cur_featureMap][i / stride + j / stride * output_size1]);
 				loss_input[spot][cur_featureMap][i + previousIndexX][j + previousIndexY] = 0.0;
 
 				//matrix max pooling
-				int indexX = get<0>(inputCoordsOfOutputPixels[spot][cur_featureMap][i / stride + j / stride * output_size1]);
-				int indexY = get<1>(inputCoordsOfOutputPixels[spot][cur_featureMap][i / stride + j / stride * output_size1]);
+				const int indexX = get<0>(inputCoordsOfOutputPixels[spot][cur_featureMap][i / stride + j / stride * output_size1]);
+				const int indexY = get<1>(inputCoordsOfOutputPixels[spot][cur_featureMap][i / stride + j / stride * output_size1]);
 
 				//set only the lossInput of the "pixel" max pool kept
 				loss_input[spot][cur_featureMap][i + indexX][j + indexY] = loss_gradient[spot][cur_featureMap][i / stride][j / stride];

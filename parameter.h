@@ -23,7 +23,7 @@ class ThreadPool;
 const int num_trainingData = 42000; //Anzahl an Trainingsdatensätzen (42000 bei MNist)
 const int baseSizeX = 28; //Anzahl Pixel in der X-Richtung, der originalen Daten
 const int baseSizeY = 28; //        -||-        Y-Richtung,          -||-        
-const int batchSize = 64; //Anzahl Bilder pro Batch
+extern int batchSize; //Anzahl Bilder pro Batch
 const int infaltionFactor = 3; //Zwischen zwei Originalpixel werden (inflationFaktor-1) interpoliert für die Trainingsdaten
 const int imageSizeX = ((baseSizeX - 1) * infaltionFactor) + 1 ; //DO NOT CHANGE: Anzahl Pixel in der X-Richtung, der Trainingsdaten
 const int imageSizeY = ((baseSizeY - 1) * infaltionFactor) + 1 ; //DO NOT CHANGE: Anzahl Pixel in der Y-Richtung, der Trainingsdaten 
@@ -43,7 +43,7 @@ const int pool_layers_stride = 2; //DO NOT CHANGE
 const int imageSizeX_afterPooling = (imageSizeX_afterConvolution - pool_layers_window) / pool_layers_stride + 1; //DO NOT CHANGE
 const int imageSizeY_afterPooling = (imageSizeY_afterConvolution - pool_layers_window) / pool_layers_stride + 1; //DO NOT CHANGE
 const int num_weights = 10; //DO NOT CHANGE: Anzahl an Klassifikations Klassen (10, da zehn Ziffern)
-const int num_finalImages = pow(num_filters, num_conv_layers); // eigentlich pow(num_filters, num_conv_layers), aber das will nicht
+const int num_finalImages = num_filters; // eigentlich pow(num_filters, num_conv_layers), aber das will nicht
 const int num_lastLayer_inputNeurons = num_finalImages * imageSizeX_afterPooling * imageSizeY_afterPooling; //Assert: Durch 100 teilbar
 
 //Parameter der Paralelisierung

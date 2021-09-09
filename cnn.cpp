@@ -2,6 +2,8 @@
 
 CNN::CNN() {
 	step = 1;
+	totalLoss = 0;
+	totalCorrect = 0;
 
 	convLayer = new Conv();
 	poolLayer = new MaxPool();

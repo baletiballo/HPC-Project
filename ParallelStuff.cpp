@@ -1,20 +1,5 @@
 #include "ParallelStuff.h"
 
-////////////////////////
-/*
- ThreadPool pool(12);
-
- void endThreads() {
- pool.queue.terminate();
- }
-
- void pushJob(int job) {
- pool.queue.push(job);
- }
-
- Sem sem(0);
- */
-/////////////////////
 Sem sem(0);
 ThreadPool pool(threads);
 
@@ -81,37 +66,6 @@ void ThreadPool::threadsDoWork() {
 			return;
 		}
 		(*cnn).forward(job, spot);
-		/*switch (currTask) {
-		 case 1:
-		 (*c).forwardJob(job);
-		 break;
-		 case 2:
-		 (*c).backpropJob(job);
-		 break;
-		 case 3:
-		 (*m).forwardJob(job);
-		 break;
-		 case 4:
-		 (*m).backpropJob(job);
-		 break;
-		 case 5:
-		 (*f).forwardJob(job);
-		 break;
-		 case 6:
-		 (*f).backpropJob(job);
-		 break;
-		 case 7:
-		 ReLuJob(job);
-		 break;
-		 case 8:
-		 ReLuPrimeJob(job);
-		 break;
-		 case 9:
-		 (*cnn).updateJob(job);
-		 break;
-		 default:
-		 return;
-		 }*/
 	}
 }
 

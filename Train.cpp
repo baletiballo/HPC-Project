@@ -192,36 +192,4 @@ void scale_trainingData(vector<vector<vector<float>>> tmp_images, float training
 			}
 		}
 	}
-	/*
-	fstream log;
-	log.open("Testlog.txt", std::ios_base::app);
-	if (!log.is_open())
-		return;
-	for (size_t x = 0; x < training_images[image].size(); x++)
-	{
-		for (int y = 0; y < training_images[image][0].size(); y++){
-			if(training_images[image][x][y] > 0.1) 
-				log << "00";
-			else  if(training_images[image][x][y] > 0.01)
-				log << "++";
-			else
-				log << "..";
-		}
-		log << endl;
-	}
-	log << endl << endl;
-	*/
-	
-	/* //Reines Aufblasen des Bildes
-	for (int image = 0; image < num_trainingData; image++) {
-		for (int pixel = 0; pixel < imagePixels; pixel++) {
-			float pixelValue = tmp_images[image][pixel];
-			for (int xShift = 0; xShift < factor; xShift++) {
-				for (int yShift = 0; yShift < factor; yShift++) {
-					training_images[image][factor * (pixel / 28) + xShift][factor * (pixel % 28) + yShift] = pixelValue;
-				}
-			}
-		}
-	}
-	*/
 }

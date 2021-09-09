@@ -1,3 +1,6 @@
+Fazit: Das Entrollen der Wiederholungen hat kaum Auswirkung auf die Geschwindigkeit (~2.5%)
+    Mit -funroll-loops gar keine (was auch Sinn der Flag ist)
+
 ------------------------------------------
 |                         Loops unrolled |
 ------------------------------------------
@@ -88,51 +91,6 @@ Durchschnittlicher Loss in den letzten 10 Batches:0.114391	 Durchschnittliche Pr
 
 Durchschnittlich: 8.23356 Sekunden
 
-
-------------------------------------------
-| Loops rolled, aber -funroll-loops aktiv |
-------------------------------------------
-Trainingsdurchlauf 0:
-Durchschnittlicher Loss in den letzten 10 Batches:0.0879101	 Durchschnittliche Praezision in den letzten 10 Batches: 0.975556
-7.48195 Sekunden
-
-Trainingsdurchlauf 1:
-Durchschnittlicher Loss in den letzten 10 Batches:0.104536	 Durchschnittliche Praezision in den letzten 10 Batches: 0.973333
-8.25887 Sekunden
-
-Trainingsdurchlauf 2:
-Durchschnittlicher Loss in den letzten 10 Batches:0.0992475	 Durchschnittliche Praezision in den letzten 10 Batches: 0.968889
-8.07541 Sekunden
-
-Trainingsdurchlauf 3:
-Durchschnittlicher Loss in den letzten 10 Batches:0.0952554	 Durchschnittliche Praezision in den letzten 10 Batches: 0.972222
-7.78718 Sekunden
-
-Trainingsdurchlauf 4:
-Durchschnittlicher Loss in den letzten 10 Batches:0.12203	 Durchschnittliche Praezision in den letzten 10 Batches: 0.96
-7.88292 Sekunden
-
-Trainingsdurchlauf 5:
-Durchschnittlicher Loss in den letzten 10 Batches:0.103717	 Durchschnittliche Praezision in den letzten 10 Batches: 0.971111
-8.02055 Sekunden
-
-Trainingsdurchlauf 6:
-Durchschnittlicher Loss in den letzten 10 Batches:0.095399	 Durchschnittliche Praezision in den letzten 10 Batches: 0.974444
-8.50326 Sekunden
-
-Trainingsdurchlauf 7:
-Durchschnittlicher Loss in den letzten 10 Batches:0.0799562	 Durchschnittliche Praezision in den letzten 10 Batches: 0.981111
-8.47434 Sekunden
-
-Trainingsdurchlauf 8:
-Durchschnittlicher Loss in den letzten 10 Batches:0.139257	 Durchschnittliche Praezision in den letzten 10 Batches: 0.961111
-8.24492 Sekunden
-
-Trainingsdurchlauf 9:
-Durchschnittlicher Loss in den letzten 10 Batches:0.114383	 Durchschnittliche Praezision in den letzten 10 Batches: 0.974444
-8.39455 Sekunden
-
-Durchschnittlich: 8.1124 Sekunden
 
 
 ------------------------------------------

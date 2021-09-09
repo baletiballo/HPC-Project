@@ -31,8 +31,8 @@ class CNN {
 public:
 
 	/*const int packetSizeConv = (num_conv_layers * num_filters) / num_packets; //groesse der arbeitspakete fuer update Conv
-	int packetSizeFull = (num_weights * num_finalImages * imageSizeX_afterPooling * imageSizeY_afterPooling) / num_packets; //groesse der arbeitspakete fuer update FullyConnectedLayer
-	bool needCleanup = (num_conv_layers * num_filters) % num_packets != 0 || (num_weights * num_finalImages * imageSizeX_afterPooling *imageSizeY_afterPooling) % num_packets != 0; //soll JobCleanup aufgerufen werden?*/
+	int packetSizeFull = (num_classes * num_finalImages * imageSizeX_afterPooling * imageSizeY_afterPooling) / num_packets; //groesse der arbeitspakete fuer update FullyConnectedLayer
+	bool needCleanup = (num_conv_layers * num_filters) % num_packets != 0 || (num_classes * num_finalImages * imageSizeX_afterPooling *imageSizeY_afterPooling) % num_packets != 0; //soll JobCleanup aufgerufen werden?*/
 
 	float corr1 = 1.0f;		//Korrekturterm des erstes Moments
 	float corr2 = 1.0f;		//Korrekturterm des zweiten Moments

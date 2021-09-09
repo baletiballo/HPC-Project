@@ -34,6 +34,18 @@ void MaxPool::forward(int_fast8_t spot) {
 				//		maxX = m;
 				//		maxY = n;
 				// }
+
+				for (int m = 0; m < pool_layers_window; m++){
+					for (int n = 0; n < pool_layers_window; n++){
+						if (max < input[spot][cur_featureMap][i + m][j + n]) {
+							max = input[spot][cur_featureMap][i + m][j + n];
+							maxX = m;
+							maxY = n;
+						 }
+					}
+				}
+				
+				/*
 				if (max < input[spot][cur_featureMap][i][j]) {
 					max = input[spot][cur_featureMap][i][j];
 					maxX = 0;
@@ -57,6 +69,7 @@ void MaxPool::forward(int_fast8_t spot) {
 					maxX = 1;
 					maxY = 1;
 				}
+				*/
 
 				output[spot][cur_featureMap][i / stride][j / stride] = max;
 

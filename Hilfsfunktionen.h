@@ -17,7 +17,7 @@
 
 //vector<vector<vector<float>>> deflatten(vector<float> &t1, int s1, int s2, int s3);
 
-void softmax(float t1 [num_weights]);
+void softmax(float t1 [num_classes]);
 
 
 #endif /* HILFSFUNKTIONEN_H_ */

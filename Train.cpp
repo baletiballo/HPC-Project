@@ -58,7 +58,7 @@ int main() {
 		log << "------------------------------------------" << endl;
 		//log << "| " << setw(35) << "Batchsize = " << setw(3) << batchSize << " |" << endl;
 		//log << "| " << setw(35) << "Anzahl an Threads = " << setw(3) << threads << " |" << endl;
-		log << "| " << setw(38) << "Loops unrolled" << " |" << endl;
+		log << "| " << setw(38) << "Loops rolled, aber -funroll-loops aktiv" << " |" << endl;
 		log << "------------------------------------------" << endl;
 
 		for (int j = 0; j < num_trainings_cycles; j++) { //Mehrere Durchläufe mit denselben Parametern, um Konsistenz zu erhöhen		

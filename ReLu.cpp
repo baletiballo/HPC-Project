@@ -18,13 +18,14 @@ void ReLu(float t1 [reluSize1] [reluSize2] [reluSize3]) {
 	*/
 	for (unsigned i = 0; i < reluSize1; i++) {
 		for (unsigned j = 0; j < reluSize2; j++) {
-			for(unsigned k = 0; k < reluSize3; k+=10){
+			for(unsigned k = 0; k < reluSize3; k++){
 				//DEPENDS ON: reluSize3
 				//if (t1[i][j][k] <= 0) 
 				//t1[i][j][k] = 0;
 				if (t1[i][j][k+0] <= 0)
 					t1[i][j][k+0] = 0;
 
+				/*
 				if (t1[i][j][k+1] <= 0)
 					t1[i][j][k+1] = 0;
 
@@ -51,6 +52,7 @@ void ReLu(float t1 [reluSize1] [reluSize2] [reluSize3]) {
 
 				if (t1[i][j][k+9] <= 0)
 					t1[i][j][k+9] = 0;
+				*/
 			}
 		}
 	}
@@ -67,13 +69,13 @@ void ReLuPrime(float t1 [reluSize1] [reluSize2] [reluSize3], float t2  [reluSize
 	*/
 	for (unsigned i = 0; i < reluSize1; i++) {
 		for (unsigned j = 0; j < reluSize2; j++) {
-			for(unsigned k = 0; k < reluSize3; k+=10){
+			for(unsigned k = 0; k < reluSize3; k++){
 				//DEPENDS ON: reluSize3
 				//if (t2[i][j][k] <= 0) 
 				//t1[i][j][k] = 0;
-				if (t2[i][j][0+k] <= 0)
-					t1[i][j][0+k] = 0;
-
+				if (t2[i][j][k] <= 0)
+					t1[i][j][k] = 0;
+				/*
 				if (t2[i][j][1+k] <= 0)
 					t1[i][j][1+k] = 0;
 
@@ -100,6 +102,7 @@ void ReLuPrime(float t1 [reluSize1] [reluSize2] [reluSize3], float t2  [reluSize
 
 				if (t2[i][j][9+k] <= 0)
 					t1[i][j][9+k] = 0;
+				*/
 			}
 		}
 	}

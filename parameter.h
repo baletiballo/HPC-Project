@@ -28,7 +28,7 @@ const int infaltionFactor = 3; //Zwischen zwei Originalpixel werden (inflationFa
 const int imageSizeX = ((baseSizeX - 1) * infaltionFactor) + 1 ; //DO NOT CHANGE: Anzahl Pixel in der X-Richtung, der Trainingsdaten
 const int imageSizeY = ((baseSizeY - 1) * infaltionFactor) + 1 ; //DO NOT CHANGE: Anzahl Pixel in der Y-Richtung, der Trainingsdaten 
 const int imagePixels = baseSizeX*baseSizeY; //Anzahl der Pixel eines unskalierten Bildes == Größe eines flachen Vektors eines Bildes
-const int num_steps = 32000 / batchSize; //Anzahl an Batches (1000 für die Benchmarks, kann für schnellere Tests reduziert werden)
+extern int num_steps; //Anzahl an Batches (1000 für die Benchmarks, kann für schnellere Tests reduziert werden)
 const int num_trainings_cycles = 1; //Anzahl an Trainingsdurchläufen
 
 //Parameter des CNN

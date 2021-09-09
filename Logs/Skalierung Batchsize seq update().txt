@@ -1,0 +1,61 @@
+------------------------------------------
+|                        Batchsize =  40 |
+|                Anzahl an Threads =  12 |
+------------------------------------------
+Durchschnittlich: 9.41857 Sekunden
+
+------------------------------------------
+|                        Batchsize =  50 |
+|                Anzahl an Threads =  12 |
+------------------------------------------
+Durchschnittlich: 8.61552 Sekunden
+
+------------------------------------------
+|                        Batchsize =  60 |
+|                Anzahl an Threads =  12 |
+------------------------------------------
+Durchschnittlich: 8.31373 Sekunden
+
+------------------------------------------
+|                        Batchsize =  70 |
+|                Anzahl an Threads =  12 |
+------------------------------------------
+Durchschnittlich: 7.91499 Sekunden
+
+------------------------------------------
+|                        Batchsize =  80 |
+|                Anzahl an Threads =  12 |
+------------------------------------------
+Durchschnittlich: 7.39012 Sekunden
+
+------------------------------------------
+|                        Batchsize =  90 |
+|                Anzahl an Threads =  12 |
+------------------------------------------
+Durchschnittlich: 7.33616 Sekunden
+
+------------------------------------------
+|                        Batchsize = 100 |
+|                Anzahl an Threads =  12 |
+------------------------------------------
+Durchschnittlich: 7.39678 Sekunden
+
+------------------------------------------
+|                        Batchsize = 110 |
+|                Anzahl an Threads =  12 |
+------------------------------------------
+Durchschnittlich: 7.37961 Sekunden
+
+------------------------------------------
+|                        Batchsize = 120 |
+|                Anzahl an Threads =  12 |
+------------------------------------------
+Durchschnittlich: 7.33525 Sekunden
+
+------------------------------------------
+|                        Batchsize = 130 |
+|                Anzahl an Threads =  12 |
+------------------------------------------
+Durchschnittlich: 7.40038 Sekunden
+
+

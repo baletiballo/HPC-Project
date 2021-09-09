@@ -53,22 +53,26 @@ int main() {
 
 	for (int i = 1; i <= 1; i++) { //Bündellauf mit leicht unterschiedlichen Parametern
 		//Parameter setzten
+		
+
 		log << "------------------------------------------" << endl;
-		log << "| " << setw(35) << "Batchsize = " << setw(3) << batchSize << " |" << endl;
-		log << "| " << setw(35) << "Anzahl an Threads = " << setw(3) << threads << " |" << endl;
-		//log << "| " << setw(38) << "Einige Loops unrolled" << " |" << endl;
+		//log << "| " << setw(35) << "Batchsize = " << setw(3) << batchSize << " |" << endl;
+		//log << "| " << setw(35) << "Anzahl an Threads = " << setw(3) << threads << " |" << endl;
+		log << "| " << setw(38) << "Loops unrolled" << " |" << endl;
 		log << "------------------------------------------" << endl;
 
 		for (int j = 0; j < num_trainings_cycles; j++) { //Mehrere Durchläufe mit denselben Parametern, um Konsistenz zu erhöhen		
-			if (num_trainings_cycles != 1) log << "Trainingsdurchlauf " << j << ":" << endl;
+			
  			train();
+
+			if (num_trainings_cycles != 1) log << "Trainingsdurchlauf " << j << ":" << endl;
 			log << "Durchschnittlicher Loss in den letzten 10 Batches:" << endLoss / (float)(10 * batchSize)
 			 << "\t Durchschnittliche Praezision in den letzten 10 Batches: " << (float)endCorr / (10 * batchSize) << endl;
-			log << totalTime.count()<< " Sekunden" << endl;
+			log << totalTime.count()<< " Sekunden" << endl << endl;
+			
 			endLoss = 0.0;
 			endCorr = 0;
 			avgTime += totalTime.count();
-			log << endl;
 		}
 
 		if (num_trainings_cycles != 1){

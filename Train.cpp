@@ -58,7 +58,7 @@ int main() {
 		log << "------------------------------------------" << endl;
 		//log << "| " << setw(35) << "Batchsize = " << setw(3) << batchSize << " |" << endl;
 		//log << "| " << setw(35) << "Anzahl an Threads = " << setw(3) << threads << " |" << endl;
-		log << "| " << setw(38) << "Loops rolled, aber -funroll-loops aktiv" << " |" << endl;
+		log << "| " << setw(38) << "Update sequenziell" << " |" << endl;
 		log << "------------------------------------------" << endl;
 
 		for (int j = 0; j < num_trainings_cycles; j++) { //Mehrere Durchläufe mit denselben Parametern, um Konsistenz zu erhöhen		
@@ -81,10 +81,14 @@ int main() {
 			avgTime = 0.0;
 		}
 	}
-	endThreads();
-
-	log << endl;
 	std::cout << "Training finished." << endl;
+	log << endl;
+
+	//Beenden des Threadpools
+	sem.set(0);
+	endThreads();
+	sem.P(threads);
+	return 0;
 }
 
 //Die ursprüngliche main(). So können mehrere ähnliche Trainingsläufe durchgeführt werden, ohne dass sie alle einzeln angestoßen werden müssen

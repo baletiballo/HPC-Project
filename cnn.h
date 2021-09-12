@@ -36,8 +36,10 @@ public:
 
 	float corr1 = 1.0f;		//Korrekturterm des erstes Moments
 	float corr2 = 1.0f;		//Korrekturterm des zweiten Moments
+	int num_updateJobs = num_filters + num_classes; //Anzahl an Jobpaketen, in die update() aufgeteilt ist
 
 	int step; //Anzahl der bisher gelernten Batches
+	
 
 	Conv *convLayer; //Vektor aller Convolutional Layers
 	MaxPool *poolLayer; //Vektor aller Pooling Layers
@@ -72,6 +74,7 @@ public:
 	void update_par();*/
 
 	void update();
+	void update_par(int job);
 
 };
 

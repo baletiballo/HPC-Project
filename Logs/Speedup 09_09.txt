@@ -1,0 +1,38 @@
+------------------------------------------
+|                    InflationFactor = 3 |
+------------------------------------------
+Trainingsdurchlauf 0:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0271974	 Durchschnittliche Praezision in den letzten 10 Batches: 0.993333
+6.99327 Sekunden
+
+Trainingsdurchlauf 1:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0196786	 Durchschnittliche Praezision in den letzten 10 Batches: 0.996667
+8.00455 Sekunden
+
+Trainingsdurchlauf 2:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0254408	 Durchschnittliche Praezision in den letzten 10 Batches: 0.992222
+7.68543 Sekunden
+
+Durchschnittlich: 7.56108 Sekunden
+
+Vor Optimierungen 5:30 Min => 330/7.5 = 44x Speedup
+
+
+------------------------------------------
+|                    InflationFactor = 4 |
+------------------------------------------
+Trainingsdurchlauf 0:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0266265	 Durchschnittliche Praezision in den letzten 10 Batches: 0.992222
+14.67 Sekunden
+
+Trainingsdurchlauf 1:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0132335	 Durchschnittliche Praezision in den letzten 10 Batches: 0.997778
+13.8181 Sekunden
+
+Trainingsdurchlauf 2:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0237573	 Durchschnittliche Praezision in den letzten 10 Batches: 0.992222
+14.0654 Sekunden
+
+Durchschnittlich: 14.1845 Sekunden
+
+Vor Optimierungen: 10 Min => 600/14.2 = 42.25x Speedup

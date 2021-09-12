@@ -63,9 +63,15 @@ void ThreadPool::threadsDoWork() {
 	while (true) {
 		int job = queue.pop();
 		if (queue.abort == true) {
+			sem.V(1);
 			return;
 		}
-		(*cnn).forward(job, spot);
+		if(job < batchSize){
+			cnn->forward(job, spot);
+		}
+		else{
+			cnn->update_par(job - batchSize);
+		}
 	}
 }
 

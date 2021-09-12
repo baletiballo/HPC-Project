@@ -1,0 +1,78 @@
+Fazit: 18 Threads ist das Beste, und passt hervorragend zu update_par().
+
+Ein Vergleich Verschiedener Threadanzahlen. In 6er Schritten, weil mein PC 6 Kerne hat.
+------------------------------------------
+|                Anzahl an Threads =   1 |
+------------------------------------------
+Durchschnittlich: 26.3808 Sekunden
+
+------------------------------------------
+|                Anzahl an Threads =   6 |
+------------------------------------------
+Durchschnittlich: 8.65217 Sekunden
+
+------------------------------------------
+|                Anzahl an Threads =  12 |
+------------------------------------------
+Durchschnittlich: 8.04761 Sekunden
+
+------------------------------------------
+|                Anzahl an Threads =  18 |
+------------------------------------------
+Durchschnittlich: 6.31275 Sekunden
+
+------------------------------------------
+|                Anzahl an Threads =  24 |
+------------------------------------------
+Durchschnittlich: 6.82173 Sekunden
+
+------------------------------------------
+|                Anzahl an Threads =  30 |
+------------------------------------------
+Durchschnittlich: 6.65916 Sekunden
+
+
+Genauere Untersuchung zwischen 14 und 20 Threads
+------------------------------------------
+|                Anzahl an Threads =  14 |
+------------------------------------------
+Durchschnittlich: 7.26756 Sekunden
+
+------------------------------------------
+|                Anzahl an Threads =  15 |
+------------------------------------------
+Durchschnittlich: 6.93144 Sekunden
+
+------------------------------------------
+|                Anzahl an Threads =  16 |
+------------------------------------------
+Durchschnittlich: 6.86263 Sekunden
+
+------------------------------------------
+|                Anzahl an Threads =  17 |
+------------------------------------------
+Durchschnittlich: 6.6821 Sekunden
+
+------------------------------------------
+|                Anzahl an Threads =  18 |
+------------------------------------------
+Durchschnittlich: 6.59872 Sekunden
+
+------------------------------------------
+|                Anzahl an Threads =  19 |
+------------------------------------------
+Durchschnittlich: 6.68216 Sekunden
+
+------------------------------------------
+|                Anzahl an Threads =  20 |
+------------------------------------------
+Durchschnittlich: 6.67812 Sekunden
+
+
+------------------------------------------
+|                Anzahl an Threads =  18 |
+|                        Update parallel |
+------------------------------------------
+Durchschnittlich: 6.03662 Sekunden
+
+

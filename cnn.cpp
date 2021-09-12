@@ -90,7 +90,6 @@ std::tuple<float, int> CNN::learn(float (*x_batch) [imageSizeX][imageSizeY], int
 		pushJob(i + batchSize); //nicht die schönste Technik einen 2D Input umzusetzen, aber es sollte passen.
 	}
 	sem.P(num_updateJobs);
-
 	convLayer->cleanup(); //Gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
 	connected_layer->cleanup(); //Gradienten wieder auf 0 zuruecksetzen fuer naechstes batch
 	

@@ -1,0 +1,28 @@
+------------------------------------------
+|                Anzahl an Threads =  18 |
+|                        Update parallel |
+|                    Inflationfaktor = 3 |
+------------------------------------------
+Trainingsdurchlauf 0:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0878168	 Durchschnittliche Praezision in den letzten 10 Batches: 0.975556
+5.65089 Sekunden
+
+Trainingsdurchlauf 1:
+Durchschnittlicher Loss in den letzten 10 Batches:0.104556	 Durchschnittliche Praezision in den letzten 10 Batches: 0.973333
+5.9301 Sekunden
+
+Trainingsdurchlauf 2:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0992057	 Durchschnittliche Praezision in den letzten 10 Batches: 0.968889
+5.84634 Sekunden
+
+Trainingsdurchlauf 3:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0952608	 Durchschnittliche Praezision in den letzten 10 Batches: 0.972222
+5.85332 Sekunden
+
+Trainingsdurchlauf 4:
+Durchschnittlicher Loss in den letzten 10 Batches:0.121848	 Durchschnittliche Praezision in den letzten 10 Batches: 0.96
+5.97598 Sekunden
+
+Durchschnittlich: 5.85132 Sekunden
+
+Vor Optimierungen 5:30 Min => 330/5.85 = 56.4x Speedup

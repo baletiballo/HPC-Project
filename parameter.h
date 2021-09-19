@@ -29,7 +29,7 @@ const int imageSizeX = ((baseSizeX - 1) * infaltionFactor) + 1 ; //DO NOT CHANGE
 const int imageSizeY = ((baseSizeY - 1) * infaltionFactor) + 1 ; //DO NOT CHANGE: Anzahl Pixel in der Y-Richtung, der Trainingsdaten 
 const int imagePixels = baseSizeX*baseSizeY; //Anzahl der Pixel eines unskalierten Bildes == Größe eines flachen Vektors eines Bildes
 extern int num_steps; //Anzahl an Batches (1000 für die Benchmarks, kann für schnellere Tests reduziert werden)
-const int num_trainings_cycles = 5; //Anzahl an Trainingsdurchläufen
+const int num_trainings_cycles = 3; //Anzahl an Trainingsdurchläufen
 
 //Parameter des CNN
 const int num_conv_layers = 1; //Anzahl der Convolutional Layer ()
@@ -49,7 +49,7 @@ const int num_lastLayer_inputNeurons = num_finalImages * imageSizeX_afterPooling
 //Parameter der Paralelisierung
 //const bool parallel = false; //sollen die parallelen Methoden aufgerufen werden?
 //const int num_packets = 12; //in wie viele arbeitspakete soll update aufgeteilt werden (falls parallel)
-const int threads = 18;
+const int threads = 6;
 
 //Konstanten für ADAM, direkt die aus dem Paper
 const float alpha = 0.001f; //Lernrate

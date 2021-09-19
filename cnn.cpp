@@ -110,38 +110,10 @@ std::tuple<float, int> CNN::learn(float (*x_batch) [imageSizeX][imageSizeY], int
 void CNN::update_par(int job) {
 	corr1 = 1.0f;		// - pow(beta1, step); //Korrekturterm des erstes Moments
 	corr2 = 1.0f;		// - pow(beta2, step); //Korrekturterm des zweiten Moments
-	if(job < num_filters) { //Filter des conv layer
-		int curr_filter = job;
-		for (unsigned k = 0; k < conv_size1; k++) { //filter x
-			for (unsigned l = 0; l < conv_size2; l++) { //filter y
+	
 
-				float fg = 0.0;
-				for (int spot = 0; spot < threads; spot++) {
-					fg += (convLayer->filter_gradient)[spot][curr_filter][k][l];
-				}
-
-				first_momentum_filters[curr_filter][k][l] = beta1 * first_momentum_filters[curr_filter][k][l] + (1.0f - beta1) * fg / batchSize; //erstes moment der filter updaten
-				second_momentum_filters[curr_filter][k][l] = beta2 * second_momentum_filters[curr_filter][k][l] + (1.0f - beta2) * powf(fg / batchSize, 2); //zweites moment der filter updaten
-
-				convLayer->filters[curr_filter][k][l] = convLayer->filters[curr_filter][k][l]
-						- alpha * ((first_momentum_filters[curr_filter][k][l] / corr1) / (sqrt(second_momentum_filters[curr_filter][k][l] / corr2) + EPSILON)); //filter des conv layers updaten
-			}
-		}
-
-		float bg = 0.0;
-		for (int spot = 0; spot < threads; spot++) {
-			bg += (convLayer->bias_gradient)[spot][curr_filter];
-		}
-
-		first_momentum_conv_biases[curr_filter] = beta1 * first_momentum_conv_biases[curr_filter] + (1.0f - beta1) * bg / batchSize; //erstes moment der filterbiasse updaten
-		second_momentum_conv_biases[curr_filter] = beta2 * second_momentum_conv_biases[curr_filter] + (1.0f - beta2) * powf(bg / batchSize, 2); //zweites moment der filterbiasse updaten
-
-		convLayer->biases[curr_filter] = convLayer->biases[curr_filter]
-				- alpha * ((first_momentum_conv_biases[curr_filter] / corr1) / (sqrt(second_momentum_conv_biases[curr_filter] / corr2) + EPSILON)); //filterbiasse des conv layers updaten
-	}
-
-	else { //outputzahlen
-		int curr_class = job - num_filters; 
+	if(job < num_classes) { //outputzahlen
+		int curr_class = job; 
 		for (unsigned curr_neuron = 0; curr_neuron < num_lastLayer_inputNeurons; curr_neuron ++) { //gesamtgroesse des inputs f�r den fully connected layer (fcl)
 
 			float wg = 0.0;
@@ -168,6 +140,36 @@ void CNN::update_par(int job) {
 
 		connected_layer->biases[curr_class] = connected_layer->biases[curr_class]
 				- alpha * ((first_momentum_conn_biases[curr_class] / corr1) / (sqrt(second_momentum_conn_biases[curr_class] / corr2) + EPSILON)); //biasse des fcl updaten
+	}
+
+	else { //Filter des conv layer
+		int curr_filter = job - num_classes;
+		for (unsigned k = 0; k < conv_size1; k++) { //filter x
+			for (unsigned l = 0; l < conv_size2; l++) { //filter y
+
+				float fg = 0.0;
+				for (int spot = 0; spot < threads; spot++) {
+					fg += (convLayer->filter_gradient)[spot][curr_filter][k][l];
+				}
+
+				first_momentum_filters[curr_filter][k][l] = beta1 * first_momentum_filters[curr_filter][k][l] + (1.0f - beta1) * fg / batchSize; //erstes moment der filter updaten
+				second_momentum_filters[curr_filter][k][l] = beta2 * second_momentum_filters[curr_filter][k][l] + (1.0f - beta2) * powf(fg / batchSize, 2); //zweites moment der filter updaten
+
+				convLayer->filters[curr_filter][k][l] = convLayer->filters[curr_filter][k][l]
+						- alpha * ((first_momentum_filters[curr_filter][k][l] / corr1) / (sqrt(second_momentum_filters[curr_filter][k][l] / corr2) + EPSILON)); //filter des conv layers updaten
+			}
+		}
+
+		float bg = 0.0;
+		for (int spot = 0; spot < threads; spot++) {
+			bg += (convLayer->bias_gradient)[spot][curr_filter];
+		}
+
+		first_momentum_conv_biases[curr_filter] = beta1 * first_momentum_conv_biases[curr_filter] + (1.0f - beta1) * bg / batchSize; //erstes moment der filterbiasse updaten
+		second_momentum_conv_biases[curr_filter] = beta2 * second_momentum_conv_biases[curr_filter] + (1.0f - beta2) * powf(bg / batchSize, 2); //zweites moment der filterbiasse updaten
+
+		convLayer->biases[curr_filter] = convLayer->biases[curr_filter]
+				- alpha * ((first_momentum_conv_biases[curr_filter] / corr1) / (sqrt(second_momentum_conv_biases[curr_filter] / corr2) + EPSILON)); //filterbiasse des conv layers updaten
 	}
 	sem.V(1);
 	

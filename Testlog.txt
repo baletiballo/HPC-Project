@@ -178,3 +178,23 @@ Durchschnittlicher Loss in den letzten 10 Batches:0.099249	 Durchschnittliche Pr
 Durchschnittlich: 8.41085 Sekunden
 
 
+------------------------------------------
+|                Anzahl an Threads =   6 |
+|                        Update parallel |
+|                    Inflationfaktor = 3 |
+------------------------------------------
+Trainingsdurchlauf 0:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0878837	 Durchschnittliche Praezision in den letzten 10 Batches: 0.975556
+8.4125 Sekunden
+
+Trainingsdurchlauf 1:
+Durchschnittlicher Loss in den letzten 10 Batches:0.104521	 Durchschnittliche Praezision in den letzten 10 Batches: 0.973333
+8.10727 Sekunden
+
+Trainingsdurchlauf 2:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0992295	 Durchschnittliche Praezision in den letzten 10 Batches: 0.968889
+9.02785 Sekunden
+
+Durchschnittlich: 8.51587 Sekunden
+
+

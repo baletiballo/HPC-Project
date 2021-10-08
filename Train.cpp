@@ -58,18 +58,20 @@ int main() {
 		log << "------------------------------------------" << endl;
 		//log << "| " << setw(35) << "Batchsize = " << setw(3) << batchSize << " |" << endl;
 		log << "| " << setw(35) << "Anzahl an Threads = " << setw(3) << threads << " |" << endl;
-		log << "| " << setw(38) << "Update parallel" << " |" << endl;
-		log << "| " << setw(38) << "Inflationfaktor = 3" << " |" << endl;
+		//log << "| " << setw(38) << "Update parallel" << " |" << endl;
+		//log << "| " << setw(38) << "Inflationfaktor = 3" << " |" << endl;
 		log << "------------------------------------------" << endl;
 
+		std::cout << "| " << setw(35) << "Anzahl an Threads = " << setw(3) << threads << " |" << endl;
 		for (int j = 0; j < num_trainings_cycles; j++) { //Mehrere Durchläufe mit denselben Parametern, um Konsistenz zu erhöhen		
 			
  			train();
-			
-			if (num_trainings_cycles != 1) log << "Trainingsdurchlauf " << j << ":" << endl;
-			log << "Durchschnittlicher Loss in den letzten 10 Batches:" << endLoss / (float)(10 * batchSize)
-			 << "\t Durchschnittliche Praezision in den letzten 10 Batches: " << (float)endCorr / (10 * batchSize) << endl;
-			log << totalTime.count()<< " Sekunden" << endl << endl;
+			if(detailedLog){
+				if (num_trainings_cycles != 1) log << "Trainingsdurchlauf " << j << ":" << endl;
+				log << "Durchschnittlicher Loss in den letzten 10 Batches:" << endLoss / (float)(10 * batchSize)
+					<< "\t Durchschnittliche Praezision in den letzten 10 Batches: " << (float)endCorr / (10 * batchSize) << endl;
+				log << totalTime.count()<< " Sekunden" << endl << endl;
+			}
 			
 			endLoss = 0.0;
 			endCorr = 0;

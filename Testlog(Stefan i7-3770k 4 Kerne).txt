@@ -1,0 +1,228 @@
+------------------------------------------
+|                Anzahl an Threads =   4 |
+------------------------------------------
+Trainingsdurchlauf 0:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0880233	 Durchschnittliche Praezision in den letzten 10 Batches: 0.975556
+13.3858 Sekunden
+
+Trainingsdurchlauf 1:
+Durchschnittlicher Loss in den letzten 10 Batches:0.104574	 Durchschnittliche Praezision in den letzten 10 Batches: 0.973333
+11.2755 Sekunden
+
+Trainingsdurchlauf 2:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0991494	 Durchschnittliche Praezision in den letzten 10 Batches: 0.968889
+11.4524 Sekunden
+
+Trainingsdurchlauf 3:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0952588	 Durchschnittliche Praezision in den letzten 10 Batches: 0.972222
+13.8302 Sekunden
+
+Trainingsdurchlauf 4:
+Durchschnittlicher Loss in den letzten 10 Batches:0.121964	 Durchschnittliche Praezision in den letzten 10 Batches: 0.96
+12.6711 Sekunden
+
+Trainingsdurchlauf 5:
+Durchschnittlicher Loss in den letzten 10 Batches:0.103739	 Durchschnittliche Praezision in den letzten 10 Batches: 0.971111
+14.0044 Sekunden
+
+Trainingsdurchlauf 6:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0953575	 Durchschnittliche Praezision in den letzten 10 Batches: 0.974444
+12.9965 Sekunden
+
+Trainingsdurchlauf 7:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0799446	 Durchschnittliche Praezision in den letzten 10 Batches: 0.981111
+11.8332 Sekunden
+
+Trainingsdurchlauf 8:
+Durchschnittlicher Loss in den letzten 10 Batches:0.139294	 Durchschnittliche Praezision in den letzten 10 Batches: 0.961111
+14.1917 Sekunden
+
+Trainingsdurchlauf 9:
+Durchschnittlicher Loss in den letzten 10 Batches:0.114397	 Durchschnittliche Praezision in den letzten 10 Batches: 0.974444
+13.3041 Sekunden
+
+Durchschnittlich: 12.8945 Sekunden
+
+
+------------------------------------------
+|                Anzahl an Threads =   8 |
+------------------------------------------
+Trainingsdurchlauf 0:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0878974	 Durchschnittliche Praezision in den letzten 10 Batches: 0.975556
+10.9384 Sekunden
+
+Trainingsdurchlauf 1:
+Durchschnittlicher Loss in den letzten 10 Batches:0.104518	 Durchschnittliche Praezision in den letzten 10 Batches: 0.973333
+9.81779 Sekunden
+
+Trainingsdurchlauf 2:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0992263	 Durchschnittliche Praezision in den letzten 10 Batches: 0.968889
+9.62785 Sekunden
+
+Trainingsdurchlauf 3:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0952569	 Durchschnittliche Praezision in den letzten 10 Batches: 0.972222
+9.2444 Sekunden
+
+Trainingsdurchlauf 4:
+Durchschnittlicher Loss in den letzten 10 Batches:0.12199	 Durchschnittliche Praezision in den letzten 10 Batches: 0.96
+10.1617 Sekunden
+
+Trainingsdurchlauf 5:
+Durchschnittlicher Loss in den letzten 10 Batches:0.103715	 Durchschnittliche Praezision in den letzten 10 Batches: 0.971111
+10.4316 Sekunden
+
+Trainingsdurchlauf 6:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0953576	 Durchschnittliche Praezision in den letzten 10 Batches: 0.974444
+10.8534 Sekunden
+
+Trainingsdurchlauf 7:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0799464	 Durchschnittliche Praezision in den letzten 10 Batches: 0.981111
+10.0827 Sekunden
+
+Trainingsdurchlauf 8:
+Durchschnittlicher Loss in den letzten 10 Batches:0.139275	 Durchschnittliche Praezision in den letzten 10 Batches: 0.961111
+10.1797 Sekunden
+
+Trainingsdurchlauf 9:
+Durchschnittlicher Loss in den letzten 10 Batches:0.114395	 Durchschnittliche Praezision in den letzten 10 Batches: 0.974444
+9.66484 Sekunden
+
+Durchschnittlich: 10.1002 Sekunden
+
+
+------------------------------------------
+|                Anzahl an Threads =  16 |
+------------------------------------------
+Trainingsdurchlauf 0:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0879847	 Durchschnittliche Praezision in den letzten 10 Batches: 0.975556
+8.70615 Sekunden
+
+Trainingsdurchlauf 1:
+Durchschnittlicher Loss in den letzten 10 Batches:0.104514	 Durchschnittliche Praezision in den letzten 10 Batches: 0.973333
+8.06249 Sekunden
+
+Trainingsdurchlauf 2:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0992452	 Durchschnittliche Praezision in den letzten 10 Batches: 0.968889
+7.82584 Sekunden
+
+Trainingsdurchlauf 3:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0952777	 Durchschnittliche Praezision in den letzten 10 Batches: 0.972222
+8.13334 Sekunden
+
+Trainingsdurchlauf 4:
+Durchschnittlicher Loss in den letzten 10 Batches:0.12195	 Durchschnittliche Praezision in den letzten 10 Batches: 0.96
+8.37626 Sekunden
+
+Trainingsdurchlauf 5:
+Durchschnittlicher Loss in den letzten 10 Batches:0.103739	 Durchschnittliche Praezision in den letzten 10 Batches: 0.971111
+8.21731 Sekunden
+
+Trainingsdurchlauf 6:
+Durchschnittlicher Loss in den letzten 10 Batches:0.095404	 Durchschnittliche Praezision in den letzten 10 Batches: 0.974444
+8.32628 Sekunden
+
+Trainingsdurchlauf 7:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0799718	 Durchschnittliche Praezision in den letzten 10 Batches: 0.981111
+7.83762 Sekunden
+
+Trainingsdurchlauf 8:
+Durchschnittlicher Loss in den letzten 10 Batches:0.139294	 Durchschnittliche Praezision in den letzten 10 Batches: 0.961111
+8.22231 Sekunden
+
+Trainingsdurchlauf 9:
+Durchschnittlicher Loss in den letzten 10 Batches:0.114402	 Durchschnittliche Praezision in den letzten 10 Batches: 0.974444
+8.8711 Sekunden
+
+Durchschnittlich: 8.25787 Sekunden
+
+
+------------------------------------------
+|                Anzahl an Threads =  24 |
+------------------------------------------
+Trainingsdurchlauf 0:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0878118	 Durchschnittliche Praezision in den letzten 10 Batches: 0.975556
+8.52321 Sekunden
+
+Trainingsdurchlauf 1:
+Durchschnittlicher Loss in den letzten 10 Batches:0.104574	 Durchschnittliche Praezision in den letzten 10 Batches: 0.973333
+8.49722 Sekunden
+
+Trainingsdurchlauf 2:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0992415	 Durchschnittliche Praezision in den letzten 10 Batches: 0.968889
+8.43624 Sekunden
+
+Trainingsdurchlauf 3:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0952503	 Durchschnittliche Praezision in den letzten 10 Batches: 0.972222
+8.5442 Sekunden
+
+Trainingsdurchlauf 4:
+Durchschnittlicher Loss in den letzten 10 Batches:0.12198	 Durchschnittliche Praezision in den letzten 10 Batches: 0.96
+8.46823 Sekunden
+
+Trainingsdurchlauf 5:
+Durchschnittlicher Loss in den letzten 10 Batches:0.103739	 Durchschnittliche Praezision in den letzten 10 Batches: 0.971111
+8.51322 Sekunden
+
+Trainingsdurchlauf 6:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0954123	 Durchschnittliche Praezision in den letzten 10 Batches: 0.974444
+8.41625 Sekunden
+
+Trainingsdurchlauf 7:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0799577	 Durchschnittliche Praezision in den letzten 10 Batches: 0.981111
+8.40425 Sekunden
+
+Trainingsdurchlauf 8:
+Durchschnittlicher Loss in den letzten 10 Batches:0.139266	 Durchschnittliche Praezision in den letzten 10 Batches: 0.961111
+8.55436 Sekunden
+
+Trainingsdurchlauf 9:
+Durchschnittlicher Loss in den letzten 10 Batches:0.114404	 Durchschnittliche Praezision in den letzten 10 Batches: 0.974444
+8.37878 Sekunden
+
+Durchschnittlich: 8.4736 Sekunden
+
+
+------------------------------------------
+|                Anzahl an Threads =  32 |
+------------------------------------------
+Trainingsdurchlauf 0:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0878911	 Durchschnittliche Praezision in den letzten 10 Batches: 0.975556
+8.71315 Sekunden
+
+Trainingsdurchlauf 1:
+Durchschnittlicher Loss in den letzten 10 Batches:0.104532	 Durchschnittliche Praezision in den letzten 10 Batches: 0.973333
+8.60319 Sekunden
+
+Trainingsdurchlauf 2:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0992122	 Durchschnittliche Praezision in den letzten 10 Batches: 0.968889
+8.90908 Sekunden
+
+Trainingsdurchlauf 3:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0952602	 Durchschnittliche Praezision in den letzten 10 Batches: 0.972222
+8.65127 Sekunden
+
+Trainingsdurchlauf 4:
+Durchschnittlicher Loss in den letzten 10 Batches:0.122028	 Durchschnittliche Praezision in den letzten 10 Batches: 0.96
+8.60619 Sekunden
+
+Trainingsdurchlauf 5:
+Durchschnittlicher Loss in den letzten 10 Batches:0.103727	 Durchschnittliche Praezision in den letzten 10 Batches: 0.971111
+8.61618 Sekunden
+
+Trainingsdurchlauf 6:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0954055	 Durchschnittliche Praezision in den letzten 10 Batches: 0.974444
+8.75724 Sekunden
+
+Trainingsdurchlauf 7:
+Durchschnittlicher Loss in den letzten 10 Batches:0.0799515	 Durchschnittliche Praezision in den letzten 10 Batches: 0.981111
+8.67016 Sekunden
+
+Trainingsdurchlauf 8:
+Durchschnittlicher Loss in den letzten 10 Batches:0.139266	 Durchschnittliche Praezision in den letzten 10 Batches: 0.961111
+8.61718 Sekunden
+
+Trainingsdurchlauf 9:
+Durchschnittlicher Loss in den letzten 10 Batches:0.114406	 Durchschnittliche Praezision in den letzten 10 Batches: 0.974444
+8.93008 Sekunden
+
+Durchschnittlich: 8.70737 Sekunden

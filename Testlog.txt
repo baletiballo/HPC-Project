@@ -1,0 +1,18 @@
+------------------------------------------
+|                Anzahl an Threads =  18 |
+------------------------------------------
+Trainingsdurchlauf 0:
+Durchschnittlicher Loss in den letzten 10 Batches:0.139718	 Durchschnittliche Praezision in den letzten 10 Batches: 0.960547
+1.1509 Sekunden
+
+Trainingsdurchlauf 1:
+Durchschnittlicher Loss in den letzten 10 Batches:0.135645	 Durchschnittliche Praezision in den letzten 10 Batches: 0.9625
+1.18385 Sekunden
+
+Trainingsdurchlauf 2:
+Durchschnittlicher Loss in den letzten 10 Batches:0.129047	 Durchschnittliche Praezision in den letzten 10 Batches: 0.960938
+1.17437 Sekunden
+
+Durchschnittlich: 1.1697 Sekunden
+
+

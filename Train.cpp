@@ -2,7 +2,7 @@
  * train.cpp
  *
  *  Created on: 03.05.2021
- *      Author: Stefan, Hannah, Silas
+ *      Author: Stefan Gebhart, Hannah Frisch, Silas Kuder
  */
 
 //Werden in CNN.cpp eingebunden, hier aber auch genutzt

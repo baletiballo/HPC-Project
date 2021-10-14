@@ -30,7 +30,7 @@ const int imageSizeY = ((baseSizeY - 1) * infaltionFactor) + 1 ; //Anzahl Pixel 
 const int imagePixels = baseSizeX*baseSizeY; //Anzahl der Pixel eines unskalierten Bildes == Größe eines flachen Vektors eines Bildes
 extern int num_steps; //Anzahl an Batches (1000 für die Benchmarks, kann für schnellere Tests reduziert werden)
 const int num_trainings_cycles = 3; //Anzahl an Trainingsdurchläufen
-const bool detailedLog = false;
+const bool detailedLog = true;
 
 //Parameter des CNN
 const int num_conv_layers = 1; //Anzahl der Convolutional Layer ()
@@ -45,7 +45,7 @@ const int imageSizeX_afterPooling = (imageSizeX_afterConvolution - pool_layers_w
 const int imageSizeY_afterPooling = (imageSizeY_afterConvolution - pool_layers_window) / pool_layers_stride + 1; 
 const int num_classes = 10; //Anzahl an Klassifikations Klassen (10, da zehn Ziffern)
 const int num_finalImages = pow(num_filters, num_conv_layers);
-const int num_lastLayer_inputNeurons = num_finalImages * imageSizeX_afterPooling * imageSizeY_afterPooling; //Assert: Durch 100 teilbar
+const int num_lastLayer_inputNeurons = num_finalImages * imageSizeX_afterPooling * imageSizeY_afterPooling;
 
 //Parameter der Paralelisierung
 //const bool parallel = false; //sollen die parallelen Methoden aufgerufen werden?

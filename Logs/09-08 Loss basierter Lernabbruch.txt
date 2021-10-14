@@ -1,3 +1,6 @@
+Fazit:
+Abbrechen bei Unterschreiten einer bestimmten Loss-Schranke ist nicht sinnvoll, da bei geringerer Batchsize Ausreißer wahrscheinlicher werden.
+
 ------------------------------------------
 |                        Batchsize =  16 |
 |                Anzahl an Threads =  12 |
@@ -86,5 +89,4 @@ Durchschnittlicher Loss in den letzten 10 Batches:0.0489989	 Durchschnittliche P
 Durchschnittlich: 23.1128 Sekunden
 
 
-Fazit:
-Abbrechen bei Unterschreiten einer bestimmten Loss-Schranke ist nicht sinnvoll, da bei geringerer Batchsize Ausreißer wahrscheinlicher werden.
+

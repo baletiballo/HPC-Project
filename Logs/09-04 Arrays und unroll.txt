@@ -1,4 +1,5 @@
 ------------------------------------------
+|                 Skalierungsfaktor == 2 |
 |          Vektoren durch Arrays ersetzt |
 |                  Einige Loops unrolled |
 ------------------------------------------

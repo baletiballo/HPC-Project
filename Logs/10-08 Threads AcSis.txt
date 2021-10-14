@@ -1,8 +1,6 @@
 Test mit anderem Laptop
 4 Kerne mit Hyperthreading
 
-
-
 ------------------------------------------
 |                Anzahl an Threads =   4 |
 ------------------------------------------

@@ -14,12 +14,11 @@
 #include <iostream>
 #include <sstream>
 #include <cmath>
+#include <tgmath.h>
 
 #include <mutex>
 
 #include "parameter.h"
-#include "Hilfsfunktionen.h"
-#include "ReLu.h"
 #include "FullyConnectedLayer.h"
 #include "Conv.h"
 #include "MaxPool.h"
@@ -75,6 +74,10 @@ public:
 
 	void update();
 	void update_par(int job);
+	void softmax(float t1 [num_classes]);
+	void ReLu(float t1 [num_filters] [imageSizeX_afterConvolution] [imageSizeY_afterConvolution]);
+	void ReLuPrime( float t1 [num_filters] [imageSizeX_afterConvolution] [imageSizeY_afterConvolution],
+                float t2  [num_filters] [imageSizeX_afterConvolution] [imageSizeY_afterConvolution]);
 
 };
 

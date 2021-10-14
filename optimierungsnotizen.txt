@@ -1,3 +1,0 @@
-Flachklopfen der convolutional Layer output zu fully connected input sparen
-MaxPool gesetzte Pixel für backprop merken
-

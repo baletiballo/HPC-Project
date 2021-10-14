@@ -167,12 +167,6 @@ void read_scale_trainingData(string filename, float training_images [num_trainin
 	}
 }
 
-//an image scaled by this should have sizes:
-//((image.size() - 1) * factor) + 1 by (((image[0].size() - 1) * factor) + 1))
-//this is because we want to add factor-1 new pixels between each two original pixels. This gives us image.size()-1 blocks with factor pixels each and one single lone pixel at the end.
-//sooo make sure training_images[image] has those sizes
-void scale_image_bilinear_interpolation(float image [baseSizeX] [baseSizeY], float newImage [imageSizeX] [imageSizeY], int factor) {}
-
 void scale_trainingData(vector<vector<vector<float>>> tmp_images, float training_images [num_trainingData] [imageSizeX] [imageSizeY], int factor) {
 	//Bilineare Interpolation
 	for (int image = 0; image < num_trainingData; image++) {
